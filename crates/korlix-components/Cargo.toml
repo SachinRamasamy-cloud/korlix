@@ -1,0 +1,13 @@
+[package]
+name = "korlix-components"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+korlix-core = { path = "../korlix-core" }
+korlix-ast = { path = "../korlix-ast" }
+korlix-style = { path = "../korlix-style" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+indexmap = { workspace = true }
+once_cell = { workspace = true }

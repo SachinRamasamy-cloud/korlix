@@ -1,0 +1,55 @@
+[workspace]
+members = [
+    "crates/korlix-cli",
+    "crates/korlix-core",
+    "crates/korlix-lexer",
+    "crates/korlix-parser",
+    "crates/korlix-ast",
+    "crates/korlix-resolver",
+    "crates/korlix-style",
+    "crates/korlix-components",
+    "crates/korlix-runtime-plan",
+    "crates/korlix-codegen",
+    "crates/korlix-dev-server",
+    "crates/korlix-compiler",
+]
+resolver = "2"
+
+[workspace.dependencies]
+# Serialization
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+# Async
+tokio = { version = "1", features = ["full"] }
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Terminal output
+colored = "2"
+indicatif = "0.17"
+
+# File system
+walkdir = "2"
+notify = "6"
+
+# Web / WebSocket
+axum = { version = "0.7", features = ["ws"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["fs", "cors"] }
+tokio-tungstenite = "0.21"
+futures = "0.3"
+
+# Error handling / reporting
+thiserror = "1"
+anyhow = "1"
+
+# String helpers
+regex = "1"
+indexmap = { version = "2", features = ["serde"] }
+once_cell = "1"
+
+# Path handling
+dunce = "1"
+pathdiff = { version = "0.2" }

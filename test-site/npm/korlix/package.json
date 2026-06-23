@@ -1,0 +1,37 @@
+{
+  "name": "korlix",
+  "version": "0.1.0",
+  "description": "Korlix frontend-first language compiler and CLI",
+  "license": "MIT",
+  "type": "commonjs",
+  "bin": {
+    "korlix": "./bin/korlix.js"
+  },
+  "files": [
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "korlix",
+    "klx",
+    "compiler",
+    "frontend",
+    "language",
+    "static-site",
+    "spa",
+    "html",
+    "css",
+    "javascript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SachinRamasamy-cloud/korlix.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SachinRamasamy-cloud/korlix"
+  },
+  "homepage": "https://github.com/SachinRamasamy-cloud/korlix#readme"
+}

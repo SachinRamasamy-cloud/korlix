@@ -1,0 +1,13 @@
+page index route "/":
+  meta:
+    title "{{name}} — Korlix App"
+
+  section .min-h-screen .flex .flex-col .items-center .justify-center .bg-background .text-foreground .p-8:
+    h1 .text-6xl .font-bold .text-primary .mb-4 "{{name}}"
+    p .text-xl .text-muted .mb-8 "Built with Korlix"
+
+    div .flex .gap-4:
+      btn .primary "Get Started" on:click:
+        navigate("/about")
+      btn .ghost "Show Toast" on:click:
+        toast success "Korlix is working!"

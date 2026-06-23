@@ -1,0 +1,7 @@
+component hero:
+  prop title: string
+  prop subtitle: string
+
+  section .hero .min-h-screen .flex .flex-col .items-center .justify-center .text-center .p-8:
+    h1 .text-6xl .font-bold .text-primary .mb-4 title
+    p .text-xl .text-muted subtitle

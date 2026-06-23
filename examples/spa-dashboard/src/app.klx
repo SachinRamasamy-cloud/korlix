@@ -1,0 +1,15 @@
+import DashboardLayout from "./layouts/dashboard.klx"
+
+app:
+  layout DashboardLayout
+  theme:
+    default "dark"
+    dark true
+  routes:
+    page "/" from "./pages/dashboard.klx"
+    page "/users" from "./pages/users.klx"
+    page "/settings" from "./pages/settings.klx"
+  providers:
+    toast
+    modal
+    theme

@@ -1,0 +1,10 @@
+{
+  "name": "korlix-landing",
+  "version": "0.1.0",
+  "src": "src",
+  "public": "public",
+  "dist": "dist",
+  "mode": "static",
+  "theme": { "default": "dark", "dark": true },
+  "server": { "port": 3000 }
+}

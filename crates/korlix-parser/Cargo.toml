@@ -1,0 +1,9 @@
+[package]
+name = "korlix-parser"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+korlix-core = { path = "../korlix-core" }
+korlix-ast = { path = "../korlix-ast" }
+korlix-lexer = { path = "../korlix-lexer" }

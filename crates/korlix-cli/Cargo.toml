@@ -1,0 +1,27 @@
+[package]
+name = "korlix-cli"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "korlix"
+path = "src/main.rs"
+
+[dependencies]
+korlix-core = { path = "../korlix-core" }
+korlix-compiler = { path = "../korlix-compiler" }
+korlix-dev-server = { path = "../korlix-dev-server" }
+korlix-lexer = { path = "../korlix-lexer" }
+korlix-parser = { path = "../korlix-parser" }
+korlix-resolver = { path = "../korlix-resolver" }
+korlix-style = { path = "../korlix-style" }
+clap = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+colored = { workspace = true }
+indicatif = { workspace = true }
+anyhow = { workspace = true }
+walkdir = { workspace = true }
+axum = { workspace = true }
+tower-http = { workspace = true }

@@ -1,0 +1,15 @@
+[package]
+name = "korlix-codegen"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+korlix-core = { path = "../korlix-core" }
+korlix-ast = { path = "../korlix-ast" }
+korlix-style = { path = "../korlix-style" }
+korlix-components = { path = "../korlix-components" }
+korlix-runtime-plan = { path = "../korlix-runtime-plan" }
+korlix-resolver = { path = "../korlix-resolver" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+indexmap = { workspace = true }

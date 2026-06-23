@@ -1,0 +1,21 @@
+[package]
+name = "korlix-compiler"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+korlix-core = { path = "../korlix-core" }
+korlix-ast = { path = "../korlix-ast" }
+korlix-lexer = { path = "../korlix-lexer" }
+korlix-parser = { path = "../korlix-parser" }
+korlix-resolver = { path = "../korlix-resolver" }
+korlix-style = { path = "../korlix-style" }
+korlix-components = { path = "../korlix-components" }
+korlix-runtime-plan = { path = "../korlix-runtime-plan" }
+korlix-codegen = { path = "../korlix-codegen" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+indexmap = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }
+walkdir = { workspace = true }
