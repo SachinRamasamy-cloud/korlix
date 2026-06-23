@@ -13,8 +13,11 @@ pub fn validate_classes(classes: &std::collections::HashSet<String>, diag: &mut 
                 format!("Did you mean: {}?", suggestions.join(", "))
             };
             diag.push(
-                korlix_core::Diagnostic::warning("KX-E201", format!("Unknown utility class `.{}`", class))
-                    .with_hint(hint),
+                korlix_core::Diagnostic::warning(
+                    "KX-E201",
+                    format!("Unknown utility class `.{}`", class),
+                )
+                .with_hint(hint),
             );
         }
     }
@@ -22,7 +25,9 @@ pub fn validate_classes(classes: &std::collections::HashSet<String>, diag: &mut 
 
 fn is_valid(class: &str) -> bool {
     // direct lookup
-    if lookup(class).is_some() { return true; }
+    if lookup(class).is_some() {
+        return true;
+    }
 
     // variant: sm:flex, hover:bg-red-500, dark:text-white …
     if let Some((_prefix, base)) = parse_variant(class) {

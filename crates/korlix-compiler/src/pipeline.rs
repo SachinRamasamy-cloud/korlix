@@ -1,8 +1,12 @@
-use crate::{context::CompileContext, output::{CompileOutput, PageFile}, project::Project};
+use crate::{
+    context::CompileContext,
+    output::{CompileOutput, PageFile},
+    project::Project,
+};
 use korlix_ast::program::Item;
 use korlix_codegen::{
     css::generate_css_for_classes,
-    document::{generate_document, generate_build_manifest, PageOutput},
+    document::{generate_build_manifest, generate_document, PageOutput},
     routes::generate_route_manifest,
 };
 use korlix_lexer::lexer::lex;
@@ -75,9 +79,10 @@ pub fn compile(project: &Project, _mode: &str) -> Result<CompileOutput, String> 
     for module in &ctx.program.modules {
         for item in &module.items {
             if let Item::Page(page) = item {
-                let route = page.route.clone()
-                    .unwrap_or_else(|| "/".to_string());
-                let layout_html = page.layout.as_ref()
+                let route = page.route.clone().unwrap_or_else(|| "/".to_string());
+                let layout_html = page
+                    .layout
+                    .as_ref()
                     .and_then(|l| layout_map.get(l))
                     .cloned();
 
@@ -89,7 +94,11 @@ pub fn compile(project: &Project, _mode: &str) -> Result<CompileOutput, String> 
                     &project.config.name.as_deref().unwrap_or("Korlix App"),
                 );
                 let filename = route_to_filename(&route);
-                pages.push(PageFile { route, filename, html });
+                pages.push(PageFile {
+                    route,
+                    filename,
+                    html,
+                });
             }
         }
     }
@@ -104,16 +113,15 @@ pub fn compile(project: &Project, _mode: &str) -> Result<CompileOutput, String> 
     let route_manifest = generate_route_manifest(&routes);
 
     // 9. Build manifest
-    let page_outputs: Vec<PageOutput> = pages.iter().map(|p| PageOutput {
-        route: p.route.clone(),
-        filename: p.filename.clone(),
-        html: p.html.clone(),
-    }).collect();
-    let build_manifest = generate_build_manifest(
-        &page_outputs,
-        css.len(),
-        app_js.len(),
-    );
+    let page_outputs: Vec<PageOutput> = pages
+        .iter()
+        .map(|p| PageOutput {
+            route: p.route.clone(),
+            filename: p.filename.clone(),
+            html: p.html.clone(),
+        })
+        .collect();
+    let build_manifest = generate_build_manifest(&page_outputs, css.len(), app_js.len());
 
     // 10. Inline runtime (embedded)
     let runtime_js = RUNTIME_JS.to_string();
@@ -139,8 +147,7 @@ fn route_to_filename(route: &str) -> String {
 pub fn write_dist(output: &CompileOutput, project: &Project) -> Result<(), String> {
     let dist = &project.dist_dir;
     let assets_dir = dist.join("assets");
-    std::fs::create_dir_all(&assets_dir)
-        .map_err(|e| format!("Cannot create dist/: {}", e))?;
+    std::fs::create_dir_all(&assets_dir).map_err(|e| format!("Cannot create dist/: {}", e))?;
 
     // Copy public assets first so compiler outputs take precedence for
     // reserved files such as index.html and assets/korlix.css.
@@ -174,8 +181,7 @@ pub fn write_dist(output: &CompileOutput, project: &Project) -> Result<(), Strin
         } else {
             let full = dist.join(&page.filename);
             if let Some(parent) = full.parent() {
-                std::fs::create_dir_all(parent)
-                    .map_err(|e| format!("Cannot create dir: {}", e))?;
+                std::fs::create_dir_all(parent).map_err(|e| format!("Cannot create dir: {}", e))?;
             }
             full
         };

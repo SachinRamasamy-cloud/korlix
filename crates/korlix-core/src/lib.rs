@@ -1,13 +1,13 @@
-pub mod span;
-pub mod source;
-pub mod diagnostics;
 pub mod config;
-pub mod result;
+pub mod diagnostics;
 pub mod paths;
+pub mod result;
+pub mod source;
+pub mod span;
 
-pub use span::*;
-pub use source::*;
-pub use diagnostics::*;
 pub use config::*;
-pub use result::*;
+pub use diagnostics::*;
 pub use paths::*;
+pub use result::*;
+pub use source::*;
+pub use span::*;

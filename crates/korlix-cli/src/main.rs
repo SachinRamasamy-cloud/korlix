@@ -83,7 +83,12 @@ async fn main() {
                 std::process::exit(1);
             }
         }
-        Some(Commands::Check { a11y, security, seo, ast }) => {
+        Some(Commands::Check {
+            a11y,
+            security,
+            seo,
+            ast,
+        }) => {
             if let Err(e) = commands::check::run(a11y, security, seo, ast) {
                 output::print_error(&format!("{}", e));
                 std::process::exit(1);

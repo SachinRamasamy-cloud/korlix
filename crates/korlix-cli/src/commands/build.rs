@@ -17,11 +17,27 @@ pub fn run(mode: Option<&str>) -> anyhow::Result<()> {
             write_dist(&output, &project).map_err(|e| anyhow::anyhow!(e))?;
             let elapsed = start.elapsed();
             println!();
-            println!("  {} Build complete in {:.0}ms", "✓".green().bold(), elapsed.as_millis());
+            println!(
+                "  {} Build complete in {:.0}ms",
+                "✓".green().bold(),
+                elapsed.as_millis()
+            );
             println!();
-            println!("  {} {}", "→".dimmed(), format!("dist/ ({} pages)", output.pages.len()).cyan());
-            println!("  {} CSS:  {:.1}kb", " ".dimmed(), output.css.len() as f64 / 1024.0);
-            println!("  {} JS:   {:.1}kb", " ".dimmed(), (output.app_js.len() + output.runtime_js.len()) as f64 / 1024.0);
+            println!(
+                "  {} {}",
+                "→".dimmed(),
+                format!("dist/ ({} pages)", output.pages.len()).cyan()
+            );
+            println!(
+                "  {} CSS:  {:.1}kb",
+                " ".dimmed(),
+                output.css.len() as f64 / 1024.0
+            );
+            println!(
+                "  {} JS:   {:.1}kb",
+                " ".dimmed(),
+                (output.app_js.len() + output.runtime_js.len()) as f64 / 1024.0
+            );
             println!();
         }
         Err(e) => {

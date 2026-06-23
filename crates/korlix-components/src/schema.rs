@@ -16,9 +16,21 @@ pub struct ComponentSchema {
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub enum ComponentCategory {
-    Primitive, Media, Icon, Avatar, Navigation,
-    Feedback, Loader, Placeholder, Overlay,
-    Form, Content, DataDisplay, Marketing, Dashboard, Ecommerce,
+    Primitive,
+    Media,
+    Icon,
+    Avatar,
+    Navigation,
+    Feedback,
+    Loader,
+    Placeholder,
+    Overlay,
+    Form,
+    Content,
+    DataDisplay,
+    Marketing,
+    Dashboard,
+    Ecommerce,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -38,5 +50,13 @@ pub struct SlotSchema {
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub enum RuntimeFeature {
-    Core, Router, State, Toast, Overlay, Media, Theme, Forms, Motion,
+    Core,
+    Router,
+    State,
+    Toast,
+    Overlay,
+    Media,
+    Theme,
+    Forms,
+    Motion,
 }

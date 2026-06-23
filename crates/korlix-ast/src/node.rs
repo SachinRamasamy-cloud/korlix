@@ -1,6 +1,6 @@
 use crate::{
-    declarations::{StateDecl, LetDecl, DerivedDecl, ActionDecl, DataDecl},
-    element::{ElementNode, ComponentNode},
+    declarations::{ActionDecl, DataDecl, DerivedDecl, LetDecl, StateDecl},
+    element::{ComponentNode, ElementNode},
     expression::Expr,
 };
 use korlix_core::Span;

@@ -1,4 +1,8 @@
-use korlix_ast::{element::ClassRef, node::Node, program::{Item, Module}};
+use korlix_ast::{
+    element::ClassRef,
+    node::Node,
+    program::{Item, Module},
+};
 use std::collections::HashSet;
 
 /// Walk the full AST and collect all class references used.
@@ -12,10 +16,10 @@ pub fn scan_classes(module: &Module) -> HashSet<String> {
 
 fn scan_item(item: &Item, out: &mut HashSet<String>) {
     match item {
-        Item::Page(p)      => scan_nodes(&p.body, out),
-        Item::Layout(l)    => scan_nodes(&l.body, out),
+        Item::Page(p) => scan_nodes(&p.body, out),
+        Item::Layout(l) => scan_nodes(&l.body, out),
         Item::Component(c) => scan_nodes(&c.body, out),
-        Item::AppDecl(_)   => {}
+        Item::AppDecl(_) => {}
         Item::MountDecl(_) => {}
         Item::ThemeDecl(_) => {}
     }
@@ -32,7 +36,9 @@ fn scan_node(node: &Node, out: &mut HashSet<String>) {
         Node::Element(el) => {
             scan_classes_list(&el.classes, out);
             scan_nodes(&el.children, out);
-            for ev in &el.events { scan_nodes(&ev.body, out); }
+            for ev in &el.events {
+                scan_nodes(&ev.body, out);
+            }
         }
         Node::Component(c) => {
             scan_classes_list(&c.classes, out);
@@ -40,14 +46,18 @@ fn scan_node(node: &Node, out: &mut HashSet<String>) {
         }
         Node::If(i) => {
             scan_nodes(&i.then_body, out);
-            if let Some(e) = &i.else_body { scan_nodes(e, out); }
+            if let Some(e) = &i.else_body {
+                scan_nodes(e, out);
+            }
         }
-        Node::For(f)    => scan_nodes(&f.body, out),
+        Node::For(f) => scan_nodes(&f.body, out),
         Node::Action(a) => scan_nodes(&a.body, out),
         _ => {}
     }
 }
 
 fn scan_classes_list(classes: &[ClassRef], out: &mut HashSet<String>) {
-    for c in classes { out.insert(c.name.clone()); }
+    for c in classes {
+        out.insert(c.name.clone());
+    }
 }

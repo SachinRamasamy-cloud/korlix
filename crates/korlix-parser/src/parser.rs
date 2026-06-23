@@ -22,11 +22,15 @@ impl<'t> Parser<'t> {
     // ── token navigation ───────────────────────────────────────────────
 
     pub fn current(&self) -> &Token {
-        self.tokens.get(self.pos).unwrap_or(self.tokens.last().unwrap())
+        self.tokens
+            .get(self.pos)
+            .unwrap_or(self.tokens.last().unwrap())
     }
 
     pub fn peek_ahead(&self, n: usize) -> &Token {
-        self.tokens.get(self.pos + n).unwrap_or(self.tokens.last().unwrap())
+        self.tokens
+            .get(self.pos + n)
+            .unwrap_or(self.tokens.last().unwrap())
     }
 
     pub fn current_kind(&self) -> TokenKind {
@@ -65,10 +69,8 @@ impl<'t> Parser<'t> {
         } else {
             let got = self.current_kind();
             let _span = self.current_span();
-            self.diagnostics.error(
-                "KX-E001",
-                format!("Expected `{}`, found `{}`", kind, got),
-            );
+            self.diagnostics
+                .error("KX-E001", format!("Expected `{}`, found `{}`", kind, got));
             false
         }
     }
@@ -92,7 +94,9 @@ impl<'t> Parser<'t> {
 
         while !self.is_eof() {
             self.skip_newlines();
-            if self.is_eof() { break; }
+            if self.is_eof() {
+                break;
+            }
 
             if let Some(item) = self.parse_top_level_item() {
                 module.items.push(item);

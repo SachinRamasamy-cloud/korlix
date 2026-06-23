@@ -71,7 +71,9 @@ impl<'a> Lexer<'a> {
     fn skip_comment(&mut self) {
         // # single-line comment
         while let Some(c) = self.peek() {
-            if c == '\n' { break; }
+            if c == '\n' {
+                break;
+            }
             self.advance();
         }
     }
@@ -95,9 +97,15 @@ impl<'a> Lexer<'a> {
                 let mut indent = 0usize;
                 loop {
                     match self.peek() {
-                        Some(' ')  => { self.advance(); indent += 1; }
-                        Some('\t') => { self.advance(); indent += 4; }
-                        _          => break,
+                        Some(' ') => {
+                            self.advance();
+                            indent += 1;
+                        }
+                        Some('\t') => {
+                            self.advance();
+                            indent += 4;
+                        }
+                        _ => break,
                     }
                 }
 
@@ -197,11 +205,19 @@ impl<'a> Lexer<'a> {
                         // followed by another class-name segment, as in hover:bg-red-500.
                         loop {
                             match self.peek() {
-                                Some(':') if self.peek2().map(is_class_segment_char).unwrap_or(false) => {
+                                Some(':')
+                                    if self.peek2().map(is_class_segment_char).unwrap_or(false) =>
+                                {
                                     class.push(':');
                                     self.advance();
                                 }
-                                Some(c) if is_class_segment_char(c) || matches!(c, '-' | '_' | '[' | ']' | '/' | '.' | '#' | '%') => {
+                                Some(c)
+                                    if is_class_segment_char(c)
+                                        || matches!(
+                                            c,
+                                            '-' | '_' | '[' | ']' | '/' | '.' | '#' | '%'
+                                        ) =>
+                                {
                                     class.push(c);
                                     self.advance();
                                 }
@@ -209,7 +225,11 @@ impl<'a> Lexer<'a> {
                             }
                         }
                         let span = self.make_span(start);
-                        return Some(Token::new(TokenKind::Class(class.clone()), span, format!(".{}", class)));
+                        return Some(Token::new(
+                            TokenKind::Class(class.clone()),
+                            span,
+                            format!(".{}", class),
+                        ));
                     }
                 }
                 // lone dot
@@ -232,12 +252,15 @@ impl<'a> Lexer<'a> {
                             self.advance();
                             if escaped {
                                 match c {
-                                    'n'  => s.push('\n'),
-                                    't'  => s.push('\t'),
+                                    'n' => s.push('\n'),
+                                    't' => s.push('\t'),
                                     '\\' => s.push('\\'),
-                                    '"'  => s.push('"'),
+                                    '"' => s.push('"'),
                                     '\'' => s.push('\''),
-                                    _    => { s.push('\\'); s.push(c); }
+                                    _ => {
+                                        s.push('\\');
+                                        s.push(c);
+                                    }
                                 }
                                 escaped = false;
                             } else if c == '\\' {
@@ -251,13 +274,22 @@ impl<'a> Lexer<'a> {
                     }
                 }
                 let span = self.make_span(start);
-                return Some(Token::new(TokenKind::StringLit(s.clone()), span, format!("\"{}\"", s)));
+                return Some(Token::new(
+                    TokenKind::StringLit(s.clone()),
+                    span,
+                    format!("\"{}\"", s),
+                ));
             }
 
             // ── number ─────────────────────────────────────────────────
-            if ch.is_ascii_digit() || (ch == '-' && self.peek2().map(|c| c.is_ascii_digit()).unwrap_or(false)) {
+            if ch.is_ascii_digit()
+                || (ch == '-' && self.peek2().map(|c| c.is_ascii_digit()).unwrap_or(false))
+            {
                 let mut num = String::new();
-                if ch == '-' { num.push('-'); self.advance(); }
+                if ch == '-' {
+                    num.push('-');
+                    self.advance();
+                }
                 while let Some(c) = self.peek() {
                     if c.is_ascii_digit() || c == '.' {
                         num.push(c);
@@ -283,41 +315,61 @@ impl<'a> Lexer<'a> {
                     }
                 }
                 let span = self.make_span(start);
-                let kind = lookup_keyword(&ident)
-                    .unwrap_or(TokenKind::Ident(ident.clone()));
+                let kind = lookup_keyword(&ident).unwrap_or(TokenKind::Ident(ident.clone()));
                 return Some(Token::new(kind, span, ident));
             }
 
             // ── two-char operators ─────────────────────────────────────
             self.advance();
             let kind = match (ch, self.peek()) {
-                ('=', Some('=')) => { self.advance(); TokenKind::EqEq }
-                ('=', Some('>')) => { self.advance(); TokenKind::Arrow }
-                ('!', Some('=')) => { self.advance(); TokenKind::BangEq }
-                ('<', Some('=')) => { self.advance(); TokenKind::LtEq }
-                ('>', Some('=')) => { self.advance(); TokenKind::GtEq }
-                ('&', Some('&')) => { self.advance(); TokenKind::AmpAmp }
-                ('|', Some('|')) => { self.advance(); TokenKind::PipePipe }
+                ('=', Some('=')) => {
+                    self.advance();
+                    TokenKind::EqEq
+                }
+                ('=', Some('>')) => {
+                    self.advance();
+                    TokenKind::Arrow
+                }
+                ('!', Some('=')) => {
+                    self.advance();
+                    TokenKind::BangEq
+                }
+                ('<', Some('=')) => {
+                    self.advance();
+                    TokenKind::LtEq
+                }
+                ('>', Some('=')) => {
+                    self.advance();
+                    TokenKind::GtEq
+                }
+                ('&', Some('&')) => {
+                    self.advance();
+                    TokenKind::AmpAmp
+                }
+                ('|', Some('|')) => {
+                    self.advance();
+                    TokenKind::PipePipe
+                }
                 // ── single-char ───────────────────────────────────
-                (':',  _) => TokenKind::Colon,
-                (',',  _) => TokenKind::Comma,
-                ('=',  _) => TokenKind::Equals,
-                ('+',  _) => TokenKind::Plus,
-                ('-',  _) => TokenKind::Minus,
-                ('*',  _) => TokenKind::Star,
-                ('/',  _) => TokenKind::Slash,
-                ('%',  _) => TokenKind::Percent,
-                ('<',  _) => TokenKind::Lt,
-                ('>',  _) => TokenKind::Gt,
-                ('!',  _) => TokenKind::Bang,
-                ('?',  _) => TokenKind::Question,
-                (';',  _) => TokenKind::Semicolon,
-                ('(',  _) => TokenKind::LParen,
-                (')',  _) => TokenKind::RParen,
-                ('[',  _) => TokenKind::LBracket,
-                (']',  _) => TokenKind::RBracket,
-                ('{',  _) => TokenKind::LBrace,
-                ('}',  _) => TokenKind::RBrace,
+                (':', _) => TokenKind::Colon,
+                (',', _) => TokenKind::Comma,
+                ('=', _) => TokenKind::Equals,
+                ('+', _) => TokenKind::Plus,
+                ('-', _) => TokenKind::Minus,
+                ('*', _) => TokenKind::Star,
+                ('/', _) => TokenKind::Slash,
+                ('%', _) => TokenKind::Percent,
+                ('<', _) => TokenKind::Lt,
+                ('>', _) => TokenKind::Gt,
+                ('!', _) => TokenKind::Bang,
+                ('?', _) => TokenKind::Question,
+                (';', _) => TokenKind::Semicolon,
+                ('(', _) => TokenKind::LParen,
+                (')', _) => TokenKind::RParen,
+                ('[', _) => TokenKind::LBracket,
+                (']', _) => TokenKind::RBracket,
+                ('{', _) => TokenKind::LBrace,
+                ('}', _) => TokenKind::RBrace,
                 _ => {
                     // skip unknown char
                     continue;

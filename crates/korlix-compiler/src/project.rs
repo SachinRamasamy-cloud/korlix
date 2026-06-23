@@ -13,9 +13,15 @@ pub struct Project {
 impl Project {
     pub fn load(root: PathBuf) -> Result<Self, String> {
         let config = KorlixConfig::load(&root)?;
-        let src_dir    = config.src_dir(&root);
+        let src_dir = config.src_dir(&root);
         let public_dir = config.public_dir(&root);
-        let dist_dir   = config.dist_dir(&root);
-        Ok(Self { root, config, src_dir, public_dir, dist_dir })
+        let dist_dir = config.dist_dir(&root);
+        Ok(Self {
+            root,
+            config,
+            src_dir,
+            public_dir,
+            dist_dir,
+        })
     }
 }

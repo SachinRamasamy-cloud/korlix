@@ -15,20 +15,30 @@ pub fn run(name: &str) -> anyhow::Result<()> {
 
     // Create directory structure
     let dirs = [
-        "", "public/assets", "src/pages", "src/layouts",
-        "src/components", "src/theme", "src", "dist",
+        "",
+        "public/assets",
+        "src/pages",
+        "src/layouts",
+        "src/components",
+        "src/theme",
+        "src",
+        "dist",
     ];
     for dir in &dirs {
         std::fs::create_dir_all(project_dir.join(dir))?;
     }
 
     // korlix.config.json
-    std::fs::write(project_dir.join("korlix.config.json"), CONFIG_JSON
-        .replace("{{name}}", name))?;
+    std::fs::write(
+        project_dir.join("korlix.config.json"),
+        CONFIG_JSON.replace("{{name}}", name),
+    )?;
 
     // package.json
-    std::fs::write(project_dir.join("package.json"), PKG_JSON
-        .replace("{{name}}", name))?;
+    std::fs::write(
+        project_dir.join("package.json"),
+        PKG_JSON.replace("{{name}}", name),
+    )?;
 
     // .gitignore
     std::fs::write(project_dir.join(".gitignore"), GITIGNORE)?;
@@ -43,18 +53,25 @@ pub fn run(name: &str) -> anyhow::Result<()> {
     std::fs::write(project_dir.join("src/app.klx"), APP_KLX)?;
 
     // src/pages/index.klx
-    std::fs::write(project_dir.join("src/pages/index.klx"), PAGE_INDEX_KLX
-        .replace("{{name}}", name))?;
+    std::fs::write(
+        project_dir.join("src/pages/index.klx"),
+        PAGE_INDEX_KLX.replace("{{name}}", name),
+    )?;
 
     // src/pages/about.klx
     std::fs::write(project_dir.join("src/pages/about.klx"), PAGE_ABOUT_KLX)?;
 
     // src/layouts/main.klx
-    std::fs::write(project_dir.join("src/layouts/main.klx"), LAYOUT_MAIN_KLX
-        .replace("{{name}}", name))?;
+    std::fs::write(
+        project_dir.join("src/layouts/main.klx"),
+        LAYOUT_MAIN_KLX.replace("{{name}}", name),
+    )?;
 
     // src/components/hero.klx
-    std::fs::write(project_dir.join("src/components/hero.klx"), COMPONENT_HERO_KLX)?;
+    std::fs::write(
+        project_dir.join("src/components/hero.klx"),
+        COMPONENT_HERO_KLX,
+    )?;
 
     // src/theme/tokens.klx
     std::fs::write(project_dir.join("src/theme/tokens.klx"), TOKENS_KLX)?;

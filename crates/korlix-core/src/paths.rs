@@ -22,12 +22,14 @@ pub fn route_from_path(path: &Path, pages_dir: &Path) -> String {
         if let Normal(s) = comp {
             let s = s.to_string_lossy();
             let part = if s == "index.klx" {
-                if i == 0 { return "/".into(); }
+                if i == 0 {
+                    return "/".into();
+                }
                 continue;
             } else if s.ends_with(".klx") {
                 let base = s.trim_end_matches(".klx");
                 if base.starts_with('[') && base.ends_with(']') {
-                    let param = &base[1..base.len()-1];
+                    let param = &base[1..base.len() - 1];
                     format!(":{}", param)
                 } else {
                     base.to_string()
@@ -36,7 +38,9 @@ pub fn route_from_path(path: &Path, pages_dir: &Path) -> String {
                 s.to_string()
             };
 
-            if !route.ends_with('/') { route.push('/'); }
+            if !route.ends_with('/') {
+                route.push('/');
+            }
             route.push_str(&part);
         }
     }

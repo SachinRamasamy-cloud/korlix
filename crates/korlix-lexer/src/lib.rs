@@ -1,8 +1,8 @@
-pub mod token;
-pub mod lexer;
 pub mod indentation;
 pub mod keywords;
+pub mod lexer;
+pub mod token;
 
-pub use token::*;
-pub use lexer::*;
 pub use keywords::*;
+pub use lexer::*;
+pub use token::*;

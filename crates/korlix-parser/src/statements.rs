@@ -1,7 +1,8 @@
 use crate::parser::Parser;
 use korlix_ast::{
-    declarations::{ActionDecl, DataDecl, DerivedDecl, ImportDecl, LetDecl,
-                    RouteDecl, StateDecl, ThemeDecl},
+    declarations::{
+        ActionDecl, DataDecl, DerivedDecl, ImportDecl, LetDecl, RouteDecl, StateDecl, ThemeDecl,
+    },
     expression::Expr,
     node::{AssignNode, CallNode, ForNode, IfNode, Node, TextNode},
     program::{AppDecl, ComponentDecl, Item, LayoutDecl, MountDecl, PageDecl},
@@ -13,14 +14,17 @@ impl<'t> Parser<'t> {
     pub fn parse_top_level_item(&mut self) -> Option<Item> {
         self.skip_newlines();
         match self.current_kind() {
-            TokenKind::Import  => self.parse_import().map(|_i| {
-                // imports stored in module.imports — just skip here
-                None::<Item>
-            }).flatten(),
-            TokenKind::Mount   => self.parse_mount().map(Item::MountDecl),
-            TokenKind::App     => self.parse_app().map(Item::AppDecl),
-            TokenKind::Page    => self.parse_page().map(Item::Page),
-            TokenKind::Layout  => self.parse_layout().map(Item::Layout),
+            TokenKind::Import => self
+                .parse_import()
+                .map(|_i| {
+                    // imports stored in module.imports — just skip here
+                    None::<Item>
+                })
+                .flatten(),
+            TokenKind::Mount => self.parse_mount().map(Item::MountDecl),
+            TokenKind::App => self.parse_app().map(Item::AppDecl),
+            TokenKind::Page => self.parse_page().map(Item::Page),
+            TokenKind::Layout => self.parse_layout().map(Item::Layout),
             TokenKind::Component => self.parse_component().map(Item::Component),
             _ => None,
         }
@@ -35,18 +39,29 @@ impl<'t> Parser<'t> {
         if let TokenKind::StringLit(path) = self.current_kind() {
             let path = path.clone();
             self.advance();
-            return Some(ImportDecl { name: None, path, span: span_start });
+            return Some(ImportDecl {
+                name: None,
+                path,
+                span: span_start,
+            });
         }
 
         let name = self.expect_ident()?;
         self.expect(&TokenKind::From);
         let path = if let TokenKind::StringLit(p) = self.current_kind() {
-            let p = p.clone(); self.advance(); p
+            let p = p.clone();
+            self.advance();
+            p
         } else {
-            self.diagnostics.error("KX-E002", "Expected string path after `from`");
+            self.diagnostics
+                .error("KX-E002", "Expected string path after `from`");
             return None;
         };
-        Some(ImportDecl { name: Some(name), path, span: span_start })
+        Some(ImportDecl {
+            name: Some(name),
+            path,
+            span: span_start,
+        })
     }
 
     // ── mount ─────────────────────────────────────────────────────────
@@ -56,9 +71,17 @@ impl<'t> Parser<'t> {
         let component = self.expect_ident()?;
         self.expect(&TokenKind::To);
         let selector = if let TokenKind::StringLit(s) = self.current_kind() {
-            let s = s.clone(); self.advance(); s
-        } else { "#korlix-root".into() };
-        Some(MountDecl { component, selector, span })
+            let s = s.clone();
+            self.advance();
+            s
+        } else {
+            "#korlix-root".into()
+        };
+        Some(MountDecl {
+            component,
+            selector,
+            span,
+        })
     }
 
     // ── app ───────────────────────────────────────────────────────────
@@ -67,17 +90,19 @@ impl<'t> Parser<'t> {
         self.advance(); // app
         self.expect(&TokenKind::Colon);
 
-        let mut layout   = None;
-        let mut routes   = vec![];
+        let mut layout = None;
+        let mut routes = vec![];
         let mut providers = vec![];
-        let mut theme    = None;
+        let mut theme = None;
 
         self.skip_newlines();
         if self.check(&TokenKind::Indent) {
             self.advance();
             loop {
                 self.skip_newlines();
-                if self.check(&TokenKind::Dedent) || self.is_eof() { break; }
+                if self.check(&TokenKind::Dedent) || self.is_eof() {
+                    break;
+                }
 
                 match self.current_kind() {
                     TokenKind::Ident(ref s) if s == "layout" => {
@@ -92,12 +117,16 @@ impl<'t> Parser<'t> {
                             self.advance();
                             loop {
                                 self.skip_newlines();
-                                if self.check(&TokenKind::Dedent) || self.is_eof() { break; }
+                                if self.check(&TokenKind::Dedent) || self.is_eof() {
+                                    break;
+                                }
                                 if let Some(r) = self.parse_route_decl() {
                                     routes.push(r);
                                 }
                             }
-                            if self.check(&TokenKind::Dedent) { self.advance(); }
+                            if self.check(&TokenKind::Dedent) {
+                                self.advance();
+                            }
                         }
                     }
                     TokenKind::Providers => {
@@ -108,12 +137,16 @@ impl<'t> Parser<'t> {
                             self.advance();
                             loop {
                                 self.skip_newlines();
-                                if self.check(&TokenKind::Dedent) || self.is_eof() { break; }
+                                if self.check(&TokenKind::Dedent) || self.is_eof() {
+                                    break;
+                                }
                                 if let Some(p) = self.expect_ident() {
                                     providers.push(p);
                                 }
                             }
-                            if self.check(&TokenKind::Dedent) { self.advance(); }
+                            if self.check(&TokenKind::Dedent) {
+                                self.advance();
+                            }
                         }
                     }
                     TokenKind::Theme => {
@@ -121,13 +154,23 @@ impl<'t> Parser<'t> {
                         self.expect(&TokenKind::Colon);
                         theme = Some(self.parse_theme_block());
                     }
-                    _ => { self.advance(); }
+                    _ => {
+                        self.advance();
+                    }
                 }
             }
-            if self.check(&TokenKind::Dedent) { self.advance(); }
+            if self.check(&TokenKind::Dedent) {
+                self.advance();
+            }
         }
 
-        Some(AppDecl { layout, routes, providers, theme, span })
+        Some(AppDecl {
+            layout,
+            routes,
+            providers,
+            theme,
+            span,
+        })
     }
 
     fn parse_route_decl(&mut self) -> Option<RouteDecl> {
@@ -135,14 +178,28 @@ impl<'t> Parser<'t> {
         // page "/" from "./pages/index.klx"
         let _kw = self.expect_ident()?; // "page"
         let path_str = if let TokenKind::StringLit(s) = self.current_kind() {
-            let s = s.clone(); self.advance(); s
-        } else { return None; };
+            let s = s.clone();
+            self.advance();
+            s
+        } else {
+            return None;
+        };
         // from "…"
-        if let TokenKind::From = self.current_kind() { self.advance(); }
+        if let TokenKind::From = self.current_kind() {
+            self.advance();
+        }
         let source = if let TokenKind::StringLit(s) = self.current_kind() {
-            let s = s.clone(); self.advance(); s
-        } else { return None; };
-        Some(RouteDecl { path: path_str, source, span })
+            let s = s.clone();
+            self.advance();
+            s
+        } else {
+            return None;
+        };
+        Some(RouteDecl {
+            path: path_str,
+            source,
+            span,
+        })
     }
 
     fn parse_theme_block(&mut self) -> ThemeDecl {
@@ -154,25 +211,35 @@ impl<'t> Parser<'t> {
             self.advance();
             loop {
                 self.skip_newlines();
-                if self.check(&TokenKind::Dedent) || self.is_eof() { break; }
+                if self.check(&TokenKind::Dedent) || self.is_eof() {
+                    break;
+                }
                 let key = self.expect_ident().unwrap_or_default();
                 match key.as_str() {
                     "default" => {
                         if let TokenKind::StringLit(s) = self.current_kind() {
-                            default_mode = Some(s.clone()); self.advance();
+                            default_mode = Some(s.clone());
+                            self.advance();
                         }
                     }
                     "dark" => {
                         if let TokenKind::Bool(b) = self.current_kind() {
-                            dark_enabled = b; self.advance();
+                            dark_enabled = b;
+                            self.advance();
                         }
                     }
                     _ => {}
                 }
             }
-            if self.check(&TokenKind::Dedent) { self.advance(); }
+            if self.check(&TokenKind::Dedent) {
+                self.advance();
+            }
         }
-        ThemeDecl { default_mode, dark_enabled, span }
+        ThemeDecl {
+            default_mode,
+            dark_enabled,
+            span,
+        }
     }
 
     // ── page ──────────────────────────────────────────────────────────
@@ -186,7 +253,8 @@ impl<'t> Parser<'t> {
         if self.check(&TokenKind::Route) {
             self.advance();
             if let TokenKind::StringLit(s) = self.current_kind() {
-                route = Some(s.clone()); self.advance();
+                route = Some(s.clone());
+                self.advance();
             }
         }
 
@@ -211,7 +279,14 @@ impl<'t> Parser<'t> {
             }
         }
 
-        Some(PageDecl { name, route, layout, meta, body, span })
+        Some(PageDecl {
+            name,
+            route,
+            layout,
+            meta,
+            body,
+            span,
+        })
     }
 
     // ── layout ────────────────────────────────────────────────────────
@@ -245,7 +320,12 @@ impl<'t> Parser<'t> {
             }
         }
 
-        Some(ComponentDecl { name, props, body, span })
+        Some(ComponentDecl {
+            name,
+            props,
+            body,
+            span,
+        })
     }
 
     // ── node (inside a block) ─────────────────────────────────────────
@@ -253,14 +333,14 @@ impl<'t> Parser<'t> {
         self.skip_newlines();
 
         match self.current_kind() {
-            TokenKind::State   => self.parse_state().map(Node::State),
-            TokenKind::Let     => self.parse_let().map(Node::Let),
+            TokenKind::State => self.parse_state().map(Node::State),
+            TokenKind::Let => self.parse_let().map(Node::Let),
             TokenKind::Derived => self.parse_derived().map(Node::Derived),
-            TokenKind::Action  => self.parse_action().map(Node::Action),
-            TokenKind::Data    => self.parse_data().map(Node::Data),
-            TokenKind::If      => self.parse_if().map(Node::If),
-            TokenKind::For     => self.parse_for().map(Node::For),
-            TokenKind::Slot    => {
+            TokenKind::Action => self.parse_action().map(Node::Action),
+            TokenKind::Data => self.parse_data().map(Node::Data),
+            TokenKind::If => self.parse_if().map(Node::If),
+            TokenKind::For => self.parse_for().map(Node::For),
+            TokenKind::Slot => {
                 let span = self.current_span();
                 self.advance();
                 let name = self.expect_ident();
@@ -290,7 +370,11 @@ impl<'t> Parser<'t> {
             self.advance();
             self.advance();
             let value = self.parse_expr().unwrap_or(Expr::Null);
-            return Some(Node::Assign(AssignNode { target: name, value, span }));
+            return Some(Node::Assign(AssignNode {
+                target: name,
+                value,
+                span,
+            }));
         }
 
         if self.peek_ahead(1).kind == TokenKind::LParen {
@@ -314,10 +398,17 @@ impl<'t> Parser<'t> {
         let type_ann = if self.check(&TokenKind::Colon) {
             self.advance();
             self.expect_ident().map(|s| KType::from_str(&s))
-        } else { None };
+        } else {
+            None
+        };
         self.expect(&TokenKind::Equals);
         let value = self.parse_expr()?;
-        Some(StateDecl { name, type_ann, value, span })
+        Some(StateDecl {
+            name,
+            type_ann,
+            value,
+            span,
+        })
     }
 
     fn parse_let(&mut self) -> Option<LetDecl> {
@@ -327,10 +418,17 @@ impl<'t> Parser<'t> {
         let type_ann = if self.check(&TokenKind::Colon) {
             self.advance();
             self.expect_ident().map(|s| KType::from_str(&s))
-        } else { None };
+        } else {
+            None
+        };
         self.expect(&TokenKind::Equals);
         let value = self.parse_expr()?;
-        Some(LetDecl { name, type_ann, value, span })
+        Some(LetDecl {
+            name,
+            type_ann,
+            value,
+            span,
+        })
     }
 
     fn parse_derived(&mut self) -> Option<DerivedDecl> {
@@ -348,7 +446,12 @@ impl<'t> Parser<'t> {
         let name = self.expect_ident()?;
         self.expect(&TokenKind::Colon);
         let body = self.parse_block();
-        Some(ActionDecl { name, params: vec![], body, span })
+        Some(ActionDecl {
+            name,
+            params: vec![],
+            body,
+            span,
+        })
     }
 
     fn parse_data(&mut self) -> Option<DataDecl> {
@@ -370,20 +473,32 @@ impl<'t> Parser<'t> {
             self.advance();
             loop {
                 self.skip_newlines();
-                if self.check(&TokenKind::Dedent) || self.is_eof() { break; }
+                if self.check(&TokenKind::Dedent) || self.is_eof() {
+                    break;
+                }
                 let key = self.expect_ident().unwrap_or_default();
                 let nodes = vec![]; // simplified
                 match key.as_str() {
                     "loading" => loading = Some(nodes),
-                    "error"   => error   = Some(nodes),
-                    "empty"   => empty   = Some(nodes),
+                    "error" => error = Some(nodes),
+                    "empty" => empty = Some(nodes),
                     _ => {}
                 }
             }
-            if self.check(&TokenKind::Dedent) { self.advance(); }
+            if self.check(&TokenKind::Dedent) {
+                self.advance();
+            }
         }
 
-        Some(DataDecl { name, method, url, loading, error, empty, span })
+        Some(DataDecl {
+            name,
+            method,
+            url,
+            loading,
+            error,
+            empty,
+            span,
+        })
     }
 
     fn parse_if(&mut self) -> Option<IfNode> {
@@ -397,9 +512,16 @@ impl<'t> Parser<'t> {
             self.advance();
             self.expect(&TokenKind::Colon);
             Some(self.parse_block())
-        } else { None };
+        } else {
+            None
+        };
 
-        Some(IfNode { condition, then_body, else_body, span })
+        Some(IfNode {
+            condition,
+            then_body,
+            else_body,
+            span,
+        })
     }
 
     fn parse_for(&mut self) -> Option<ForNode> {
@@ -410,6 +532,11 @@ impl<'t> Parser<'t> {
         let iterable = self.parse_expr()?;
         self.expect(&TokenKind::Colon);
         let body = self.parse_block();
-        Some(ForNode { var, iterable, body, span })
+        Some(ForNode {
+            var,
+            iterable,
+            body,
+            span,
+        })
     }
 }

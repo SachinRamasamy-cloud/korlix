@@ -12,7 +12,11 @@ impl<'t> Parser<'t> {
         while self.check(&TokenKind::PipePipe) {
             self.advance();
             let right = self.parse_and_expr()?;
-            left = Expr::Binary { left: Box::new(left), op: BinaryOp::Or, right: Box::new(right) };
+            left = Expr::Binary {
+                left: Box::new(left),
+                op: BinaryOp::Or,
+                right: Box::new(right),
+            };
         }
         Some(left)
     }
@@ -22,7 +26,11 @@ impl<'t> Parser<'t> {
         while self.check(&TokenKind::AmpAmp) {
             self.advance();
             let right = self.parse_eq_expr()?;
-            left = Expr::Binary { left: Box::new(left), op: BinaryOp::And, right: Box::new(right) };
+            left = Expr::Binary {
+                left: Box::new(left),
+                op: BinaryOp::And,
+                right: Box::new(right),
+            };
         }
         Some(left)
     }
@@ -31,13 +39,17 @@ impl<'t> Parser<'t> {
         let mut left = self.parse_cmp_expr()?;
         loop {
             let op = match self.current_kind() {
-                TokenKind::EqEq  => BinaryOp::Eq,
+                TokenKind::EqEq => BinaryOp::Eq,
                 TokenKind::BangEq => BinaryOp::Ne,
                 _ => break,
             };
             self.advance();
             let right = self.parse_cmp_expr()?;
-            left = Expr::Binary { left: Box::new(left), op, right: Box::new(right) };
+            left = Expr::Binary {
+                left: Box::new(left),
+                op,
+                right: Box::new(right),
+            };
         }
         Some(left)
     }
@@ -46,15 +58,19 @@ impl<'t> Parser<'t> {
         let mut left = self.parse_add_expr()?;
         loop {
             let op = match self.current_kind() {
-                TokenKind::Lt   => BinaryOp::Lt,
+                TokenKind::Lt => BinaryOp::Lt,
                 TokenKind::LtEq => BinaryOp::Le,
-                TokenKind::Gt   => BinaryOp::Gt,
+                TokenKind::Gt => BinaryOp::Gt,
                 TokenKind::GtEq => BinaryOp::Ge,
                 _ => break,
             };
             self.advance();
             let right = self.parse_add_expr()?;
-            left = Expr::Binary { left: Box::new(left), op, right: Box::new(right) };
+            left = Expr::Binary {
+                left: Box::new(left),
+                op,
+                right: Box::new(right),
+            };
         }
         Some(left)
     }
@@ -63,13 +79,17 @@ impl<'t> Parser<'t> {
         let mut left = self.parse_mul_expr()?;
         loop {
             let op = match self.current_kind() {
-                TokenKind::Plus  => BinaryOp::Add,
+                TokenKind::Plus => BinaryOp::Add,
                 TokenKind::Minus => BinaryOp::Sub,
                 _ => break,
             };
             self.advance();
             let right = self.parse_mul_expr()?;
-            left = Expr::Binary { left: Box::new(left), op, right: Box::new(right) };
+            left = Expr::Binary {
+                left: Box::new(left),
+                op,
+                right: Box::new(right),
+            };
         }
         Some(left)
     }
@@ -78,14 +98,18 @@ impl<'t> Parser<'t> {
         let mut left = self.parse_unary_expr()?;
         loop {
             let op = match self.current_kind() {
-                TokenKind::Star    => BinaryOp::Mul,
-                TokenKind::Slash   => BinaryOp::Div,
+                TokenKind::Star => BinaryOp::Mul,
+                TokenKind::Slash => BinaryOp::Div,
                 TokenKind::Percent => BinaryOp::Mod,
                 _ => break,
             };
             self.advance();
             let right = self.parse_unary_expr()?;
-            left = Expr::Binary { left: Box::new(left), op, right: Box::new(right) };
+            left = Expr::Binary {
+                left: Box::new(left),
+                op,
+                right: Box::new(right),
+            };
         }
         Some(left)
     }
@@ -94,7 +118,10 @@ impl<'t> Parser<'t> {
         if self.check(&TokenKind::Bang) {
             self.advance();
             let expr = self.parse_unary_expr()?;
-            return Some(Expr::Unary { op: UnaryOp::Not, operand: Box::new(expr) });
+            return Some(Expr::Unary {
+                op: UnaryOp::Not,
+                operand: Box::new(expr),
+            });
         }
         self.parse_postfix_expr()
     }
@@ -105,7 +132,10 @@ impl<'t> Parser<'t> {
             if self.check(&TokenKind::Dot) {
                 self.advance();
                 if let Some(field) = self.expect_ident() {
-                    expr = Expr::Member { object: Box::new(expr), field };
+                    expr = Expr::Member {
+                        object: Box::new(expr),
+                        field,
+                    };
                 } else {
                     break;
                 }
@@ -116,15 +146,23 @@ impl<'t> Parser<'t> {
                     if let Some(a) = self.parse_expr() {
                         args.push(a);
                     }
-                    if self.check(&TokenKind::Comma) { self.advance(); }
+                    if self.check(&TokenKind::Comma) {
+                        self.advance();
+                    }
                 }
                 self.expect(&TokenKind::RParen);
-                expr = Expr::Call { callee: Box::new(expr), args };
+                expr = Expr::Call {
+                    callee: Box::new(expr),
+                    args,
+                };
             } else if self.check(&TokenKind::LBracket) {
                 self.advance();
                 let idx = self.parse_expr()?;
                 self.expect(&TokenKind::RBracket);
-                expr = Expr::Index { object: Box::new(expr), index: Box::new(idx) };
+                expr = Expr::Index {
+                    object: Box::new(expr),
+                    index: Box::new(idx),
+                };
             } else {
                 break;
             }
@@ -158,8 +196,12 @@ impl<'t> Parser<'t> {
                 self.advance();
                 let mut items = vec![];
                 while !self.check(&TokenKind::RBracket) && !self.is_eof() {
-                    if let Some(e) = self.parse_expr() { items.push(e); }
-                    if self.check(&TokenKind::Comma) { self.advance(); }
+                    if let Some(e) = self.parse_expr() {
+                        items.push(e);
+                    }
+                    if self.check(&TokenKind::Comma) {
+                        self.advance();
+                    }
                 }
                 self.expect(&TokenKind::RBracket);
                 Some(Expr::List(items))
@@ -172,7 +214,9 @@ impl<'t> Parser<'t> {
                     self.expect(&TokenKind::Colon);
                     let val = self.parse_expr().unwrap_or(Expr::Null);
                     pairs.push((key, val));
-                    if self.check(&TokenKind::Comma) { self.advance(); }
+                    if self.check(&TokenKind::Comma) {
+                        self.advance();
+                    }
                 }
                 self.expect(&TokenKind::RBrace);
                 Some(Expr::Object(pairs))

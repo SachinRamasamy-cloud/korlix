@@ -8,7 +8,9 @@ pub enum WatchEvent {
 }
 
 pub fn watch_project<F>(src_dir: &Path, handler: F) -> Result<RecommendedWatcher, String>
-where F: FnMut(WatchEvent) + Send + 'static {
+where
+    F: FnMut(WatchEvent) + Send + 'static,
+{
     let (tx, rx) = mpsc::channel();
     let mut watcher = RecommendedWatcher::new(
         move |res: Result<Event, _>| {
@@ -17,9 +19,11 @@ where F: FnMut(WatchEvent) + Send + 'static {
             }
         },
         Config::default().with_poll_interval(Duration::from_millis(200)),
-    ).map_err(|e| format!("Watcher error: {}", e))?;
+    )
+    .map_err(|e| format!("Watcher error: {}", e))?;
 
-    watcher.watch(src_dir, RecursiveMode::Recursive)
+    watcher
+        .watch(src_dir, RecursiveMode::Recursive)
         .map_err(|e| format!("Watch error: {}", e))?;
 
     std::thread::spawn(move || {
@@ -27,10 +31,13 @@ where F: FnMut(WatchEvent) + Send + 'static {
         for event in rx {
             if let EventKind::Modify(_) | EventKind::Create(_) = event.kind {
                 let is_style = event.paths.iter().any(|p| {
-                    p.to_string_lossy().contains("theme") ||
-                    p.to_string_lossy().contains("tokens")
+                    p.to_string_lossy().contains("theme") || p.to_string_lossy().contains("tokens")
                 });
-                handler(if is_style { WatchEvent::StyleChange } else { WatchEvent::ContentChange });
+                handler(if is_style {
+                    WatchEvent::StyleChange
+                } else {
+                    WatchEvent::ContentChange
+                });
             }
         }
     });

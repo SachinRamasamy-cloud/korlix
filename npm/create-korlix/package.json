@@ -1,0 +1,17 @@
+{
+  "name": "create-korlix",
+  "version": "0.1.0",
+  "description": "Create a new Korlix app",
+  "license": "MIT",
+  "type": "commonjs",
+  "bin": {
+    "create-korlix": "./bin/create-korlix.js"
+  },
+  "files": [
+    "bin",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}

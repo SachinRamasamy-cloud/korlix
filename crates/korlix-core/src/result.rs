@@ -14,11 +14,11 @@ pub enum KorlixError {
 impl std::fmt::Display for KorlixError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::ParseError(_)   => write!(f, "Parse error"),
-            Self::IoError(e)      => write!(f, "IO error: {}", e),
-            Self::ConfigError(s)  => write!(f, "Config error: {}", s),
+            Self::ParseError(_) => write!(f, "Parse error"),
+            Self::IoError(e) => write!(f, "IO error: {}", e),
+            Self::ConfigError(s) => write!(f, "Config error: {}", s),
             Self::CompileError(_) => write!(f, "Compile error"),
-            Self::General(s)      => write!(f, "{}", s),
+            Self::General(s) => write!(f, "{}", s),
         }
     }
 }

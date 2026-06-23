@@ -1,0 +1,19 @@
+page about route "/about":
+  section .min-h-screen .flex .flex-col .items-center .justify-center .bg-background .text-foreground .p-8:
+    h1 .text-4xl .font-bold .mb-4 "About"
+    p .text-lg .text-muted .mb-8 "This project was built with Korlix."
+
+    state count: int = 0
+
+    card .p-8 .rounded-xl .shadow-lg .bg-surface .mb-6:
+      p .text-center .text-muted .mb-4 "Counter demo:"
+      p .text-5xl .text-primary .font-bold .text-center .mb-4:
+        text count
+      div .flex .gap-3 .justify-center:
+        btn .primary "Increment" on:click:
+          count = count + 1
+        btn .danger "Reset" on:click:
+          count = 0
+
+    link .text-primary href="/":
+      "← Back to Home"

@@ -10,7 +10,10 @@ pub struct ClassRef {
 
 impl ClassRef {
     pub fn new(name: impl Into<String>, span: Span) -> Self {
-        Self { name: name.into(), span }
+        Self {
+            name: name.into(),
+            span,
+        }
     }
 }
 
@@ -23,7 +26,11 @@ pub struct Prop {
 
 impl Prop {
     pub fn new(key: impl Into<String>, value: Expr, span: Span) -> Self {
-        Self { key: key.into(), value, span }
+        Self {
+            key: key.into(),
+            value,
+            span,
+        }
     }
 }
 

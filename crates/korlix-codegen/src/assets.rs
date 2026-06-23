@@ -1,7 +1,9 @@
 use std::path::Path;
 
 pub fn copy_public_assets(public_dir: &Path, dist_dir: &Path) -> std::io::Result<()> {
-    if !public_dir.exists() { return Ok(()); }
+    if !public_dir.exists() {
+        return Ok(());
+    }
     copy_dir_recursive(public_dir, dist_dir)
 }
 

@@ -1,5 +1,5 @@
-use korlix_style::{generator::generate_css, scanner::scan_classes};
 use korlix_ast::program::Module;
+use korlix_style::{generator::generate_css, scanner::scan_classes};
 use std::collections::HashSet;
 
 pub fn generate_css_for_module(module: &Module) -> String {

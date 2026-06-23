@@ -1,15 +1,15 @@
-pub mod registry;
-pub mod tokens;
 pub mod colors;
-pub mod spacing;
-pub mod typography;
-pub mod layout;
-pub mod variants;
-pub mod scanner;
-pub mod validator;
 pub mod generator;
+pub mod layout;
+pub mod registry;
+pub mod scanner;
+pub mod spacing;
+pub mod tokens;
+pub mod typography;
+pub mod validator;
+pub mod variants;
 
-pub use registry::*;
 pub use generator::*;
+pub use registry::*;
 pub use scanner::*;
 pub use validator::*;

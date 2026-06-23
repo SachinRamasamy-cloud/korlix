@@ -1,4 +1,4 @@
-use crate::declarations::{ImportDecl, PropDecl, RouteDecl, ThemeDecl, MetaBlock};
+use crate::declarations::{ImportDecl, MetaBlock, PropDecl, RouteDecl, ThemeDecl};
 use crate::node::Node;
 use korlix_core::Span;
 use serde::{Deserialize, Serialize};
@@ -20,7 +20,9 @@ impl Program {
 }
 
 impl Default for Program {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -33,7 +35,12 @@ pub struct Module {
 
 impl Module {
     pub fn new(file_id: u32, path: PathBuf) -> Self {
-        Self { file_id, path, imports: vec![], items: vec![] }
+        Self {
+            file_id,
+            path,
+            imports: vec![],
+            items: vec![],
+        }
     }
 }
 

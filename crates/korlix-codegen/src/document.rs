@@ -1,5 +1,5 @@
+use crate::html::{html_escape, render_nodes};
 use korlix_ast::program::PageDecl;
-use crate::html::{render_nodes, html_escape};
 
 pub struct BuildOutput {
     pub pages: Vec<PageOutput>,
@@ -23,27 +23,36 @@ pub fn generate_document(
 ) -> String {
     let page_body = render_nodes(&page.body);
     let content = if let Some(layout) = layout_html {
-        layout.replace(r#"<div data-slot="default" class="kx-slot"></div>"#, &page_body)
+        layout.replace(
+            r#"<div data-slot="default" class="kx-slot"></div>"#,
+            &page_body,
+        )
     } else {
         page_body
     };
 
-    let title = page.meta.as_ref()
+    let title = page
+        .meta
+        .as_ref()
         .and_then(|m| m.title.as_ref())
         .and_then(|t| t.as_string().map(|s| s.to_string()))
         .unwrap_or_else(|| format!("{} | Korlix", app_name));
 
-    let description = page.meta.as_ref()
+    let description = page
+        .meta
+        .as_ref()
         .and_then(|m| m.description.as_ref())
         .and_then(|d| d.as_string().map(|s| s.to_string()))
         .unwrap_or_default();
 
-    let js_tags: String = js_paths.iter()
+    let js_tags: String = js_paths
+        .iter()
         .map(|p| format!(r#"<script src="{}" defer></script>"#, p))
         .collect::<Vec<_>>()
         .join("\n    ");
 
-    format!(r#"<!doctype html>
+    format!(
+        r#"<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -58,25 +67,29 @@ pub fn generate_document(
 </body>
 </html>"#,
         title = html_escape(&title),
-        desc  = if description.is_empty() { String::new() }
-                else { format!(r#"<meta name="description" content="{}" />"#, html_escape(&description)) },
-        css   = css_path,
+        desc = if description.is_empty() {
+            String::new()
+        } else {
+            format!(
+                r#"<meta name="description" content="{}" />"#,
+                html_escape(&description)
+            )
+        },
+        css = css_path,
         content = content,
-        js    = js_tags,
+        js = js_tags,
     )
 }
 
-pub fn generate_spa_shell(
-    css_path: &str,
-    js_paths: &[&str],
-    app_name: &str,
-) -> String {
-    let js_tags: String = js_paths.iter()
+pub fn generate_spa_shell(css_path: &str, js_paths: &[&str], app_name: &str) -> String {
+    let js_tags: String = js_paths
+        .iter()
         .map(|p| format!(r#"<script src="{}" defer></script>"#, p))
         .collect::<Vec<_>>()
         .join("\n    ");
 
-    format!(r#"<!doctype html>
+    format!(
+        r#"<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -88,19 +101,24 @@ pub fn generate_spa_shell(
   <div id="korlix-root"><div class="kx-page-loading" aria-live="polite"></div></div>
   {}
 </body>
-</html>"#, app_name, css_path, js_tags)
+</html>"#,
+        app_name, css_path, js_tags
+    )
 }
 
-pub fn generate_build_manifest(
-    pages: &[PageOutput],
-    css_size: usize,
-    js_size: usize,
-) -> String {
-    let page_entries: Vec<String> = pages.iter().map(|p| {
-        format!(r#"    {{ "route": "{}", "file": "{}" }}"#, p.route, p.filename)
-    }).collect();
+pub fn generate_build_manifest(pages: &[PageOutput], css_size: usize, js_size: usize) -> String {
+    let page_entries: Vec<String> = pages
+        .iter()
+        .map(|p| {
+            format!(
+                r#"    {{ "route": "{}", "file": "{}" }}"#,
+                p.route, p.filename
+            )
+        })
+        .collect();
 
-    format!(r#"{{
+    format!(
+        r#"{{
   "version": "0.1.0",
   "compiler": "korlix",
   "pages": [

@@ -34,12 +34,18 @@ pub fn generate_css(classes: &HashSet<String>) -> String {
     // Group media queries to the end
     let (plain, media): (Vec<_>, Vec<_>) = rules.into_iter().partition(|r| r.media_query.is_none());
 
-    for rule in plain  { css.push_str(&rule.to_css()); css.push('\n'); }
+    for rule in plain {
+        css.push_str(&rule.to_css());
+        css.push('\n');
+    }
 
     // Group media rules
     let mut mq_groups: std::collections::HashMap<String, Vec<CssRule>> = Default::default();
     for rule in media {
-        mq_groups.entry(rule.media_query.clone().unwrap()).or_default().push(rule);
+        mq_groups
+            .entry(rule.media_query.clone().unwrap())
+            .or_default()
+            .push(rule);
     }
     let mut mq_keys: Vec<_> = mq_groups.keys().cloned().collect();
     mq_keys.sort();
@@ -80,10 +86,12 @@ fn resolve_class(class: &str) -> Option<CssRule> {
 fn resolve_arbitrary(class: &str) -> Option<CssRule> {
     let bracket_start = class.find('[')?;
     let bracket_end = class.rfind(']')?;
-    if bracket_end <= bracket_start { return None; }
+    if bracket_end <= bracket_start {
+        return None;
+    }
 
     let prefix = &class[..bracket_start];
-    let value = &class[bracket_start+1..bracket_end];
+    let value = &class[bracket_start + 1..bracket_end];
 
     // Safety: block JS and expressions
     if value.contains("javascript:") || value.contains("expression(") {
@@ -95,29 +103,29 @@ fn resolve_arbitrary(class: &str) -> Option<CssRule> {
     let translate_y_val;
 
     let (prop, val): (&str, &str) = match prefix.trim_end_matches('-') {
-        "w"           => ("width", value),
-        "h"           => ("height", value),
-        "min-w"       => ("min-width", value),
-        "min-h"       => ("min-height", value),
-        "max-w"       => ("max-width", value),
-        "max-h"       => ("max-height", value),
-        "p"           => ("padding", value),
-        "px"          => ("padding-inline", value),
-        "py"          => ("padding-block", value),
-        "m"           => ("margin", value),
-        "mx"          => ("margin-inline", value),
-        "my"          => ("margin-block", value),
-        "gap"         => ("gap", value),
-        "text"        => ("font-size", value),
-        "bg"          => ("background-color", value),
-        "border"      => ("border-color", value),
-        "top"         => ("top", value),
-        "right"       => ("right", value),
-        "bottom"      => ("bottom", value),
-        "left"        => ("left", value),
-        "grid-cols"   => ("grid-template-columns", value),
-        "z"           => ("z-index", value),
-        "opacity"     => ("opacity", value),
+        "w" => ("width", value),
+        "h" => ("height", value),
+        "min-w" => ("min-width", value),
+        "min-h" => ("min-height", value),
+        "max-w" => ("max-width", value),
+        "max-h" => ("max-height", value),
+        "p" => ("padding", value),
+        "px" => ("padding-inline", value),
+        "py" => ("padding-block", value),
+        "m" => ("margin", value),
+        "mx" => ("margin-inline", value),
+        "my" => ("margin-block", value),
+        "gap" => ("gap", value),
+        "text" => ("font-size", value),
+        "bg" => ("background-color", value),
+        "border" => ("border-color", value),
+        "top" => ("top", value),
+        "right" => ("right", value),
+        "bottom" => ("bottom", value),
+        "left" => ("left", value),
+        "grid-cols" => ("grid-template-columns", value),
+        "z" => ("z-index", value),
+        "opacity" => ("opacity", value),
         "translate-x" => {
             translate_x_val = format!("translateX({})", value);
             ("transform", &translate_x_val)

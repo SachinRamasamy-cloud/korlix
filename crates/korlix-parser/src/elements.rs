@@ -7,14 +7,66 @@ use korlix_lexer::token::TokenKind;
 
 /// HTML-native tags that map directly to HTML elements.
 const HTML_TAGS: &[&str] = &[
-    "div", "span", "p", "h1", "h2", "h3", "h4", "h5", "h6",
-    "a", "ul", "ol", "li", "table", "thead", "tbody", "tr", "td", "th",
-    "form", "input", "textarea", "select", "option", "button", "label",
-    "header", "footer", "main", "nav", "section", "article", "aside",
-    "figure", "figcaption", "img", "video", "audio", "canvas", "svg",
-    "code", "pre", "blockquote", "br", "hr", "strong", "em", "small",
-    "sub", "sup", "del", "ins", "mark", "abbr", "cite", "q",
-    "details", "summary", "dialog", "template",
+    "div",
+    "span",
+    "p",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "a",
+    "ul",
+    "ol",
+    "li",
+    "table",
+    "thead",
+    "tbody",
+    "tr",
+    "td",
+    "th",
+    "form",
+    "input",
+    "textarea",
+    "select",
+    "option",
+    "button",
+    "label",
+    "header",
+    "footer",
+    "main",
+    "nav",
+    "section",
+    "article",
+    "aside",
+    "figure",
+    "figcaption",
+    "img",
+    "video",
+    "audio",
+    "canvas",
+    "svg",
+    "code",
+    "pre",
+    "blockquote",
+    "br",
+    "hr",
+    "strong",
+    "em",
+    "small",
+    "sub",
+    "sup",
+    "del",
+    "ins",
+    "mark",
+    "abbr",
+    "cite",
+    "q",
+    "details",
+    "summary",
+    "dialog",
+    "template",
 ];
 
 fn is_html_tag(name: &str) -> bool {
@@ -44,20 +96,31 @@ impl<'t> Parser<'t> {
         loop {
             match self.current_kind() {
                 // prop=value
-                _ if self.current_kind().is_ident_like() && self.peek_ahead(1).kind == TokenKind::Equals => {
+                _ if self.current_kind().is_ident_like()
+                    && self.peek_ahead(1).kind == TokenKind::Equals =>
+                {
                     let key = self.expect_ident().unwrap_or_default();
                     self.advance(); // =
-                    let val = self.parse_expr().unwrap_or(korlix_ast::expression::Expr::Null);
+                    let val = self
+                        .parse_expr()
+                        .unwrap_or(korlix_ast::expression::Expr::Null);
                     let prop_span = span;
                     props.push(Prop::new(key, val, prop_span));
                 }
                 // inline text / binding content
-                TokenKind::StringLit(_) | TokenKind::Number(_) | TokenKind::Bool(_) | TokenKind::Null => {
-                    let expr = self.parse_expr().unwrap_or(korlix_ast::expression::Expr::Null);
+                TokenKind::StringLit(_)
+                | TokenKind::Number(_)
+                | TokenKind::Bool(_)
+                | TokenKind::Null => {
+                    let expr = self
+                        .parse_expr()
+                        .unwrap_or(korlix_ast::expression::Expr::Null);
                     inline_children.push(Node::Text(TextNode { value: expr, span }));
                 }
                 _ if self.current_kind().is_ident_like() => {
-                    let expr = self.parse_expr().unwrap_or(korlix_ast::expression::Expr::Null);
+                    let expr = self
+                        .parse_expr()
+                        .unwrap_or(korlix_ast::expression::Expr::Null);
                     inline_children.push(Node::Text(TextNode { value: expr, span }));
                 }
                 // on:event
@@ -67,7 +130,11 @@ impl<'t> Parser<'t> {
                     self.advance();
                     self.expect(&TokenKind::Colon);
                     let body = self.parse_block();
-                    events.push(EventHandler { event: ev, body, span: ev_span });
+                    events.push(EventHandler {
+                        event: ev,
+                        body,
+                        span: ev_span,
+                    });
                     break;
                 }
                 _ => break,
@@ -81,8 +148,10 @@ impl<'t> Parser<'t> {
             while i < self.tokens.len() {
                 match &self.tokens[i].kind {
                     TokenKind::Newline => i += 1,
-                    TokenKind::Indent  => break,
-                    _                  => { break; }
+                    TokenKind::Indent => break,
+                    _ => {
+                        break;
+                    }
                 }
             }
             i < self.tokens.len() && matches!(self.tokens[i].kind, TokenKind::Indent)
@@ -105,10 +174,25 @@ impl<'t> Parser<'t> {
         }
 
         if is_html_tag(&name) {
-            Some(Node::Element(ElementNode { tag: name, classes, props, events, children: all_children, span }))
+            Some(Node::Element(ElementNode {
+                tag: name,
+                classes,
+                props,
+                events,
+                children: all_children,
+                span,
+            }))
         } else {
             // Korlix component
-            Some(Node::Component(ComponentNode { name, classes, props, slots: vec![], events, children: all_children, span }))
+            Some(Node::Component(ComponentNode {
+                name,
+                classes,
+                props,
+                slots: vec![],
+                events,
+                children: all_children,
+                span,
+            }))
         }
     }
 }

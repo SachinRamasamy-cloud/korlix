@@ -4,21 +4,40 @@ use once_cell::sync::Lazy;
 
 pub static COMPONENT_REGISTRY: Lazy<IndexMap<String, ComponentSchema>> = Lazy::new(build_registry);
 
-fn prop(name: &str, type_ann: &str, required: bool, default: Option<&str>, desc: &str) -> PropSchema {
+fn prop(
+    name: &str,
+    type_ann: &str,
+    required: bool,
+    default: Option<&str>,
+    desc: &str,
+) -> PropSchema {
     PropSchema {
-        name: name.into(), type_ann: type_ann.into(), required,
-        default: default.map(|s| s.into()), description: desc.into(),
+        name: name.into(),
+        type_ann: type_ann.into(),
+        required,
+        default: default.map(|s| s.into()),
+        description: desc.into(),
     }
 }
 fn slot(name: Option<&str>, desc: &str) -> SlotSchema {
-    SlotSchema { name: name.map(|s| s.into()), description: desc.into() }
+    SlotSchema {
+        name: name.map(|s| s.into()),
+        description: desc.into(),
+    }
 }
 #[allow(dead_code)]
 fn schema(name: &str, cat: ComponentCategory, tag: &str, desc: &str) -> ComponentSchema {
     ComponentSchema {
-        name: name.into(), category: cat, html_tag: tag.into(), self_closing: false,
-        props: vec![], slots: vec![], default_classes: vec![], runtime_features: vec![],
-        aria_role: None, description: desc.into(),
+        name: name.into(),
+        category: cat,
+        html_tag: tag.into(),
+        self_closing: false,
+        props: vec![],
+        slots: vec![],
+        default_classes: vec![],
+        runtime_features: vec![],
+        aria_role: None,
+        description: desc.into(),
     }
 }
 
@@ -26,16 +45,26 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     let mut m = IndexMap::new();
 
     macro_rules! reg {
-        ($s:expr) => { m.insert($s.name.clone(), $s); };
+        ($s:expr) => {
+            m.insert($s.name.clone(), $s);
+        };
     }
 
     // ── Primitives ──────────────────────────────────────────────────
     reg!(ComponentSchema {
-        name: "btn".into(), category: ComponentCategory::Primitive,
-        html_tag: "button".into(), self_closing: false,
+        name: "btn".into(),
+        category: ComponentCategory::Primitive,
+        html_tag: "button".into(),
+        self_closing: false,
         aria_role: Some("button".into()),
         props: vec![
-            prop("variant", "string", false, Some("default"), "Visual variant: primary|secondary|ghost|danger"),
+            prop(
+                "variant",
+                "string",
+                false,
+                Some("default"),
+                "Visual variant: primary|secondary|ghost|danger"
+            ),
             prop("size", "string", false, Some("md"), "Size: sm|md|lg"),
             prop("disabled", "bool", false, Some("false"), "Disabled state"),
             prop("loading", "bool", false, Some("false"), "Loading spinner"),
@@ -48,11 +77,19 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "button".into(), category: ComponentCategory::Primitive,
-        html_tag: "button".into(), self_closing: false,
+        name: "button".into(),
+        category: ComponentCategory::Primitive,
+        html_tag: "button".into(),
+        self_closing: false,
         aria_role: Some("button".into()),
         props: vec![
-            prop("variant", "string", false, Some("default"), "Visual variant"),
+            prop(
+                "variant",
+                "string",
+                false,
+                Some("default"),
+                "Visual variant"
+            ),
             prop("disabled", "bool", false, Some("false"), "Disabled state"),
         ],
         slots: vec![slot(None, "Button label")],
@@ -62,8 +99,11 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "link".into(), category: ComponentCategory::Primitive,
-        html_tag: "a".into(), self_closing: false, aria_role: None,
+        name: "link".into(),
+        category: ComponentCategory::Primitive,
+        html_tag: "a".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
             prop("href", "string", true, None, "Destination URL"),
             prop("external", "bool", false, Some("false"), "Opens in new tab"),
@@ -76,13 +116,28 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "icon".into(), category: ComponentCategory::Icon,
-        html_tag: "span".into(), self_closing: true, aria_role: Some("img".into()),
+        name: "icon".into(),
+        category: ComponentCategory::Icon,
+        html_tag: "span".into(),
+        self_closing: true,
+        aria_role: Some("img".into()),
         props: vec![
             prop("name", "string", true, None, "Icon identifier"),
             prop("size", "string", false, Some("md"), "Size: xs|sm|md|lg|xl"),
-            prop("label", "string", false, None, "Accessible label (aria-label)"),
-            prop("decorative", "bool", false, Some("false"), "Hide from screen readers"),
+            prop(
+                "label",
+                "string",
+                false,
+                None,
+                "Accessible label (aria-label)"
+            ),
+            prop(
+                "decorative",
+                "bool",
+                false,
+                Some("false"),
+                "Hide from screen readers"
+            ),
         ],
         slots: vec![],
         default_classes: vec!["kx-icon".into()],
@@ -91,11 +146,20 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "image".into(), category: ComponentCategory::Media,
-        html_tag: "img".into(), self_closing: true, aria_role: None,
+        name: "image".into(),
+        category: ComponentCategory::Media,
+        html_tag: "img".into(),
+        self_closing: true,
+        aria_role: None,
         props: vec![
             prop("src", "string", true, None, "Image source URL"),
-            prop("alt", "string", true, None, "Alt text (required for accessibility)"),
+            prop(
+                "alt",
+                "string",
+                true,
+                None,
+                "Alt text (required for accessibility)"
+            ),
             prop("lazy", "bool", false, Some("true"), "Lazy load the image"),
             prop("placeholder", "string", false, None, "blur|skeleton|none"),
             prop("width", "number", false, None, "Width in pixels"),
@@ -109,12 +173,21 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "avatar".into(), category: ComponentCategory::Avatar,
-        html_tag: "div".into(), self_closing: false, aria_role: None,
+        name: "avatar".into(),
+        category: ComponentCategory::Avatar,
+        html_tag: "div".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
             prop("src", "string", false, None, "Avatar image URL"),
             prop("name", "string", false, None, "Name for initials fallback"),
-            prop("size", "string", false, Some("md"), "Size: xs|sm|md|lg|xl|2xl"),
+            prop(
+                "size",
+                "string",
+                false,
+                Some("md"),
+                "Size: xs|sm|md|lg|xl|2xl"
+            ),
             prop("status", "string", false, None, "online|offline|busy|away"),
             prop("shape", "string", false, Some("circle"), "circle|square"),
         ],
@@ -125,11 +198,26 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "card".into(), category: ComponentCategory::Content,
-        html_tag: "div".into(), self_closing: false, aria_role: None,
+        name: "card".into(),
+        category: ComponentCategory::Content,
+        html_tag: "div".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
-            prop("variant", "string", false, Some("default"), "default|outline|elevated"),
-            prop("clickable", "bool", false, Some("false"), "Adds hover/focus styles"),
+            prop(
+                "variant",
+                "string",
+                false,
+                Some("default"),
+                "default|outline|elevated"
+            ),
+            prop(
+                "clickable",
+                "bool",
+                false,
+                Some("false"),
+                "Adds hover/focus styles"
+            ),
         ],
         slots: vec![slot(None, "Card content")],
         default_classes: vec!["kx-card".into()],
@@ -138,21 +226,36 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "navbar".into(), category: ComponentCategory::Navigation,
-        html_tag: "nav".into(), self_closing: false, aria_role: Some("navigation".into()),
+        name: "navbar".into(),
+        category: ComponentCategory::Navigation,
+        html_tag: "nav".into(),
+        self_closing: false,
+        aria_role: Some("navigation".into()),
         props: vec![
             prop("sticky", "bool", false, Some("false"), "Sticky positioning"),
-            prop("transparent", "bool", false, Some("false"), "Transparent background"),
+            prop(
+                "transparent",
+                "bool",
+                false,
+                Some("false"),
+                "Transparent background"
+            ),
         ],
-        slots: vec![slot(None, "Nav content"), slot(Some("end"), "Right-side items")],
+        slots: vec![
+            slot(None, "Nav content"),
+            slot(Some("end"), "Right-side items")
+        ],
         default_classes: vec!["kx-navbar".into()],
         runtime_features: vec![RuntimeFeature::Core],
         description: "Top navigation bar".into(),
     });
 
     reg!(ComponentSchema {
-        name: "footer".into(), category: ComponentCategory::Navigation,
-        html_tag: "footer".into(), self_closing: false, aria_role: None,
+        name: "footer".into(),
+        category: ComponentCategory::Navigation,
+        html_tag: "footer".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![],
         slots: vec![slot(None, "Footer content")],
         default_classes: vec!["kx-footer".into()],
@@ -161,8 +264,11 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "sidebar".into(), category: ComponentCategory::Navigation,
-        html_tag: "aside".into(), self_closing: false, aria_role: None,
+        name: "sidebar".into(),
+        category: ComponentCategory::Navigation,
+        html_tag: "aside".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
             prop("collapsed", "bool", false, Some("false"), "Collapsed state"),
             prop("width", "string", false, Some("240px"), "Sidebar width"),
@@ -175,13 +281,34 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
 
     // ── Feedback ────────────────────────────────────────────────────
     reg!(ComponentSchema {
-        name: "toast".into(), category: ComponentCategory::Feedback,
-        html_tag: "div".into(), self_closing: false, aria_role: Some("alert".into()),
+        name: "toast".into(),
+        category: ComponentCategory::Feedback,
+        html_tag: "div".into(),
+        self_closing: false,
+        aria_role: Some("alert".into()),
         props: vec![
-            prop("type", "string", false, Some("info"), "success|error|warning|info|loading"),
+            prop(
+                "type",
+                "string",
+                false,
+                Some("info"),
+                "success|error|warning|info|loading"
+            ),
             prop("message", "string", true, None, "Toast message"),
-            prop("duration", "number", false, Some("3000"), "Auto dismiss ms (0=manual)"),
-            prop("position", "string", false, Some("top-right"), "Toast position"),
+            prop(
+                "duration",
+                "number",
+                false,
+                Some("3000"),
+                "Auto dismiss ms (0=manual)"
+            ),
+            prop(
+                "position",
+                "string",
+                false,
+                Some("top-right"),
+                "Toast position"
+            ),
         ],
         slots: vec![],
         default_classes: vec!["kx-toast".into()],
@@ -190,12 +317,27 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "alert".into(), category: ComponentCategory::Feedback,
-        html_tag: "div".into(), self_closing: false, aria_role: Some("alert".into()),
+        name: "alert".into(),
+        category: ComponentCategory::Feedback,
+        html_tag: "div".into(),
+        self_closing: false,
+        aria_role: Some("alert".into()),
         props: vec![
-            prop("type", "string", false, Some("info"), "success|error|warning|info"),
+            prop(
+                "type",
+                "string",
+                false,
+                Some("info"),
+                "success|error|warning|info"
+            ),
             prop("title", "string", false, None, "Alert title"),
-            prop("dismissible", "bool", false, Some("false"), "Show close button"),
+            prop(
+                "dismissible",
+                "bool",
+                false,
+                Some("false"),
+                "Show close button"
+            ),
         ],
         slots: vec![slot(None, "Alert content")],
         default_classes: vec!["kx-alert".into()],
@@ -204,10 +346,19 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "badge".into(), category: ComponentCategory::Content,
-        html_tag: "span".into(), self_closing: false, aria_role: None,
+        name: "badge".into(),
+        category: ComponentCategory::Content,
+        html_tag: "span".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
-            prop("variant", "string", false, Some("default"), "default|primary|success|danger|warning"),
+            prop(
+                "variant",
+                "string",
+                false,
+                Some("default"),
+                "default|primary|success|danger|warning"
+            ),
             prop("size", "string", false, Some("md"), "sm|md|lg"),
         ],
         slots: vec![slot(None, "Badge text")],
@@ -218,8 +369,11 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
 
     // ── Loaders ─────────────────────────────────────────────────────
     reg!(ComponentSchema {
-        name: "spinner".into(), category: ComponentCategory::Loader,
-        html_tag: "div".into(), self_closing: true, aria_role: Some("status".into()),
+        name: "spinner".into(),
+        category: ComponentCategory::Loader,
+        html_tag: "div".into(),
+        self_closing: true,
+        aria_role: Some("status".into()),
         props: vec![
             prop("size", "string", false, Some("md"), "xs|sm|md|lg|xl"),
             prop("color", "string", false, Some("primary"), "Color token"),
@@ -231,8 +385,11 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "skeleton".into(), category: ComponentCategory::Loader,
-        html_tag: "div".into(), self_closing: true, aria_role: None,
+        name: "skeleton".into(),
+        category: ComponentCategory::Loader,
+        html_tag: "div".into(),
+        self_closing: true,
+        aria_role: None,
         props: vec![
             prop("width", "string", false, Some("100%"), "Width"),
             prop("height", "string", false, Some("1rem"), "Height"),
@@ -245,10 +402,19 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "skeleton-card".into(), category: ComponentCategory::Loader,
-        html_tag: "div".into(), self_closing: false, aria_role: None,
+        name: "skeleton-card".into(),
+        category: ComponentCategory::Loader,
+        html_tag: "div".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
-            prop("count", "number", false, Some("1"), "Number of skeleton cards"),
+            prop(
+                "count",
+                "number",
+                false,
+                Some("1"),
+                "Number of skeleton cards"
+            ),
             prop("lines", "number", false, Some("3"), "Lines per card"),
         ],
         slots: vec![],
@@ -259,8 +425,11 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
 
     // ── Placeholders ────────────────────────────────────────────────
     reg!(ComponentSchema {
-        name: "empty-state".into(), category: ComponentCategory::Placeholder,
-        html_tag: "div".into(), self_closing: false, aria_role: None,
+        name: "empty-state".into(),
+        category: ComponentCategory::Placeholder,
+        html_tag: "div".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
             prop("icon", "string", false, None, "Icon name"),
             prop("title", "string", false, Some("Nothing here"), "Title text"),
@@ -274,8 +443,10 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
 
     // ── Overlay ─────────────────────────────────────────────────────
     reg!(ComponentSchema {
-        name: "modal".into(), category: ComponentCategory::Overlay,
-        html_tag: "div".into(), self_closing: false,
+        name: "modal".into(),
+        category: ComponentCategory::Overlay,
+        html_tag: "div".into(),
+        self_closing: false,
         aria_role: Some("dialog".into()),
         props: vec![
             prop("id", "string", true, None, "Unique modal ID"),
@@ -293,8 +464,10 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "drawer".into(), category: ComponentCategory::Overlay,
-        html_tag: "div".into(), self_closing: false,
+        name: "drawer".into(),
+        category: ComponentCategory::Overlay,
+        html_tag: "div".into(),
+        self_closing: false,
         aria_role: Some("dialog".into()),
         props: vec![
             prop("id", "string", true, None, "Drawer ID"),
@@ -308,11 +481,20 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "tooltip".into(), category: ComponentCategory::Overlay,
-        html_tag: "div".into(), self_closing: false, aria_role: Some("tooltip".into()),
+        name: "tooltip".into(),
+        category: ComponentCategory::Overlay,
+        html_tag: "div".into(),
+        self_closing: false,
+        aria_role: Some("tooltip".into()),
         props: vec![
             prop("content", "string", true, None, "Tooltip text"),
-            prop("placement", "string", false, Some("top"), "top|bottom|left|right"),
+            prop(
+                "placement",
+                "string",
+                false,
+                Some("top"),
+                "top|bottom|left|right"
+            ),
         ],
         slots: vec![slot(None, "Tooltip trigger")],
         default_classes: vec!["kx-tooltip".into()],
@@ -322,13 +504,22 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
 
     // ── Pagination ───────────────────────────────────────────────────
     reg!(ComponentSchema {
-        name: "pagination".into(), category: ComponentCategory::Navigation,
-        html_tag: "div".into(), self_closing: false, aria_role: Some("navigation".into()),
+        name: "pagination".into(),
+        category: ComponentCategory::Navigation,
+        html_tag: "div".into(),
+        self_closing: false,
+        aria_role: Some("navigation".into()),
         props: vec![
             prop("page", "int", true, None, "Current page (1-based)"),
             prop("total", "int", true, None, "Total items"),
             prop("perPage", "int", false, Some("10"), "Items per page"),
-            prop("siblings", "int", false, Some("1"), "Pages on each side of current"),
+            prop(
+                "siblings",
+                "int",
+                false,
+                Some("1"),
+                "Pages on each side of current"
+            ),
         ],
         slots: vec![],
         default_classes: vec!["kx-pagination".into()],
@@ -338,8 +529,11 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
 
     // ── Forms ────────────────────────────────────────────────────────
     reg!(ComponentSchema {
-        name: "input".into(), category: ComponentCategory::Form,
-        html_tag: "input".into(), self_closing: true, aria_role: None,
+        name: "input".into(),
+        category: ComponentCategory::Form,
+        html_tag: "input".into(),
+        self_closing: true,
+        aria_role: None,
         props: vec![
             prop("type", "string", false, Some("text"), "HTML input type"),
             prop("placeholder", "string", false, None, "Placeholder text"),
@@ -355,10 +549,19 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "select".into(), category: ComponentCategory::Form,
-        html_tag: "select".into(), self_closing: false, aria_role: None,
+        name: "select".into(),
+        category: ComponentCategory::Form,
+        html_tag: "select".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
-            prop("options", "list<record>", true, None, "Option items [{label, value}]"),
+            prop(
+                "options",
+                "list<record>",
+                true,
+                None,
+                "Option items [{label, value}]"
+            ),
             prop("value", "string", false, None, "Selected value"),
             prop("placeholder", "string", false, None, "Placeholder option"),
             prop("disabled", "bool", false, Some("false"), "Disabled state"),
@@ -370,8 +573,11 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "textarea".into(), category: ComponentCategory::Form,
-        html_tag: "textarea".into(), self_closing: false, aria_role: None,
+        name: "textarea".into(),
+        category: ComponentCategory::Form,
+        html_tag: "textarea".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
             prop("rows", "int", false, Some("4"), "Visible rows"),
             prop("placeholder", "string", false, None, "Placeholder text"),
@@ -384,8 +590,11 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "checkbox".into(), category: ComponentCategory::Form,
-        html_tag: "label".into(), self_closing: false, aria_role: None,
+        name: "checkbox".into(),
+        category: ComponentCategory::Form,
+        html_tag: "label".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
             prop("checked", "bool", false, Some("false"), "Checked state"),
             prop("label", "string", false, None, "Checkbox label"),
@@ -398,8 +607,11 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "switch".into(), category: ComponentCategory::Form,
-        html_tag: "label".into(), self_closing: false, aria_role: Some("switch".into()),
+        name: "switch".into(),
+        category: ComponentCategory::Form,
+        html_tag: "label".into(),
+        self_closing: false,
+        aria_role: Some("switch".into()),
         props: vec![
             prop("checked", "bool", false, Some("false"), "On/off state"),
             prop("label", "string", false, None, "Switch label"),
@@ -413,11 +625,26 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
 
     // ── Content ──────────────────────────────────────────────────────
     reg!(ComponentSchema {
-        name: "accordion".into(), category: ComponentCategory::Content,
-        html_tag: "div".into(), self_closing: false, aria_role: None,
+        name: "accordion".into(),
+        category: ComponentCategory::Content,
+        html_tag: "div".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
-            prop("multiple", "bool", false, Some("false"), "Allow multiple open"),
-            prop("default-open", "string", false, None, "ID of panel open by default"),
+            prop(
+                "multiple",
+                "bool",
+                false,
+                Some("false"),
+                "Allow multiple open"
+            ),
+            prop(
+                "default-open",
+                "string",
+                false,
+                None,
+                "ID of panel open by default"
+            ),
         ],
         slots: vec![slot(None, "Accordion panels")],
         default_classes: vec!["kx-accordion".into()],
@@ -426,8 +653,11 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "tabs".into(), category: ComponentCategory::Navigation,
-        html_tag: "div".into(), self_closing: false, aria_role: Some("tablist".into()),
+        name: "tabs".into(),
+        category: ComponentCategory::Navigation,
+        html_tag: "div".into(),
+        self_closing: false,
+        aria_role: Some("tablist".into()),
         props: vec![
             prop("active", "string", false, None, "Active tab ID"),
             prop("variant", "string", false, Some("line"), "line|pills|boxed"),
@@ -439,11 +669,26 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "table".into(), category: ComponentCategory::DataDisplay,
-        html_tag: "table".into(), self_closing: false, aria_role: None,
+        name: "table".into(),
+        category: ComponentCategory::DataDisplay,
+        html_tag: "table".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
-            prop("striped", "bool", false, Some("false"), "Alternating row colors"),
-            prop("hoverable", "bool", false, Some("true"), "Row hover highlight"),
+            prop(
+                "striped",
+                "bool",
+                false,
+                Some("false"),
+                "Alternating row colors"
+            ),
+            prop(
+                "hoverable",
+                "bool",
+                false,
+                Some("true"),
+                "Row hover highlight"
+            ),
         ],
         slots: vec![slot(None, "Table content")],
         default_classes: vec!["kx-table".into()],
@@ -453,10 +698,19 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
 
     // ── Marketing ────────────────────────────────────────────────────
     reg!(ComponentSchema {
-        name: "hero".into(), category: ComponentCategory::Marketing,
-        html_tag: "section".into(), self_closing: false, aria_role: None,
+        name: "hero".into(),
+        category: ComponentCategory::Marketing,
+        html_tag: "section".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
-            prop("variant", "string", false, Some("centered"), "centered|split|full"),
+            prop(
+                "variant",
+                "string",
+                false,
+                Some("centered"),
+                "centered|split|full"
+            ),
             prop("size", "string", false, Some("lg"), "sm|md|lg|xl"),
         ],
         slots: vec![
@@ -470,15 +724,23 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "progress".into(), category: ComponentCategory::Loader,
-        html_tag: "div".into(), self_closing: true,
+        name: "progress".into(),
+        category: ComponentCategory::Loader,
+        html_tag: "div".into(),
+        self_closing: true,
         aria_role: Some("progressbar".into()),
         props: vec![
             prop("value", "number", false, Some("0"), "Progress 0-100"),
             prop("max", "number", false, Some("100"), "Maximum value"),
             prop("variant", "string", false, Some("primary"), "Color variant"),
             prop("size", "string", false, Some("md"), "sm|md|lg"),
-            prop("label", "bool", false, Some("false"), "Show percentage label"),
+            prop(
+                "label",
+                "bool",
+                false,
+                Some("false"),
+                "Show percentage label"
+            ),
         ],
         slots: vec![],
         default_classes: vec!["kx-progress".into()],
@@ -487,8 +749,11 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "profile-card".into(), category: ComponentCategory::Avatar,
-        html_tag: "div".into(), self_closing: false, aria_role: None,
+        name: "profile-card".into(),
+        category: ComponentCategory::Avatar,
+        html_tag: "div".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![
             prop("name", "string", true, None, "User name"),
             prop("avatar", "string", false, None, "Avatar URL"),
@@ -502,12 +767,26 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "breadcrumb".into(), category: ComponentCategory::Navigation,
-        html_tag: "nav".into(), self_closing: false,
+        name: "breadcrumb".into(),
+        category: ComponentCategory::Navigation,
+        html_tag: "nav".into(),
+        self_closing: false,
         aria_role: Some("navigation".into()),
         props: vec![
-            prop("items", "list<record>", true, None, "Breadcrumb items [{label, href}]"),
-            prop("separator", "string", false, Some("/"), "Separator character"),
+            prop(
+                "items",
+                "list<record>",
+                true,
+                None,
+                "Breadcrumb items [{label, href}]"
+            ),
+            prop(
+                "separator",
+                "string",
+                false,
+                Some("/"),
+                "Separator character"
+            ),
         ],
         slots: vec![],
         default_classes: vec!["kx-breadcrumb".into()],
@@ -516,8 +795,11 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "section".into(), category: ComponentCategory::Primitive,
-        html_tag: "section".into(), self_closing: false, aria_role: None,
+        name: "section".into(),
+        category: ComponentCategory::Primitive,
+        html_tag: "section".into(),
+        self_closing: false,
+        aria_role: None,
         props: vec![],
         slots: vec![slot(None, "Section content")],
         default_classes: vec![],
@@ -526,11 +808,18 @@ fn build_registry() -> IndexMap<String, ComponentSchema> {
     });
 
     reg!(ComponentSchema {
-        name: "container".into(), category: ComponentCategory::Primitive,
-        html_tag: "div".into(), self_closing: false, aria_role: None,
-        props: vec![
-            prop("size", "string", false, Some("lg"), "sm|md|lg|xl|2xl|full"),
-        ],
+        name: "container".into(),
+        category: ComponentCategory::Primitive,
+        html_tag: "div".into(),
+        self_closing: false,
+        aria_role: None,
+        props: vec![prop(
+            "size",
+            "string",
+            false,
+            Some("lg"),
+            "sm|md|lg|xl|2xl|full"
+        ),],
         slots: vec![slot(None, "Container content")],
         default_classes: vec!["kx-container".into()],
         runtime_features: vec![],

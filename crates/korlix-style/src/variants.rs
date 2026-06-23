@@ -3,33 +3,36 @@ use crate::tokens::BREAKPOINTS;
 
 /// State variant prefixes and their CSS pseudo-class/attribute.
 pub const STATE_VARIANTS: &[(&str, &str)] = &[
-    ("hover",         ":hover"),
-    ("focus",         ":focus"),
-    ("focus-within",  ":focus-within"),
+    ("hover", ":hover"),
+    ("focus", ":focus"),
+    ("focus-within", ":focus-within"),
     ("focus-visible", ":focus-visible"),
-    ("active",        ":active"),
-    ("visited",       ":visited"),
-    ("disabled",      ":disabled"),
-    ("checked",       ":checked"),
+    ("active", ":active"),
+    ("visited", ":visited"),
+    ("disabled", ":disabled"),
+    ("checked", ":checked"),
     ("indeterminate", ":indeterminate"),
-    ("placeholder",   "::placeholder"),
-    ("first",         ":first-child"),
-    ("last",          ":last-child"),
-    ("odd",           ":nth-child(odd)"),
-    ("even",          ":nth-child(even)"),
-    ("required",      ":required"),
-    ("invalid",       ":invalid"),
-    ("valid",         ":valid"),
-    ("read-only",     ":read-only"),
-    ("empty",         ":empty"),
-    ("group-hover",   ".group:hover "),
-    ("peer-checked",  ".peer:checked ~ "),
-    ("dark",          ".dark "),
-    ("data-open",     "[data-open] "),
-    ("data-active",   "[data-active] "),
-    ("motion-safe",   "@media (prefers-reduced-motion: no-preference)"),
+    ("placeholder", "::placeholder"),
+    ("first", ":first-child"),
+    ("last", ":last-child"),
+    ("odd", ":nth-child(odd)"),
+    ("even", ":nth-child(even)"),
+    ("required", ":required"),
+    ("invalid", ":invalid"),
+    ("valid", ":valid"),
+    ("read-only", ":read-only"),
+    ("empty", ":empty"),
+    ("group-hover", ".group:hover "),
+    ("peer-checked", ".peer:checked ~ "),
+    ("dark", ".dark "),
+    ("data-open", "[data-open] "),
+    ("data-active", "[data-active] "),
+    (
+        "motion-safe",
+        "@media (prefers-reduced-motion: no-preference)",
+    ),
     ("motion-reduce", "@media (prefers-reduced-motion: reduce)"),
-    ("print",         "@media print"),
+    ("print", "@media print"),
 ];
 
 /// Parse a class string like "hover:bg-blue-500" or "sm:flex" into
@@ -45,7 +48,7 @@ pub fn parse_variant(class: &str) -> Option<(&str, &str)> {
         }
     }
     let idx = last_colon?;
-    Some((&class[..idx], &class[idx+1..]))
+    Some((&class[..idx], &class[idx + 1..]))
 }
 
 /// Check if a prefix is a responsive breakpoint.

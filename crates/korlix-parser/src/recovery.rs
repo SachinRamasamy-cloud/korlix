@@ -14,14 +14,21 @@ impl<'t> Parser<'t> {
         let mut depth = 0usize;
         while !self.is_eof() {
             match self.current_kind() {
-                TokenKind::Indent  => { depth += 1; self.advance(); }
-                TokenKind::Dedent  => {
-                    if depth == 0 { break; }
+                TokenKind::Indent => {
+                    depth += 1;
+                    self.advance();
+                }
+                TokenKind::Dedent => {
+                    if depth == 0 {
+                        break;
+                    }
                     depth -= 1;
                     self.advance();
                 }
-                TokenKind::Eof     => break,
-                _                  => { self.advance(); }
+                TokenKind::Eof => break,
+                _ => {
+                    self.advance();
+                }
             }
         }
     }

@@ -1,5 +1,5 @@
-use korlix_core::{DiagnosticSet, SourceMap};
 use korlix_ast::program::Program;
+use korlix_core::{DiagnosticSet, SourceMap};
 use korlix_resolver::symbol_table::SymbolTable;
 use std::collections::HashSet;
 

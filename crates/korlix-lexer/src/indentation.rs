@@ -20,11 +20,7 @@ impl IndentStack {
     pub fn process(&mut self, indent: usize, file_id: u32, line: usize) -> Vec<Token> {
         let mut tokens = vec![];
         let current = self.current();
-        let dummy_span = Span::new(
-            Pos::new(line, 1, 0),
-            Pos::new(line, 1, 0),
-            file_id,
-        );
+        let dummy_span = Span::new(Pos::new(line, 1, 0), Pos::new(line, 1, 0), file_id);
 
         if indent > current {
             self.stack.push(indent);
@@ -40,11 +36,7 @@ impl IndentStack {
     }
 
     pub fn flush_dedents(&mut self, file_id: u32, line: usize) -> Vec<Token> {
-        let dummy_span = Span::new(
-            Pos::new(line, 1, 0),
-            Pos::new(line, 1, 0),
-            file_id,
-        );
+        let dummy_span = Span::new(Pos::new(line, 1, 0), Pos::new(line, 1, 0), file_id);
         let mut tokens = vec![];
         while self.current() > 0 {
             self.stack.pop();

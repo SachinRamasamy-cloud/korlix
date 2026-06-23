@@ -28,7 +28,11 @@ pub struct Span {
 
 impl Span {
     pub fn new(start: Pos, end: Pos, file_id: u32) -> Self {
-        Self { start, end, file_id }
+        Self {
+            start,
+            end,
+            file_id,
+        }
     }
 
     pub fn dummy() -> Self {

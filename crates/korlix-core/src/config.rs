@@ -70,8 +70,7 @@ impl KorlixConfig {
         if config_path.exists() {
             let content = std::fs::read_to_string(&config_path)
                 .map_err(|e| format!("Failed to read korlix.config.json: {}", e))?;
-            serde_json::from_str(&content)
-                .map_err(|e| format!("Invalid korlix.config.json: {}", e))
+            serde_json::from_str(&content).map_err(|e| format!("Invalid korlix.config.json: {}", e))
         } else {
             Ok(Self::default())
         }
@@ -90,9 +89,6 @@ impl KorlixConfig {
     }
 
     pub fn port(&self) -> u16 {
-        self.server
-            .as_ref()
-            .and_then(|s| s.port)
-            .unwrap_or(3000)
+        self.server.as_ref().and_then(|s| s.port).unwrap_or(3000)
     }
 }

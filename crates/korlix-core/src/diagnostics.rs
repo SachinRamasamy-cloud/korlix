@@ -63,10 +63,10 @@ impl Diagnostic {
 
     pub fn print(&self, source: Option<&str>) {
         let prefix = match self.severity {
-            Severity::Error   => "error".red().bold(),
+            Severity::Error => "error".red().bold(),
             Severity::Warning => "warning".yellow().bold(),
-            Severity::Info    => "info".cyan().bold(),
-            Severity::Hint    => "hint".blue().bold(),
+            Severity::Info => "info".cyan().bold(),
+            Severity::Hint => "hint".blue().bold(),
         };
 
         let code = format!("[{}]", self.code).dimmed();
