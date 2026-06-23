@@ -4,6 +4,9 @@
   "description": "Create a new Korlix app",
   "license": "MIT",
   "type": "commonjs",
+  "dependencies": {
+    "korlix": "^0.1.0"
+  },
   "bin": {
     "create-korlix": "./bin/create-korlix.js"
   },
@@ -13,5 +16,12 @@
   ],
   "engines": {
     "node": ">=18"
-  }
+  },
+  "keywords": [
+    "korlix",
+    "create-korlix",
+    "frontend",
+    "language",
+    "spa"
+  ]
 }

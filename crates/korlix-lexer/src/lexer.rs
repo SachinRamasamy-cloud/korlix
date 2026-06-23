@@ -203,12 +203,26 @@ impl<'a> Lexer<'a> {
                         // class chars: alphanumeric, -, _, :, [, ], / (for responsive variants).
                         // A trailing ':' starts a KLX block, so only keep ':' when it is
                         // followed by another class-name segment, as in hover:bg-red-500.
+                        let mut bracket_depth = 0;
                         loop {
                             match self.peek() {
                                 Some(':')
-                                    if self.peek2().map(is_class_segment_char).unwrap_or(false) =>
+                                    if bracket_depth == 0
+                                        && self
+                                            .peek2()
+                                            .map(is_class_segment_char)
+                                            .unwrap_or(false) =>
                                 {
                                     class.push(':');
+                                    self.advance();
+                                }
+                                Some(c) if bracket_depth > 0 => {
+                                    if c == '[' {
+                                        bracket_depth += 1;
+                                    } else if c == ']' {
+                                        bracket_depth -= 1;
+                                    }
+                                    class.push(c);
                                     self.advance();
                                 }
                                 Some(c)
@@ -218,6 +232,9 @@ impl<'a> Lexer<'a> {
                                             '-' | '_' | '[' | ']' | '/' | '.' | '#' | '%'
                                         ) =>
                                 {
+                                    if c == '[' {
+                                        bracket_depth += 1;
+                                    }
                                     class.push(c);
                                     self.advance();
                                 }

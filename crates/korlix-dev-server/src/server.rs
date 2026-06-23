@@ -22,6 +22,7 @@ pub struct DevServer {
 }
 
 #[derive(Clone)]
+#[allow(dead_code)]
 struct AppState {
     dist_dir: PathBuf,
     hmr_tx: HmrSender,

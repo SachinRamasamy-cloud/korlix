@@ -1,0 +1,10 @@
+app:
+  theme:
+    default "dark"
+    dark true
+  routes:
+    page "/" from "./pages/index.klx"
+  providers:
+    toast
+    modal
+    theme

@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 mod tests {
-    use korlix_components::registry::{get_component, is_component, all_component_names};
+    use korlix_components::registry::{all_component_names, get_component, is_component};
 
     #[test]
     fn test_btn_registered() {
@@ -51,7 +51,11 @@ mod tests {
     #[test]
     fn test_minimum_component_count() {
         let names = all_component_names();
-        assert!(names.len() >= 30, "Should have 30+ components, got {}", names.len());
+        assert!(
+            names.len() >= 30,
+            "Should have 30+ components, got {}",
+            names.len()
+        );
     }
 
     #[test]
@@ -67,7 +71,11 @@ mod tests {
     #[test]
     fn test_forms_registered() {
         for name in ["input", "select", "textarea", "checkbox", "switch"] {
-            assert!(get_component(name).is_some(), "{} should be registered", name);
+            assert!(
+                get_component(name).is_some(),
+                "{} should be registered",
+                name
+            );
         }
     }
 }

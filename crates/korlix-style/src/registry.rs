@@ -56,6 +56,10 @@ fn escape_selector(s: &str) -> String {
         .replace('.', r"\.")
         .replace('%', r"\%")
         .replace('#', r"\#")
+        .replace('(', r"\(")
+        .replace(')', r"\)")
+        .replace(',', r"\,")
+        .replace('"', r#"\""#)
 }
 
 // ── Global registry: class_name → CssRule ─────────────────────────────
@@ -349,6 +353,9 @@ fn build_registry() -> IndexMap<String, CssRule> {
         add!(cls.clone(), CssRule::new(&cls).prop("font-weight", *val));
     }
     for (cls, prop, val) in [
+        ("font-sans", "font-family", "ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,sans-serif"),
+        ("font-serif", "font-family", "ui-serif,Georgia,Cambria,\"Times New Roman\",Times,serif"),
+        ("font-mono", "font-family", "ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,\"Liberation Mono\",\"Courier New\",monospace"),
         ("text-left", "text-align", "left"),
         ("text-center", "text-align", "center"),
         ("text-right", "text-align", "right"),
@@ -362,6 +369,7 @@ fn build_registry() -> IndexMap<String, CssRule> {
         ("underline", "text-decoration-line", "underline"),
         ("line-through", "text-decoration-line", "line-through"),
         ("no-underline", "text-decoration-line", "none"),
+        ("bg-clip-text", "background-clip", "text"),
         ("truncate", "overflow", "hidden"),
         ("leading-none", "line-height", "1"),
         ("leading-tight", "line-height", "1.25"),
@@ -465,6 +473,10 @@ fn build_registry() -> IndexMap<String, CssRule> {
         let cls = format!("opacity-{}", name);
         add!(cls.clone(), CssRule::new(&cls).prop("opacity", *val));
     }
+    add!(
+        "opacity-15",
+        CssRule::new("opacity-15").prop("opacity", "0.15")
+    );
 
     // ── Overflow ─────────────────────────────────────────────────────
     for (cls, val) in [
@@ -595,6 +607,12 @@ fn build_registry() -> IndexMap<String, CssRule> {
     // ── Misc ──────────────────────────────────────────────────────────
     for (cls, prop, val) in [
         ("outline-none", "outline", "2px solid transparent"),
+        ("group", "position", "relative"),
+        (
+            "animate-pulse",
+            "animation",
+            "kx-pulse 2s cubic-bezier(.4,0,.6,1) infinite",
+        ),
         (
             "ring",
             "box-shadow",
@@ -670,6 +688,7 @@ fn build_registry() -> IndexMap<String, CssRule> {
         ("inset-y-0", "top", "0"),
         ("inset-full", "inset", "100%"),
         ("inset-auto", "inset", "auto"),
+        ("left-1/2", "left", "50%"),
     ] {
         add!(cls, CssRule::new(cls).prop(prop, val));
     }

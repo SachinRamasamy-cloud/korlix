@@ -1,0 +1,7 @@
+{
+  "/": {
+    "id": "index",
+    "path": "/",
+    "source": "./pages/index.klx"
+  }
+}

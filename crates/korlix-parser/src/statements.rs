@@ -1,7 +1,8 @@
 use crate::parser::Parser;
 use korlix_ast::{
     declarations::{
-        ActionDecl, DataDecl, DerivedDecl, ImportDecl, LetDecl, RouteDecl, StateDecl, ThemeDecl,
+        ActionDecl, DataDecl, DerivedDecl, ImportDecl, LetDecl, MetaBlock, RouteDecl, StateDecl,
+        ThemeDecl,
     },
     expression::Expr,
     node::{AssignNode, CallNode, ForNode, IfNode, Node, TextNode},
@@ -263,7 +264,7 @@ impl<'t> Parser<'t> {
 
         // extract layout and meta from body
         let mut layout = None;
-        let meta = None;
+        let mut meta = None;
         let mut body = vec![];
 
         for node in body_raw {
@@ -274,6 +275,12 @@ impl<'t> Parser<'t> {
                             layout = Some(s.clone());
                         }
                     }
+                }
+                Node::Element(el) if el.tag == "meta" => {
+                    meta = Some(extract_meta_block(&node));
+                }
+                Node::Component(c) if c.name == "meta" => {
+                    meta = Some(extract_meta_block(&node));
                 }
                 _ => body.push(node),
             }
@@ -539,4 +546,51 @@ impl<'t> Parser<'t> {
             span,
         })
     }
+}
+
+fn extract_meta_block(node: &Node) -> MetaBlock {
+    let (children, span) = match node {
+        Node::Element(el) => (&el.children, el.span),
+        Node::Component(c) => (&c.children, c.span),
+        _ => unreachable!("extract_meta_block only accepts meta nodes"),
+    };
+
+    let mut meta = MetaBlock {
+        title: None,
+        description: None,
+        canonical: None,
+        og_image: None,
+        extras: vec![],
+        span,
+    };
+
+    for child in children {
+        let (name, child_children, child_props) = match child {
+            Node::Element(el) => (el.tag.as_str(), &el.children, Some(&el.props)),
+            Node::Component(c) => (c.name.as_str(), &c.children, None),
+            _ => continue,
+        };
+
+        let value = child_children.iter().find_map(|n| {
+            if let Node::Text(text) = n {
+                Some(text.value.clone())
+            } else {
+                None
+            }
+        });
+
+        match name {
+            "title" => meta.title = value,
+            "description" => meta.description = value,
+            "canonical" => meta.canonical = value,
+            "og_image" | "og-image" => meta.og_image = value,
+            _ => {
+                if let Some(props) = child_props {
+                    meta.extras.extend(props.clone());
+                }
+            }
+        }
+    }
+
+    meta
 }

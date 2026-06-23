@@ -38,7 +38,7 @@ fn render_element(el: &ElementNode) -> String {
 
     let mut attrs = String::new();
     if !classes.is_empty() {
-        attrs.push_str(&format!(r#" class="{}""#, classes));
+        attrs.push_str(&format!(r#" class="{}""#, html_escape_attr(&classes)));
     }
     for prop in &el.props {
         let val = render_expr_attr(&prop.value);
@@ -185,7 +185,7 @@ fn nodes_to_js_stub(nodes: &[Node]) -> String {
                 c.callee,
                 c.args
                     .iter()
-                    .map(render_expr_raw)
+                    .map(render_expr_state)
                     .collect::<Vec<_>>()
                     .join(",")
             ),
@@ -197,7 +197,7 @@ fn nodes_to_js_stub(nodes: &[Node]) -> String {
                         if let Node::Text(t) = child {
                             Some(match &t.value {
                                 Expr::Identifier(s) => format!("\"{}\"", s.replace('"', "\\\"")),
-                                other => render_expr_raw(other),
+                                other => render_expr_state(other),
                             })
                         } else {
                             None
@@ -213,7 +213,7 @@ fn nodes_to_js_stub(nodes: &[Node]) -> String {
                     .iter()
                     .filter_map(|child| {
                         if let Node::Text(t) = child {
-                            Some(render_expr_raw(&t.value))
+                            Some(render_expr_state(&t.value))
                         } else {
                             None
                         }

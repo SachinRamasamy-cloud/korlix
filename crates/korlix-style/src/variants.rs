@@ -38,16 +38,19 @@ pub const STATE_VARIANTS: &[(&str, &str)] = &[
 /// Parse a class string like "hover:bg-blue-500" or "sm:flex" into
 /// (variant_prefix, base_class).
 pub fn parse_variant(class: &str) -> Option<(&str, &str)> {
-    // Find the LAST colon that separates variant from class
-    let mut last_colon = None;
-    let bytes = class.as_bytes();
-    for i in 0..bytes.len() {
-        if bytes[i] == b':' {
-            last_colon = Some(i);
-            break;
+    let mut bracket_depth = 0usize;
+    let mut separator = None;
+
+    for (idx, ch) in class.char_indices() {
+        match ch {
+            '[' => bracket_depth += 1,
+            ']' => bracket_depth = bracket_depth.saturating_sub(1),
+            ':' if bracket_depth == 0 => separator = Some(idx),
+            _ => {}
         }
     }
-    let idx = last_colon?;
+
+    let idx = separator?;
     Some((&class[..idx], &class[idx + 1..]))
 }
 

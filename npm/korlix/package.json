@@ -20,7 +20,6 @@
     "compiler",
     "frontend",
     "language",
-    "static-site",
     "spa"
   ]
 }

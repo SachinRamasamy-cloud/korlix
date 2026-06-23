@@ -7,7 +7,7 @@ use korlix_parser::parser::Parser;
 use korlix_resolver::file_resolver::find_klx_files;
 use korlix_style::{scanner::scan_classes, validator::validate_classes};
 
-pub fn run(a11y: bool, security: bool, seo: bool, ast: bool) -> anyhow::Result<()> {
+pub fn run(_a11y: bool, _security: bool, _seo: bool, ast: bool) -> anyhow::Result<()> {
     print_banner();
     let root = std::env::current_dir()?;
     let project = Project::load(root).map_err(|e| anyhow::anyhow!(e))?;

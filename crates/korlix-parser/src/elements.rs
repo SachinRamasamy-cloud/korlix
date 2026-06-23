@@ -95,6 +95,12 @@ impl<'t> Parser<'t> {
 
         loop {
             match self.current_kind() {
+                // Classes may appear after props in author code:
+                // a href="#features" .text-primary "Features"
+                TokenKind::Class(c) => {
+                    classes.push(ClassRef::new(c.clone(), self.current_span()));
+                    self.advance();
+                }
                 // prop=value
                 _ if self.current_kind().is_ident_like()
                     && self.peek_ahead(1).kind == TokenKind::Equals =>

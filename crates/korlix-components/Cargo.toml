@@ -11,3 +11,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 indexmap = { workspace = true }
 once_cell = { workspace = true }
+
+[[test]]
+name = "components_test"
+path = "../../tests/components/registry.rs"

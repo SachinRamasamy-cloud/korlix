@@ -1,0 +1,11 @@
+{
+  "version": "0.1.0",
+  "compiler": "korlix",
+  "pages": [
+    { "route": "/", "file": "index.html" }
+  ],
+  "assets": {
+    "css": { "size": 24100 },
+    "js":  { "size": 260 }
+  }
+}

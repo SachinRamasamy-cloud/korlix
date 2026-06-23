@@ -7,3 +7,7 @@ edition = "2021"
 korlix-core = { path = "../korlix-core" }
 korlix-ast = { path = "../korlix-ast" }
 serde = { version = "1", features = ["derive"] }
+
+[[test]]
+name = "basic"
+path = "../../tests/lexer/basic.rs"

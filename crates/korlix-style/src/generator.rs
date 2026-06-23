@@ -69,7 +69,7 @@ fn resolve_class(class: &str) -> Option<CssRule> {
 
     // Try variant: hover:bg-blue-500 → base = bg-blue-500, variant = hover
     if let Some((prefix, base)) = parse_variant(class) {
-        if let Some(base_rule) = lookup(base) {
+        if let Some(base_rule) = resolve_class(base) {
             let rule = base_rule.clone();
             return Some(apply_variant(prefix, base, rule));
         }
@@ -83,6 +83,17 @@ fn resolve_class(class: &str) -> Option<CssRule> {
     None
 }
 
+fn is_color_like(value: &str) -> bool {
+    value.starts_with('#')
+        || value.starts_with("rgb")
+        || value.starts_with("hsl")
+        || value.starts_with("hwb")
+        || value.starts_with("oklab")
+        || value.starts_with("oklch")
+        || value == "transparent"
+        || value == "currentColor"
+}
+
 fn resolve_arbitrary(class: &str) -> Option<CssRule> {
     let bracket_start = class.find('[')?;
     let bracket_end = class.rfind(']')?;
@@ -91,7 +102,9 @@ fn resolve_arbitrary(class: &str) -> Option<CssRule> {
     }
 
     let prefix = &class[..bracket_start];
-    let value = &class[bracket_start + 1..bracket_end];
+    let raw_value = &class[bracket_start + 1..bracket_end];
+    let formatted_value = raw_value.replace('_', " ");
+    let value = formatted_value.as_str();
 
     // Safety: block JS and expressions
     if value.contains("javascript:") || value.contains("expression(") {
@@ -116,9 +129,28 @@ fn resolve_arbitrary(class: &str) -> Option<CssRule> {
         "mx" => ("margin-inline", value),
         "my" => ("margin-block", value),
         "gap" => ("gap", value),
-        "text" => ("font-size", value),
-        "bg" => ("background-color", value),
-        "border" => ("border-color", value),
+        "text" => {
+            if is_color_like(value) {
+                ("color", value)
+            } else {
+                ("font-size", value)
+            }
+        }
+        "bg" => {
+            if value.contains("gradient") || value.starts_with("url") {
+                ("background-image", value)
+            } else {
+                ("background-color", value)
+            }
+        }
+        "border" => {
+            if is_color_like(value) {
+                ("border-color", value)
+            } else {
+                ("border-width", value)
+            }
+        }
+        "shadow" => ("box-shadow", value),
         "top" => ("top", value),
         "right" => ("right", value),
         "bottom" => ("bottom", value),
@@ -216,6 +248,7 @@ const COMPONENT_CSS: &str = r#"
 @keyframes kx-fade-in    { from{opacity:0} to{opacity:1} }
 @keyframes kx-slide-up   { from{opacity:0;transform:translateY(.5rem)} to{opacity:1;transform:translateY(0)} }
 @keyframes kx-bounce     { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-.25rem)} }
+@keyframes kx-pulse      { 50%{opacity:.5} }
 .kx-fade-in  { animation:kx-fade-in .3s ease; }
 .kx-slide-up { animation:kx-slide-up .3s ease; }
 .kx-bounce   { animation:kx-bounce 1s ease infinite; }
