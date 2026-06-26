@@ -8,7 +8,17 @@
     "korlix": "^0.1.0"
   },
   "bin": {
-    "create-korlix": "./bin/create-korlix.js"
+    "create-korlix": "bin/create-korlix.js"
+  },
+  "scripts": {
+    "verify": "node --check ./bin/create-korlix.js",
+    "prepack": "npm run verify",
+    "pack:dry": "npm pack --dry-run",
+    "publish:dry": "npm publish --dry-run --access public",
+    "publish:public": "npm publish --access public"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "files": [
     "bin",
