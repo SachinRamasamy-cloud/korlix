@@ -19,8 +19,22 @@ function askProjectName(defaultValue = "my-korlix-app") {
   });
 }
 
-function run(command, args, cwd = process.cwd()) {
-  const result = spawnSync(command, args, {
+function runNodeScript(scriptPath, args, cwd = process.cwd()) {
+  const result = spawnSync(process.execPath, [scriptPath, ...args], {
+    cwd,
+    stdio: "inherit",
+    shell: false
+  });
+
+  if (result.status !== 0) {
+    process.exit(result.status ?? 1);
+  }
+}
+
+function runNpm(args, cwd = process.cwd()) {
+  const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+
+  const result = spawnSync(npmCommand, args, {
     cwd,
     stdio: "inherit",
     shell: process.platform === "win32"
@@ -31,40 +45,16 @@ function run(command, args, cwd = process.cwd()) {
   }
 }
 
-function korlixCommand() {
-  const localCli = path.resolve(__dirname, "../../korlix/bin/korlix.js");
-  if (fs.existsSync(localCli)) {
-    return {
-      command: process.execPath,
-      args: [localCli]
-    };
-  }
-
-  try {
-    return {
-      command: process.execPath,
-      args: [require.resolve("korlix/bin/korlix.js")]
-    };
-  } catch {
-    return { command: "korlix", args: [] };
-  }
-}
-
-function korlixPackageSpec() {
-  if (process.env.KORLIX_PACKAGE) {
-    return process.env.KORLIX_PACKAGE;
-  }
-
-  const localPackage = path.resolve(__dirname, "../../korlix");
-  if (fs.existsSync(path.join(localPackage, "package.json"))) {
-    return `file:${localPackage}`;
-  }
-
-  return "^0.1.0";
-}
-
 function writeJson(filePath, data) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n");
+}
+
+function findKorlixCliScript() {
+  const packageJsonPath = require.resolve("korlix/package.json", {
+    paths: [path.resolve(__dirname, "..")]
+  });
+
+  return path.join(path.dirname(packageJsonPath), "bin", "korlix.js");
 }
 
 async function main() {
@@ -89,8 +79,9 @@ async function main() {
   console.log(`Creating Korlix app: ${projectName}`);
   console.log("");
 
-  const korlix = korlixCommand();
-  run(korlix.command, [...korlix.args, "new", projectName]);
+  const korlixCliScript = findKorlixCliScript();
+
+  runNodeScript(korlixCliScript, ["new", projectName]);
 
   const configPath = path.join(projectPath, "korlix.config.json");
 
@@ -114,7 +105,7 @@ async function main() {
 
     pkg.devDependencies = {
       ...(pkg.devDependencies || {}),
-      korlix: korlixPackageSpec()
+      korlix: process.env.KORLIX_PACKAGE || "^0.1.1"
     };
 
     writeJson(packagePath, pkg);
@@ -123,10 +114,16 @@ async function main() {
   console.log("");
   console.log("Korlix app created");
   console.log("");
-  console.log("Next steps:");
-  console.log(`  cd ${projectName}`);
-  console.log("  npm install");
-  console.log("  npm run dev");
+  console.log("Installing dependencies...");
+  console.log("");
+
+  runNpm(["install"], projectPath);
+
+  console.log("");
+  console.log("Starting dev server...");
+  console.log("");
+
+  runNpm(["run", "dev"], projectPath);
 }
 
 main().catch((err) => {

@@ -1,37 +1,73 @@
 {
   "name": "create-korlix",
-  "version": "0.1.0",
-  "description": "Create a new Korlix app",
+  "version": "0.1.1",
+  "description": "Create a new Korlix app — a frontend-first language for building SPA apps with less setup",
   "license": "MIT",
+  "author": "Sachin Ramasamy",
+  "homepage": "https://github.com/SachinRamasamy-cloud/korlix#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SachinRamasamy-cloud/korlix.git",
+    "directory": "npm/create-korlix"
+  },
+  "bugs": {
+    "url": "https://github.com/SachinRamasamy-cloud/korlix/issues"
+  },
   "type": "commonjs",
-  "dependencies": {
-    "korlix": "^0.1.0"
-  },
   "bin": {
-    "create-korlix": "bin/create-korlix.js"
-  },
-  "scripts": {
-    "verify": "node --check ./bin/create-korlix.js",
-    "prepack": "npm run verify",
-    "pack:dry": "npm pack --dry-run",
-    "publish:dry": "npm publish --dry-run --access public",
-    "publish:public": "npm publish --access public"
-  },
-  "publishConfig": {
-    "access": "public"
+    "create-korlix": "./bin/create-korlix.js"
   },
   "files": [
-    "bin",
+    "bin/create-korlix.js",
     "README.md"
   ],
   "engines": {
     "node": ">=18"
   },
+  "dependencies": {
+    "korlix": "^0.1.1"
+  },
+  "scripts": {
+    "verify": "node --check ./bin/create-korlix.js",
+    "prepack": "npm run verify",
+    "pack:dry": "npm pack --dry-run",
+    "publish:dry": "npm publish --dry-run",
+    "publish:public": "npm publish"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "korlix",
     "create-korlix",
+    "create-app",
+    "scaffold",
+    "starter",
+    "template",
     "frontend",
-    "language",
-    "spa"
+    "frontend-language",
+    "programming-language",
+    "klx",
+    "compiler",
+    "rust-compiler",
+    "spa",
+    "single-page-app",
+    "web-development",
+    "ui",
+    "ui-components",
+    "hot-reload",
+    "hot-drop",
+    "jit-css",
+    "utility-css",
+    "routing",
+    "state-management",
+    "no-framework",
+    "lightweight-frontend",
+    "react-alternative",
+    "tailwind-alternative",
+    "frontend-without-react",
+    "zero-config",
+    "zero-boilerplate",
+    "core-matrix"
   ]
 }
