@@ -10,4 +10,6 @@ pub enum RuntimeFeature {
     Forms,
     Motion,
     A11y,
+    /// Enables `get`/`post`/`put`/`patch`/`delete`/`reload` API primitives.
+    Api,
 }

@@ -25,6 +25,11 @@ pub fn render_node(node: &Node) -> String {
         Node::Assign(_) => String::new(),
         Node::Call(c) => format!("<!-- call {} -->", c.callee),
         Node::Comment(s) => format!("<!-- {} -->", s),
+        // API nodes produce no HTML — they are declarations/statements handled
+        // by the JS codegen and runtime.
+        Node::ApiQuery(_) => String::new(),
+        Node::ApiMutation(_) => String::new(),
+        Node::ApiReload(_) => String::new(),
     }
 }
 
@@ -178,55 +183,82 @@ fn render_expr_attr(e: &Expr) -> String {
 fn nodes_to_js_stub(nodes: &[Node]) -> String {
     nodes
         .iter()
-        .map(|n| match n {
-            Node::Assign(a) => format!("__state.{} = {}", a.target, render_expr_state(&a.value)),
-            Node::Call(c) => format!(
-                "KorlixRuntime.call('{}', [{}])",
-                c.callee,
-                c.args
-                    .iter()
-                    .map(render_expr_state)
-                    .collect::<Vec<_>>()
-                    .join(",")
-            ),
-            Node::Component(c) if c.name == "toast" => {
-                let args = c
-                    .children
-                    .iter()
-                    .filter_map(|child| {
-                        if let Node::Text(t) = child {
-                            Some(match &t.value {
-                                Expr::Identifier(s) => format!("\"{}\"", s.replace('"', "\\\"")),
-                                other => render_expr_state(other),
-                            })
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<_>>()
-                    .join(",");
-                format!("KorlixRuntime.call('toast', [{}])", args)
+        .map(|n| {
+            // API mutation/reload nodes emit async JS for inline event handlers.
+            // We use the codegen api module for consistency.
+            if let Some(api_js) = korlix_codegen_api_stub(n) {
+                return api_js;
             }
-            Node::Component(c) => {
-                let args = c
-                    .children
-                    .iter()
-                    .filter_map(|child| {
-                        if let Node::Text(t) = child {
-                            Some(render_expr_state(&t.value))
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<_>>()
-                    .join(",");
-                format!("KorlixRuntime.call('{}', [{}])", c.name, args)
+            match n {
+                Node::Assign(a) => format!("__state.{} = {}", a.target, render_expr_state(&a.value)),
+                Node::Call(c) => format!(
+                    "KorlixRuntime.call('{}', [{}])",
+                    c.callee,
+                    c.args
+                        .iter()
+                        .map(render_expr_state)
+                        .collect::<Vec<_>>()
+                        .join(",")
+                ),
+                Node::Component(c) if c.name == "toast" => {
+                    let args = c
+                        .children
+                        .iter()
+                        .filter_map(|child| {
+                            if let Node::Text(t) = child {
+                                Some(match &t.value {
+                                    Expr::Identifier(s) => format!("\"{}\"", s.replace('"', "\\\"")),
+                                    other => render_expr_state(other),
+                                })
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                        .join(",");
+                    format!("KorlixRuntime.call('toast', [{}])", args)
+                }
+                Node::Component(c) => {
+                    let args = c
+                        .children
+                        .iter()
+                        .filter_map(|child| {
+                            if let Node::Text(t) = child {
+                                Some(render_expr_state(&t.value))
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                        .join(",");
+                    format!("KorlixRuntime.call('{}', [{}])", c.name, args)
+                }
+                _ => String::new(),
             }
-            _ => String::new(),
         })
         .filter(|s| !s.is_empty())
         .collect::<Vec<_>>()
         .join(";")
+}
+
+/// Generate inline JS for API nodes appearing in event handler bodies.
+fn korlix_codegen_api_stub(node: &Node) -> Option<String> {
+    match node {
+        Node::ApiMutation(m) => {
+            let method = format!("{:?}", m.method.as_str());
+            let url = format!("{:?}", m.url.as_str());
+            let body = match &m.body {
+                Some(b) => render_expr_raw(b),
+                None => "undefined".into(),
+            };
+            Some(format!("KorlixRuntime.api.request({},{},{})", method, url, body))
+        }
+        Node::ApiReload(r) => {
+            let name = format!("{:?}", r.target.as_str());
+            Some(format!("KorlixRuntime.api.reload({})", name))
+        }
+        _ => None,
+    }
 }
 
 fn render_expr_state(e: &Expr) -> String {

@@ -7,3 +7,7 @@ edition = "2021"
 korlix-core = { path = "../korlix-core" }
 korlix-ast = { path = "../korlix-ast" }
 korlix-lexer = { path = "../korlix-lexer" }
+
+[[test]]
+name = "api_basic"
+path = "../../tests/api/basic.rs"

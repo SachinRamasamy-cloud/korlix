@@ -8,6 +8,9 @@ pub fn runtime_modules(features: &HashSet<RuntimeFeature>) -> Vec<&'static str> 
     if features.contains(&RuntimeFeature::Router) {
         mods.push("router");
     }
+    if features.contains(&RuntimeFeature::Api) {
+        mods.push("api");
+    }
     if features.contains(&RuntimeFeature::State) {
         mods.push("state");
     }
@@ -28,3 +31,4 @@ pub fn runtime_modules(features: &HashSet<RuntimeFeature>) -> Vec<&'static str> 
     }
     mods
 }
+

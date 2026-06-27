@@ -2,8 +2,9 @@ use crate::parser::Parser;
 use korlix_ast::{
     declarations::{
         ActionDecl, DataDecl, DerivedDecl, ImportDecl, LetDecl, MetaBlock, RouteDecl, StateDecl,
-        ThemeDecl,ApiMutation,ApiQueryNode,ApiReloadNode,ApiRouteNode,HttpMethod,Node,
+        ThemeDecl,
     },
+    api::{ApiMutationNode, ApiQueryNode, ApiReloadNode, HttpMethod},
     expression::Expr,
     node::{AssignNode, CallNode, ForNode, IfNode, Node, TextNode},
     program::{AppDecl, ComponentDecl, Item, LayoutDecl, MountDecl, PageDecl},
@@ -353,6 +354,22 @@ impl<'t> Parser<'t> {
                 let name = self.expect_ident();
                 Some(Node::Slot(korlix_ast::node::SlotNode { name, span }))
             }
+
+            // ── API keywords ──────────────────────────────────────────
+            // `get name "url"` declares a reactive query at page/component scope
+            TokenKind::Get => self.parse_api_query(),
+
+            // `post/put/patch/delete/options/head "url" body?` inside actions
+            TokenKind::Post
+            | TokenKind::Put
+            | TokenKind::Patch
+            | TokenKind::Delete
+            | TokenKind::Options
+            | TokenKind::Head => self.parse_api_mutation(),
+
+            // `reload name` re-fetches a previously declared `get` query
+            TokenKind::Reload => self.parse_api_reload(),
+
             _ if self.current_kind().is_ident_like() => self.parse_ident_node(),
             TokenKind::StringLit(_) => {
                 let span = self.current_span();
@@ -547,84 +564,126 @@ impl<'t> Parser<'t> {
         })
     }
 
-    fn parse_api_query(&mut self)-> KorlixResult<Node>
-    {
-        let start = self.current_span();
-        self.export(TokenKind:Get,"expected 'get'")?;
-        let name =self.expect_identifier("expected API variable name after 'get'")?;
-        let url = self.export_string("expected URL after API variable name")?;
-        Ok(Node::ApiQuery(ApiQueryNode { name, url, span: start }))
-        
+    // ── API parsing ────────────────────────────────────────────────────
+
+    /// Parse `get <name> "<url>"` — a reactive GET query declaration.
+    ///
+    /// Emits `Node::ApiQuery`. The runtime will expose `<name>`, `<name>Loading`,
+    /// and `<name>Error` as reactive state values.
+    fn parse_api_query(&mut self) -> Option<Node> {
+        let span = self.current_span();
+        self.advance(); // consume `get`
+
+        // Expect: identifier (variable name)
+        let name = self.expect_ident()?;
+
+        // Expect: string literal (URL)
+        let url = if let TokenKind::StringLit(u) = self.current_kind() {
+            let u = u.clone();
+            self.advance();
+            u
+        } else {
+            self.diagnostics.error(
+                "KX-E010",
+                format!("Expected URL string after `get {name}`, found `{}`", self.current_kind()),
+            );
+            return None;
+        };
+
         self.skip_newlines();
 
-        Ok(Node::ApiQuery(ApiQueryNode { name, url, span: start }))
+        Some(Node::ApiQuery(ApiQueryNode { name, url, span }))
     }
 
-    fn parse_api_mutation(&mut self) -> KorlixResult<Node> {
-        let start = self.current_sapn();
+    /// Parse `post|put|patch|delete|options|head "<url>" [body]` inside an action body.
+    ///
+    /// Emits `Node::ApiMutation`. Body is optional for DELETE/HEAD.
+    fn parse_api_mutation(&mut self) -> Option<Node> {
+        let span = self.current_span();
 
-        let method = match self.current_kind(){
-            TokenKind::Post=>{
-                seld.advance()
+        let method = match self.current_kind() {
+            TokenKind::Post => {
+                self.advance();
                 HttpMethod::Post
             }
-            TokenKind::Put=>{
+            TokenKind::Put => {
                 self.advance();
                 HttpMethod::Put
             }
-            TokenKind::Delete=>{
-                self.advance();
-                HttpMethod::Delete
-            }
-            TokenKind::Patch=>{
+            TokenKind::Patch => {
                 self.advance();
                 HttpMethod::Patch
             }
-            TokenKind::Options=>{
+            TokenKind::Delete => {
+                self.advance();
+                HttpMethod::Delete
+            }
+            TokenKind::Options => {
                 self.advance();
                 HttpMethod::Options
             }
-            TokenKind::Head=>{
+            TokenKind::Head => {
                 self.advance();
                 HttpMethod::Head
             }
-            _=>{
-                return self.error_current("expected API mutation method (post, put, delete, patch, options, head)");
-            };
+            other => {
+                self.diagnostics.error(
+                    "KX-E011",
+                    format!("Expected HTTP mutation keyword (post/put/patch/delete), found `{}`", other),
+                );
+                return None;
+            }
+        };
 
-            let url=self.export_string("expected API URL")?;
+        // Expect URL string
+        let url = if let TokenKind::StringLit(u) = self.current_kind() {
+            let u = u.clone();
+            self.advance();
+            u
+        } else {
+            self.diagnostics.error(
+                "KX-E012",
+                format!("Expected URL string after `{}`, found `{}`", method.as_str(), self.current_kind()),
+            );
+            return None;
+        };
 
-            let body=if method == HttpMethod::Delete{
-                None
-            }else{
-                Some{self.parse_expression()?}
-            };
-
-            self.skip_newlines();
-
-            ok(Node::ApiMutation(ApiMutationNode{
-                method,
-                url,
-                body,
-                span:start,
-            }))
-        }
-
-    }
-
-    fn parse_api_reload(&mut self)->
-    korlixResult<Node>{
-        let start=self.current.sapn();
-        self.export(TokenKind::Reload,"expected 'reload'")?;
-
-        let target=self.export_indentifier("exported api target after 'reload'")?;
+        // Body is optional:
+        // - DELETE and HEAD typically have no body.
+        // - For others, if the next token is a newline/dedent/EOF we skip body.
+        let body = if matches!(method, HttpMethod::Delete | HttpMethod::Head) {
+            None
+        } else if self.check(&TokenKind::Newline)
+            || self.check(&TokenKind::Dedent)
+            || self.is_eof()
+        {
+            None
+        } else {
+            self.parse_expr()
+        };
 
         self.skip_newlines();
 
-        ok(Node::ApiReload(ApiReloadNode{
-            target,
-            sapn:start,
+        Some(Node::ApiMutation(ApiMutationNode {
+            method,
+            url,
+            body,
+            span,
         }))
+    }
+
+    /// Parse `reload <name>` — re-fetches a named `get` query.
+    ///
+    /// Emits `Node::ApiReload`.
+    fn parse_api_reload(&mut self) -> Option<Node> {
+        let span = self.current_span();
+        self.advance(); // consume `reload`
+
+        let target = self.expect_ident()?;
+
+        self.skip_newlines();
+
+        Some(Node::ApiReload(ApiReloadNode { target, span }))
     }
 }
 

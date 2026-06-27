@@ -1,9 +1,11 @@
 pub use crate::feature::RuntimeFeature;
 use std::collections::HashSet;
+
 pub fn required_features(
     providers: &[String],
     has_routes: bool,
     has_state: bool,
+    has_api: bool,
 ) -> HashSet<RuntimeFeature> {
     let mut f = HashSet::new();
     f.insert(RuntimeFeature::Core);
@@ -12,6 +14,9 @@ pub fn required_features(
     }
     if has_state {
         f.insert(RuntimeFeature::State);
+    }
+    if has_api {
+        f.insert(RuntimeFeature::Api);
     }
     for p in providers {
         match p.as_str() {
