@@ -1,7 +1,7 @@
 {
   "name": "create-korlix",
-  "version": "0.1.1",
-  "description": "Create a new Korlix app — a frontend-first language for building SPA apps with less setup",
+  "version": "0.1.4",
+  "description": "Create a new Korlix app",
   "license": "MIT",
   "author": "Sachin Ramasamy",
   "homepage": "https://github.com/SachinRamasamy-cloud/korlix#readme",
@@ -25,7 +25,7 @@
     "node": ">=18"
   },
   "dependencies": {
-    "korlix": "^0.1.1"
+    "korlix": "0.1.2"
   },
   "scripts": {
     "verify": "node --check ./bin/create-korlix.js",
@@ -40,34 +40,11 @@
   "keywords": [
     "korlix",
     "create-korlix",
-    "create-app",
-    "scaffold",
-    "starter",
-    "template",
     "frontend",
-    "frontend-language",
-    "programming-language",
-    "klx",
+    "language",
     "compiler",
-    "rust-compiler",
     "spa",
-    "single-page-app",
-    "web-development",
-    "ui",
-    "ui-components",
-    "hot-reload",
-    "hot-drop",
-    "jit-css",
-    "utility-css",
-    "routing",
-    "state-management",
-    "no-framework",
-    "lightweight-frontend",
-    "react-alternative",
-    "tailwind-alternative",
-    "frontend-without-react",
-    "zero-config",
-    "zero-boilerplate",
-    "core-matrix"
+    "scaffold",
+    "starter"
   ]
 }

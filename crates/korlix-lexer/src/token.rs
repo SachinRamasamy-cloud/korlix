@@ -79,6 +79,17 @@ pub enum TokenKind {
     Dedent,
     Newline,
     Eof,
+
+
+    // ── Api ───────────────────────────────────────────────────────
+    Get,
+    Post,
+    Put,
+    Delete,
+    Patch,
+    Options,
+    Head,
+    Reload,
 }
 
 impl TokenKind {

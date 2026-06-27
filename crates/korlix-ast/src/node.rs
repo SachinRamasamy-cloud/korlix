@@ -6,8 +6,15 @@ use crate::{
 use korlix_core::Span;
 use serde::{Deserialize, Serialize};
 
+use create :: api::{ApiMutation, ApiQueryNode, ApiReloadNode, ApiRouteNode, HttpMethod};
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Node {
+    Api(ApiMutation),
+    ApiQuery(ApiQueryNode),
+    ApiReload(ApiReloadNode),
+    ApiRoute(ApiRouteNode),
+    HttpMethod(HttpMethod),
     Element(ElementNode),
     Component(ComponentNode),
     Text(TextNode),

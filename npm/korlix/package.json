@@ -1,6 +1,6 @@
 {
   "name": "korlix",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Korlix frontend-first language compiler and CLI",
   "license": "MIT",
   "type": "commonjs",

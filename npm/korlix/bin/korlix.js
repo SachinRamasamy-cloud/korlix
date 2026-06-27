@@ -28,7 +28,19 @@ if (!fs.existsSync(binaryPath)) {
 
 const result = spawnSync(binaryPath, process.argv.slice(2), {
   stdio: "inherit",
-  shell: false
+  shell: false,
+  windowsHide: true
 });
+
+if (result.error) {
+  console.error("Failed to run Korlix binary.");
+  console.error(result.error.message);
+  process.exit(1);
+}
+
+if (result.signal) {
+  console.error(`Korlix process was terminated by signal: ${result.signal}`);
+  process.exit(1);
+}
 
 process.exit(result.status ?? 1);

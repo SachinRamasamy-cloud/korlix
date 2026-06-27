@@ -35,6 +35,14 @@ pub fn lookup_keyword(s: &str) -> Option<TokenKind> {
         "put" => Some(TokenKind::HttpMethod("put".into())),
         "patch" => Some(TokenKind::HttpMethod("patch".into())),
         "delete" => Some(TokenKind::HttpMethod("delete".into())),
+        "get"=>Some(TokenKind::Get),
+        "post"=>Some(TokenKind::Post),
+        "put"=>Some(TokenKind::Put),
+        "patch"=>Some(TokenKind::Patch),
+        "delete"=>Some(TokenKind::Delete),
+        "options"=>Some(TokenKind::Options),
+        "head"=>Some(TokenKind::Head),
+        "reload"=>Some(TokenKind::Reload),
         _ => None,
     }
 }

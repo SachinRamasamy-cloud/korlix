@@ -2,7 +2,7 @@ use crate::parser::Parser;
 use korlix_ast::{
     declarations::{
         ActionDecl, DataDecl, DerivedDecl, ImportDecl, LetDecl, MetaBlock, RouteDecl, StateDecl,
-        ThemeDecl,
+        ThemeDecl,ApiMutation,ApiQueryNode,ApiReloadNode,ApiRouteNode,HttpMethod,Node,
     },
     expression::Expr,
     node::{AssignNode, CallNode, ForNode, IfNode, Node, TextNode},
@@ -545,6 +545,54 @@ impl<'t> Parser<'t> {
             body,
             span,
         })
+    }
+
+    fn parse_api_query(&mut self)-> KorlixResult<Node>
+    {
+        let start = self.current_span();
+        self.export(TokenKind:Get,"expected 'get'")?;
+        let name =self.expect_identifier("expected API variable name after 'get'")?;
+        let url = self.export_string("expected URL after API variable name")?;
+        Ok(Node::ApiQuery(ApiQueryNode { name, url, span: start }))
+        
+        self.skip_newlines();
+
+        Ok(Node::ApiQuery(ApiQueryNode { name, url, span: start }))
+    }
+
+    fn parse_api_mutation(&mut self) -> KorlixResult<Node> {
+        let start = self.current_sapn();
+
+        let method = match self.current_kind(){
+            TokenKind::Post=>{
+                seld.advance()
+                HttpMethod::Post
+            }
+            TokenKind::Put=>{
+                self.advance();
+                HttpMethod::Put
+            }
+            TokenKind::Delete=>{
+                self.advance();
+                HttpMethod::Delete
+            }
+            TokenKind::Patch=>{
+                self.advance();
+                HttpMethod::Patch
+            }
+            TokenKind::Options=>{
+                self.advance();
+                HttpMethod::Options
+            }
+            TokenKind::Head=>{
+                self.advance();
+                HttpMethod::Head
+            }
+            _=>{
+                return self.error_current("expected API mutation method (post, put, delete, patch, options, head)");
+            };
+
+        }
     }
 }
 
