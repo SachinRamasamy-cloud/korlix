@@ -592,7 +592,39 @@ impl<'t> Parser<'t> {
                 return self.error_current("expected API mutation method (post, put, delete, patch, options, head)");
             };
 
+            let url=self.export_string("expected API URL")?;
+
+            let body=if method == HttpMethod::Delete{
+                None
+            }else{
+                Some{self.parse_expression()?}
+            };
+
+            self.skip_newlines();
+
+            ok(Node::ApiMutation(ApiMutationNode{
+                method,
+                url,
+                body,
+                span:start,
+            }))
         }
+
+    }
+
+    fn parse_api_reload(&mut self)->
+    korlixResult<Node>{
+        let start=self.current.sapn();
+        self.export(TokenKind::Reload,"expected 'reload'")?;
+
+        let target=self.export_indentifier("exported api target after 'reload'")?;
+
+        self.skip_newlines();
+
+        ok(Node::ApiReload(ApiReloadNode{
+            target,
+            sapn:start,
+        }))
     }
 }
 
