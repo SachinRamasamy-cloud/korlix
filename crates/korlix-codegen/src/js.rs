@@ -55,7 +55,7 @@ fn gen_page_js(page: &PageDecl) -> String {
         js.push_str(&format!("// Page: {}\n(function() {{\n", page.name));
         js.push_str("  if (typeof KorlixRuntime === 'undefined') return;\n");
 
-        if !states.is_empty() {
+        if !states.is_empty() || !api_init.is_empty() {
             js.push_str("  var __state = KorlixRuntime.createState({\n");
             for s in &states {
                 js.push_str(&format!(

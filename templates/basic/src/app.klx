@@ -2,13 +2,18 @@ import MainLayout from "./layouts/main.klx"
 
 app:
   layout MainLayout
+
   theme:
     default "dark"
     dark true
+
   routes:
     page "/" from "./pages/index.klx"
     page "/about" from "./pages/about.klx"
+    page "/api-test" from "./pages/api-test.klx"
+
   providers:
     toast
     modal
     theme
+    api

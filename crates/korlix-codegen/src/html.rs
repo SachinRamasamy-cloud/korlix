@@ -11,7 +11,7 @@ pub fn render_node(node: &Node) -> String {
         Node::Component(c) => render_node(&expand_component(c)),
         Node::Text(t) => render_expr(&t.value),
         Node::If(i) => render_if_static(i),
-        Node::For(f) => format!("<!-- for {} in ... -->", f.var),
+        Node::For(f) => render_for_static(f),
         Node::Slot(s) => format!(
             r#"<div data-slot="{}" class="kx-slot"></div>"#,
             s.name.as_deref().unwrap_or("default")
@@ -86,13 +86,24 @@ fn render_if_static(i: &korlix_ast::node::IfNode) -> String {
         .as_ref()
         .map(|e| render_nodes(e))
         .unwrap_or_default();
-    let cond = render_expr(&i.condition);
+    let cond = render_expr_raw(&i.condition);
     format!(
         r#"<template data-kx-if="{}">{}</template><template data-kx-else="{}">{}</template>"#,
         html_escape_attr(&cond),
         then_html,
         html_escape_attr(&cond),
         else_html
+    )
+}
+
+fn render_for_static(f: &korlix_ast::node::ForNode) -> String {
+    let body_html = render_nodes(&f.body);
+    let iterable = render_expr_raw(&f.iterable);
+    format!(
+        r#"<template data-kx-for="{} in {}">{}</template>"#,
+        f.var,
+        html_escape_attr(&iterable),
+        body_html
     )
 }
 

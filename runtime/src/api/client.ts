@@ -57,6 +57,11 @@ async function fetchJson(url: string, init?: RequestInit): Promise<unknown> {
  * After writing, triggers `updateBindings()` and `render()` if available.
  */
 function setGlobalValue(name: string, value: unknown): void {
+  const globalState = (window as any).__KORLIX_STATE__;
+  if (globalState) {
+    globalState[name] = value;
+  }
+
   const runtime = (window as any).KorlixRuntime;
 
   if (runtime?.state) {

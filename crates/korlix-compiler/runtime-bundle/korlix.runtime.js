@@ -12,24 +12,40 @@
     var bindings = [];
 
     function update() {
-      // Update all data-kx-bind elements
+      // 1. Update for loops first
+      $$('[data-kx-for]').forEach(function(tmpl) {
+        var expr = tmpl.getAttribute('data-kx-for');
+        var parts = expr.split(/\s+in\s+/);
+        if (parts.length !== 2) return;
+        var varName = parts[0];
+        var listName = parts[1];
+        try {
+          var list = evalExpr(listName, state, tmpl) || [];
+          renderForLoop(tmpl, varName, list);
+        } catch(e) {
+          console.error('[Korlix loop error]', e);
+        }
+      });
+
+      // 2. Update all data-kx-bind elements
       $$('[data-kx-bind]').forEach(function(el) {
         var key = el.getAttribute('data-kx-bind');
-        var val = getNestedValue(state, key);
+        var val = getNestedValue(state, key, el);
         el.textContent = val !== undefined ? String(val) : '';
       });
-      // Update conditional blocks
+
+      // 3. Update conditional blocks
       $$('[data-kx-if]').forEach(function(tmpl) {
         var cond = tmpl.getAttribute('data-kx-if');
         try {
-          var result = evalExpr(cond, state);
+          var result = evalExpr(cond, state, tmpl);
           renderConditional(tmpl, result, true);
         } catch(e) {}
       });
       $$('[data-kx-else]').forEach(function(tmpl) {
         var cond = tmpl.getAttribute('data-kx-else');
         try {
-          var result = evalExpr(cond, state);
+          var result = evalExpr(cond, state, tmpl);
           renderConditional(tmpl, !result, false);
         } catch(e) {}
       });
@@ -53,6 +69,34 @@
       }
     }
 
+    function renderForLoop(tmpl, varName, list) {
+      var id = tmpl.getAttribute('data-kx-for') + '_rendered';
+      
+      // Clean up old rendered items
+      var next = tmpl.nextSibling;
+      while (next && next._kxFor === id) {
+        var toRemove = next;
+        next = next.nextSibling;
+        toRemove.remove();
+      }
+
+      // Render new items in order
+      var insertBefore = tmpl.nextSibling;
+      list.forEach(function(item) {
+        var clone = tmpl.content ? tmpl.content.cloneNode(true) : null;
+        if (!clone) return;
+
+        var wrapper = document.createElement('div');
+        wrapper._kxFor = id;
+        wrapper.style.display = 'contents';
+        wrapper._kxContext = {};
+        wrapper._kxContext[varName] = item;
+
+        wrapper.appendChild(clone);
+        tmpl.parentNode.insertBefore(wrapper, insertBefore);
+      });
+    }
+
     function proxy(obj) {
       if (typeof Proxy === 'undefined') return obj;
       return new Proxy(obj, {
@@ -69,15 +113,33 @@
     return reactive;
   }
 
-  function getNestedValue(obj, path) {
-    return path.split('.').reduce(function(o, k) { return o && o[k]; }, obj);
+  function getNestedValue(obj, path, el) {
+    var context = Object.assign({}, obj);
+    var curr = el;
+    while (curr) {
+      if (curr._kxContext) {
+        context = Object.assign({}, curr._kxContext, context);
+      }
+      curr = curr.parentNode;
+    }
+    return path.split('.').reduce(function(o, k) { return o && o[k]; }, context);
   }
 
-  function evalExpr(expr, state) {
-    var keys = Object.keys(state);
-    var vals = keys.map(function(k) { return state[k]; });
+  function evalExpr(expr, state, el) {
+    var context = Object.assign({}, state);
+    var curr = el;
+    while (curr) {
+      if (curr._kxContext) {
+        context = Object.assign({}, curr._kxContext, context);
+      }
+      curr = curr.parentNode;
+    }
+    var keys = Object.keys(context);
+    var vals = keys.map(function(k) { return context[k]; });
     try {
-      return new Function(...keys, 'return (' + expr + ')').apply(null, vals);
+      var args = keys.concat(['return (' + expr + ')']);
+      var fn = Function.prototype.constructor.apply(null, args);
+      return fn.apply(null, vals);
     } catch(e) { return false; }
   }
 
@@ -537,6 +599,9 @@
     }
 
     function setGlobalValue(name, value) {
+      if (global.__KORLIX_STATE__) {
+        global.__KORLIX_STATE__[name] = value;
+      }
       var runtime = global.KorlixRuntime;
       if (runtime && runtime.state) {
         runtime.state[name] = value;
