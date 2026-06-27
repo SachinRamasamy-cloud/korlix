@@ -515,6 +515,98 @@
 
   global.KorlixRuntime = KorlixRuntime;
 
+  // ── API (get / post / put / patch / delete / reload) ──────────────────────
+  var Api = (function() {
+    var queries = new Map();
+
+    function fetchJson(url, init) {
+      return fetch(url, Object.assign({}, init || {}, {
+        headers: Object.assign(
+          { 'Content-Type': 'application/json' },
+          (init && init.headers) || {}
+        )
+      })).then(function(response) {
+        if (!response.ok) {
+          throw new Error(response.status + ' ' + response.statusText);
+        }
+        var ct = response.headers.get('content-type') || '';
+        return ct.indexOf('application/json') !== -1
+          ? response.json()
+          : response.text();
+      });
+    }
+
+    function setGlobalValue(name, value) {
+      var runtime = global.KorlixRuntime;
+      if (runtime && runtime.state) {
+        runtime.state[name] = value;
+      } else {
+        global[name] = value;
+      }
+      if (runtime && typeof runtime.updateBindings === 'function') {
+        runtime.updateBindings();
+      }
+      if (runtime && typeof runtime.render === 'function') {
+        runtime.render();
+      }
+    }
+
+    function runQuery(name, url) {
+      var state = { data: null, loading: true, error: null, url: url };
+      queries.set(name, state);
+
+      setGlobalValue(name, []);
+      setGlobalValue(name + 'Loading', true);
+      setGlobalValue(name + 'Error', null);
+
+      return fetchJson(url)
+        .then(function(data) {
+          state.data = data;
+          state.loading = false;
+          state.error = null;
+          setGlobalValue(name, data);
+          setGlobalValue(name + 'Loading', false);
+          setGlobalValue(name + 'Error', null);
+          return data;
+        })
+        .catch(function(err) {
+          var message = err && err.message ? err.message : String(err);
+          state.loading = false;
+          state.error = message;
+          setGlobalValue(name + 'Loading', false);
+          setGlobalValue(name + 'Error', message);
+          throw err;
+        });
+    }
+
+    function request(method, url, body) {
+      return fetchJson(url, {
+        method: method,
+        body: body === undefined ? undefined : JSON.stringify(body)
+      });
+    }
+
+    function reload(name) {
+      var existing = queries.get(name);
+      if (!existing) {
+        // Graceful: warn instead of throwing so timing issues don't crash the page.
+        console.warn(
+          '[Korlix] reload("' + name + '"): query not registered yet. ' +
+          'Did you forget `get ' + name + ' "url"`?'
+        );
+        return Promise.resolve();
+      }
+      return runQuery(name, existing.url);
+    }
+
+    return { query: runQuery, request: request, reload: reload };
+  })();
+
+  // Merge Api into KorlixRuntime (may be called before the public API object
+  // is fully assembled, so we patch it directly).
+  global.KorlixRuntime = global.KorlixRuntime || {};
+  global.KorlixRuntime.api = Api;
+
   // Auto-mount on DOM ready
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function() { mount('#korlix-root'); });
@@ -523,3 +615,4 @@
   }
 
 })(window);
+

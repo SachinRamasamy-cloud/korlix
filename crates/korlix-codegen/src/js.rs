@@ -7,6 +7,8 @@ use korlix_ast::{
 use korlix_resolver::route_resolver::RouteEntry;
 use std::collections::HashMap;
 
+use crate::api::generate_api_statement;
+
 pub fn generate_app_js(module: &Module, routes: &HashMap<String, RouteEntry>) -> String {
     let mut js = String::new();
     let mut page_code: Vec<String> = vec![];
@@ -44,22 +46,61 @@ fn gen_page_js(page: &PageDecl) -> String {
     let mut states = Vec::new();
     collect_states(&page.body, &mut states);
 
-    if !states.is_empty() {
+    // Collect API query init code (regardless of state)
+    // We need a reference to the module to do this, so we pass it in from the caller.
+    // For now we collect from the page body directly.
+    let api_init = generate_api_init_from_nodes(&page.body);
+
+    if !states.is_empty() || !api_init.is_empty() {
         js.push_str(&format!("// Page: {}\n(function() {{\n", page.name));
         js.push_str("  if (typeof KorlixRuntime === 'undefined') return;\n");
-        js.push_str("  var __state = KorlixRuntime.createState({\n");
-        for s in &states {
-            js.push_str(&format!(
-                "    {}: {},\n",
-                s.name,
-                expr_to_js_literal(&s.value)
-            ));
+
+        if !states.is_empty() {
+            js.push_str("  var __state = KorlixRuntime.createState({\n");
+            for s in &states {
+                js.push_str(&format!(
+                    "    {}: {},\n",
+                    s.name,
+                    expr_to_js_literal(&s.value)
+                ));
+            }
+            js.push_str("  });\n");
+            js.push_str("  window.__KORLIX_STATE__ = __state;\n");
         }
-        js.push_str("  });\n");
-        js.push_str("  window.__KORLIX_STATE__ = __state;\n");
+
+        if !api_init.is_empty() {
+            js.push_str("\n  // Korlix API queries\n");
+            for line in api_init.lines() {
+                js.push_str("  ");
+                js.push_str(line);
+                js.push('\n');
+            }
+        }
+
         js.push_str("})();\n\n");
     }
     js
+}
+
+/// Collect API query registrations from a flat node list (top-level of a page body).
+fn generate_api_init_from_nodes(nodes: &[Node]) -> String {
+    use crate::api::generate_api_init;
+    use korlix_ast::program::{Module, Item, PageDecl};
+    use korlix_core::Span;
+    use std::path::PathBuf;
+
+    // Build a minimal synthetic module containing just these nodes so we
+    // can reuse the shared generate_api_init logic.
+    let mut module = Module::new(0, PathBuf::new());
+    module.items.push(Item::Page(PageDecl {
+        name: "__synthetic".into(),
+        route: None,
+        layout: None,
+        meta: None,
+        body: nodes.to_vec(),
+        span: Span::default(),
+    }));
+    generate_api_init(&module)
 }
 
 fn collect_states<'a>(nodes: &'a [Node], out: &mut Vec<&'a StateDecl>) {
@@ -137,33 +178,40 @@ fn gen_event_bindings(nodes: &[Node], js: &mut String) {
 fn gen_handler_body(nodes: &[Node]) -> String {
     nodes
         .iter()
-        .map(|n| match n {
-            Node::Assign(a) => format!("__state.{}={};", a.target, expr_to_js_state(&a.value)),
-            Node::Call(c) => {
-                let args = c
-                    .args
-                    .iter()
-                    .map(|e| expr_to_js(e))
-                    .collect::<Vec<_>>()
-                    .join(",");
-                format!("KorlixRuntime.call('{}', [{}]);", c.callee, args)
+        .map(|n| {
+            // API mutation/reload nodes take priority — emit them as async await calls.
+            if let Some(api_js) = generate_api_statement(n) {
+                return api_js;
             }
-            Node::Component(c) => {
-                let args = c
-                    .children
-                    .iter()
-                    .filter_map(|child| {
-                        if let Node::Text(t) = child {
-                            Some(expr_to_js(&t.value))
-                        } else {
-                            None
-                        }
-                    })
-                    .collect::<Vec<_>>()
-                    .join(",");
-                format!("KorlixRuntime.call('{}', [{}]);", c.name, args)
+
+            match n {
+                Node::Assign(a) => format!("__state.{}={};", a.target, expr_to_js_state(&a.value)),
+                Node::Call(c) => {
+                    let args = c
+                        .args
+                        .iter()
+                        .map(|e| expr_to_js(e))
+                        .collect::<Vec<_>>()
+                        .join(",");
+                    format!("KorlixRuntime.call('{}', [{}]);", c.callee, args)
+                }
+                Node::Component(c) => {
+                    let args = c
+                        .children
+                        .iter()
+                        .filter_map(|child| {
+                            if let Node::Text(t) = child {
+                                Some(expr_to_js(&t.value))
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<_>>()
+                        .join(",");
+                    format!("KorlixRuntime.call('{}', [{}]);", c.name, args)
+                }
+                _ => String::new(),
             }
-            _ => String::new(),
         })
         .collect()
 }

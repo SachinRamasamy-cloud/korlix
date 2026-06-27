@@ -3,32 +3,43 @@ use crate::{
     element::{ComponentNode, ElementNode},
     expression::Expr,
 };
+use crate::api::{ApiMutationNode, ApiQueryNode, ApiReloadNode};
 use korlix_core::Span;
 use serde::{Deserialize, Serialize};
 
-use create :: api::{ApiMutation, ApiQueryNode, ApiReloadNode, ApiRouteNode, HttpMethod};
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum Node {
-    Api(ApiMutation),
+    // ── API ──────────────────────────────────────────────────────────────
+    /// `get users "/api/users"` at page/component top-level
     ApiQuery(ApiQueryNode),
+    /// `post "/api/url" body`, `put`, `patch`, `delete` inside action bodies
+    ApiMutation(ApiMutationNode),
+    /// `reload users` inside action bodies
     ApiReload(ApiReloadNode),
-    ApiRoute(ApiRouteNode),
-    HttpMethod(HttpMethod),
+
+    // ── UI structure ─────────────────────────────────────────────────────
     Element(ElementNode),
     Component(ComponentNode),
     Text(TextNode),
+
+    // ── Declarations ─────────────────────────────────────────────────────
     State(StateDecl),
     Let(LetDecl),
     Derived(DerivedDecl),
-    If(IfNode),
-    For(ForNode),
     Action(ActionDecl),
     Data(DataDecl),
+
+    // ── Control flow ─────────────────────────────────────────────────────
+    If(IfNode),
+    For(ForNode),
+
+    // ── Statements ───────────────────────────────────────────────────────
     Assign(AssignNode),
     Call(CallNode),
     Slot(SlotNode),
     Raw(RawNode),
+
+    // ── Misc ─────────────────────────────────────────────────────────────
     Comment(String),
 }
 

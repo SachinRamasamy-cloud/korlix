@@ -1,3 +1,4 @@
+pub mod api;
 pub mod assets;
 pub mod css;
 pub mod document;
