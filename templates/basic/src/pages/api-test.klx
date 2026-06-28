@@ -1,16 +1,72 @@
 page ApiTest route "/api-test":
   get users "http://localhost:4000/api/users"
+  get stats "http://localhost:4000/api/stats"
 
-  section .p-6
-    h1 "API Test"
+  state name: string = ""
+  state email: string = ""
+  state role: string = "User"
+
+  action createUser:
+    post "http://localhost:4000/api/users" { name: name, email: email, role: role, active: true }
+    reload users
+    reload stats
+
+  section .p-6 .space-y-6:
+    div:
+      h1 .text-2xl .font-bold "API Test"
+      p .text-muted "Testing Korlix GET, POST, reload, loading, and error states."
+
+    div .grid .grid-cols-3 .gap-4:
+      div .p-4 .border .rounded-lg:
+        h2 .font-semibold "Total Users"
+        p .text-2xl stats.totalUsers
+
+      div .p-4 .border .rounded-lg:
+        h2 .font-semibold "Active Users"
+        p .text-2xl stats.activeUsers
+
+      div .p-4 .border .rounded-lg:
+        h2 .font-semibold "Inactive Users"
+        p .text-2xl stats.inactiveUsers
+
+    div .p-4 .border .rounded-lg .space-y-3:
+      h2 .font-semibold "Create User"
+
+      input .border .p-2 .rounded value=name placeholder="Name" on:input:
+        name = event.target.value
+      input .border .p-2 .rounded value=email placeholder="Email" on:input:
+        email = event.target.value
+      input .border .p-2 .rounded value=role placeholder="Role" on:input:
+        role = event.target.value
+
+      button .bg-blue-600 .text-white .px-4 .py-2 .rounded "Create User" on:click:
+        createUser()
 
     if usersLoading:
-      p "Loading..."
+      p .text-muted "Loading users..."
 
     if usersError:
-      p "{usersError}"
+      p .text-danger usersError
 
-    for user in users:
-      div .p-4 .border:
-        h2 user.name
-        p user.email
+    if statsLoading:
+      p .text-muted "Loading stats..."
+
+    if statsError:
+      p .text-danger statsError
+
+    div .space-y-3:
+      h2 .text-xl .font-semibold "Users"
+
+      for user in users:
+        div .p-4 .border .rounded-lg:
+          div .flex .items-center .justify-between:
+            div:
+              h3 .font-semibold user.name
+              p .text-muted user.email
+              p .text-sm user.role
+
+            if user["active"]:
+              span .text-success "Active"
+
+            if user["active"] == false:
+              span .text-danger "Inactive"

@@ -46,16 +46,15 @@ fn gen_page_js(page: &PageDecl) -> String {
     let mut states = Vec::new();
     collect_states(&page.body, &mut states);
 
-    // Collect API query init code (regardless of state)
-    // We need a reference to the module to do this, so we pass it in from the caller.
-    // For now we collect from the page body directly.
     let api_init = generate_api_init_from_nodes(&page.body);
+    let mut actions = Vec::new();
+    collect_actions(&page.body, &mut actions);
 
-    if !states.is_empty() || !api_init.is_empty() {
+    if !states.is_empty() || !api_init.is_empty() || !actions.is_empty() {
         js.push_str(&format!("// Page: {}\n(function() {{\n", page.name));
         js.push_str("  if (typeof KorlixRuntime === 'undefined') return;\n");
 
-        if !states.is_empty() || !api_init.is_empty() {
+        if !states.is_empty() || !api_init.is_empty() || !actions.is_empty() {
             js.push_str("  var __state = KorlixRuntime.createState({\n");
             for s in &states {
                 js.push_str(&format!(
@@ -66,6 +65,13 @@ fn gen_page_js(page: &PageDecl) -> String {
             }
             js.push_str("  });\n");
             js.push_str("  window.__KORLIX_STATE__ = __state;\n");
+        }
+
+        if !actions.is_empty() {
+            js.push_str("\n  // Page actions\n");
+            for act in &actions {
+                js.push_str(&format!("  {}\n", act));
+            }
         }
 
         if !api_init.is_empty() {
@@ -80,6 +86,18 @@ fn gen_page_js(page: &PageDecl) -> String {
         js.push_str("})();\n\n");
     }
     js
+}
+
+fn collect_actions(nodes: &[Node], out: &mut Vec<String>) {
+    for node in nodes {
+        if let Node::Action(a) = node {
+            let body_js = gen_handler_body(&a.body);
+            out.push(format!(
+                "window.{} = async function() {{\n    {}\n  }};",
+                a.name, body_js
+            ));
+        }
+    }
 }
 
 /// Collect API query registrations from a flat node list (top-level of a page body).
@@ -224,6 +242,9 @@ pub fn expr_to_js(e: &Expr) -> String {
         Expr::Null => "null".into(),
         Expr::Identifier(s) => s.clone(),
         Expr::Member { object, field } => format!("{}.{}", expr_to_js(object), field),
+        Expr::Index { object, index } => {
+            format!("{}[{}]", expr_to_js(object), expr_to_js(index))
+        }
         Expr::Binary { left, op, right } => {
             use korlix_ast::expression::BinaryOp;
             let op_str = match op {
@@ -247,6 +268,17 @@ pub fn expr_to_js(e: &Expr) -> String {
             let a = args.iter().map(expr_to_js).collect::<Vec<_>>().join(", ");
             format!("{}({})", expr_to_js(callee), a)
         }
+        Expr::Object(pairs) => {
+            let p: Vec<String> = pairs
+                .iter()
+                .map(|(k, v)| format!("{}: {}", k, expr_to_js(v)))
+                .collect();
+            format!("{{ {} }}", p.join(", "))
+        }
+        Expr::List(items) => {
+            let it: Vec<String> = items.iter().map(|item| expr_to_js(item)).collect();
+            format!("[{}]", it.join(", "))
+        }
         _ => "null".into(),
     }
 }
@@ -256,10 +288,19 @@ fn expr_to_js_literal(e: &Expr) -> String {
 }
 
 #[allow(dead_code)]
-fn expr_to_js_state(e: &Expr) -> String {
+pub fn expr_to_js_state(e: &Expr) -> String {
     match e {
-        Expr::Identifier(s) => format!("__state.{}", s),
+        Expr::Identifier(s) => {
+            if s == "event" {
+                s.clone()
+            } else {
+                format!("__state.{}", s)
+            }
+        },
         Expr::Member { object, field } => format!("{}.{}", expr_to_js_state(object), field),
+        Expr::Index { object, index } => {
+            format!("{}[{}]", expr_to_js_state(object), expr_to_js_state(index))
+        }
         Expr::Binary { left, op, right } => {
             use korlix_ast::expression::BinaryOp;
             let op_str = match op {
@@ -291,6 +332,17 @@ fn expr_to_js_state(e: &Expr) -> String {
                 .collect::<Vec<_>>()
                 .join(", ");
             format!("{}({})", expr_to_js_state(callee), a)
+        }
+        Expr::Object(pairs) => {
+            let p: Vec<String> = pairs
+                .iter()
+                .map(|(k, v)| format!("{}: {}", k, expr_to_js_state(v)))
+                .collect();
+            format!("{{ {} }}", p.join(", "))
+        }
+        Expr::List(items) => {
+            let it: Vec<String> = items.iter().map(|item| expr_to_js_state(item)).collect();
+            format!("[{}]", it.join(", "))
         }
         _ => expr_to_js(e),
     }

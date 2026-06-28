@@ -1,6 +1,6 @@
 {
   "name": "create-korlix",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Create a new Korlix app",
   "license": "MIT",
   "author": "Sachin Ramasamy",
@@ -25,6 +25,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "cross-spawn": "^7.0.6",
     "korlix": "0.1.2"
   },
   "scripts": {

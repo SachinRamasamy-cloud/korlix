@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const readline = require("readline");
-const { spawnSync } = require("child_process");
+const spawn = require("cross-spawn");
 const path = require("path");
 const fs = require("fs");
 
@@ -24,8 +24,53 @@ function printUsage() {
   console.error("Usage:");
   console.error("  npm create korlix@latest");
   console.error("  npm create korlix@latest my-app");
+  console.error("  npm create korlix@latest my-app -- --install");
   console.error("  npx --prefer-online create-korlix@latest my-app");
   console.error("");
+}
+
+function parseArgs(argv) {
+  const options = {
+    install: false,
+    start: false,
+    projectName: undefined
+  };
+
+  for (const arg of argv) {
+    if (arg === "--help" || arg === "-h") {
+      printUsage();
+      process.exit(0);
+    }
+
+    if (arg === "--install" || arg === "--immediate") {
+      options.install = true;
+      continue;
+    }
+
+    if (arg === "--start") {
+      options.install = true;
+      options.start = true;
+      continue;
+    }
+
+    if (arg.startsWith("-")) {
+      console.error("");
+      console.error(`Error: unknown option: ${arg}`);
+      printUsage();
+      process.exit(1);
+    }
+
+    if (options.projectName) {
+      console.error("");
+      console.error(`Error: unexpected argument: ${arg}`);
+      printUsage();
+      process.exit(1);
+    }
+
+    options.projectName = arg;
+  }
+
+  return options;
 }
 
 function validateProjectName(projectName) {
@@ -49,53 +94,8 @@ function validateProjectName(projectName) {
   }
 }
 
-function runNodeScript(scriptPath, args, cwd = process.cwd()) {
-  const result = spawnSync(process.execPath, [scriptPath, ...args], {
-    cwd,
-    stdio: "inherit",
-    shell: false,
-    windowsHide: true
-  });
-
-  if (result.error) {
-    console.error(result.error);
-    process.exit(1);
-  }
-
-  if (result.status !== 0) {
-    process.exit(result.status ?? 1);
-  }
-}
-
-function runNpm(args, cwd = process.cwd()) {
-  let command;
-  let finalArgs;
-
-  const npmExecPath = process.env.npm_execpath;
-
-  // Best method:
-  // npm/npx gives us npm's JS file path.
-  // Run that through Node instead of directly spawning npm.cmd.
-  if (
-    npmExecPath &&
-    fs.existsSync(npmExecPath) &&
-    !npmExecPath.endsWith(".cmd") &&
-    !npmExecPath.endsWith(".bat")
-  ) {
-    command = process.execPath;
-    finalArgs = [npmExecPath, ...args];
-  } else if (process.platform === "win32") {
-    // Windows fallback.
-    // Do not spawn npm.cmd directly.
-    command = process.env.ComSpec || "cmd.exe";
-    finalArgs = ["/d", "/s", "/c", "npm", ...args];
-  } else {
-    // Linux/macOS.
-    command = "npm";
-    finalArgs = args;
-  }
-
-  const result = spawnSync(command, finalArgs, {
+function run(command, args, cwd = process.cwd()) {
+  const result = spawn.sync(command, args, {
     cwd,
     stdio: "inherit",
     shell: false,
@@ -113,6 +113,49 @@ function runNpm(args, cwd = process.cwd()) {
   }
 }
 
+function detectPackageManager() {
+  const userAgent = process.env.npm_config_user_agent || "";
+  const name = userAgent.split(" ")[0].split("/")[0];
+
+  if (name === "yarn") {
+    return {
+      name,
+      install: ["yarn"],
+      dev: ["yarn", "dev"]
+    };
+  }
+
+  if (name === "pnpm") {
+    return {
+      name,
+      install: ["pnpm", "install"],
+      dev: ["pnpm", "dev"]
+    };
+  }
+
+  if (name === "bun") {
+    return {
+      name,
+      install: ["bun", "install"],
+      dev: ["bun", "run", "dev"]
+    };
+  }
+
+  return {
+    name: "npm",
+    install: ["npm", "install"],
+    dev: ["npm", "run", "dev"]
+  };
+}
+
+function formatCommand(command) {
+  return command.join(" ");
+}
+
+function formatCdTarget(projectName) {
+  return /\s/.test(projectName) ? `"${projectName}"` : projectName;
+}
+
 function writeJson(filePath, data) {
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n");
 }
@@ -128,7 +171,8 @@ async function main() {
   console.log("Korlix - frontend-first language");
   console.log("");
 
-  let projectName = process.argv[2];
+  const options = parseArgs(process.argv.slice(2));
+  let projectName = options.projectName;
 
   validateProjectName(projectName);
 
@@ -150,7 +194,7 @@ async function main() {
 
   const korlixCliScript = findKorlixCliScript();
 
-  runNodeScript(korlixCliScript, ["new", projectName], process.cwd());
+  run(process.execPath, [korlixCliScript, "new", projectName], process.cwd());
 
   const configPath = path.join(projectPath, "korlix.config.json");
 
@@ -174,25 +218,43 @@ async function main() {
 
     pkg.devDependencies = {
       ...(pkg.devDependencies || {}),
-      korlix: "0.1.1"
+      korlix: "0.1.2"
     };
 
     writeJson(packagePath, pkg);
   }
 
+  const packageManager = detectPackageManager();
+  const cdTarget = formatCdTarget(projectName);
+
   console.log("");
   console.log("Korlix app created");
   console.log("");
-  console.log("Installing dependencies...");
-  console.log("");
+  if (options.install) {
+    console.log("Installing dependencies...");
+    console.log("");
+    run(packageManager.install[0], packageManager.install.slice(1), projectPath);
 
-  runNpm(["install"], projectPath);
-
-  console.log("");
-  console.log("Starting dev server...");
-  console.log("");
-
-  runNpm(["run", "dev"], projectPath);
+    if (options.start) {
+      console.log("");
+      console.log("Starting dev server...");
+      console.log("");
+      run(packageManager.dev[0], packageManager.dev.slice(1), projectPath);
+    } else {
+      console.log("");
+      console.log("Next step:");
+      console.log(`  cd ${cdTarget}`);
+      console.log(`  ${formatCommand(packageManager.dev)}`);
+    }
+  } else {
+    console.log("Next steps:");
+    console.log(`  cd ${cdTarget}`);
+    console.log(`  ${formatCommand(packageManager.install)}`);
+    console.log(`  ${formatCommand(packageManager.dev)}`);
+    console.log("");
+    console.log("To install during creation, run:");
+    console.log(`  npm create korlix@latest ${projectName} -- --install`);
+  }
 }
 
 main().catch((err) => {

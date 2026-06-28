@@ -34,6 +34,32 @@
         el.textContent = val !== undefined ? String(val) : '';
       });
 
+      // Update all data-kx-expr elements
+      $$('[data-kx-expr]').forEach(function(el) {
+        var expr = el.getAttribute('data-kx-expr');
+        try {
+          var val = evalExpr(expr, state, el);
+          el.textContent = val !== undefined ? String(val) : '';
+        } catch(e) {}
+      });
+
+      // Update all data-kx-bind-attr elements reactively
+      $$('[data-kx-bind-attr]').forEach(function(el) {
+        var spec = el.getAttribute('data-kx-bind-attr');
+        var idx = spec.indexOf(':');
+        if (idx === -1) return;
+        var attrName = spec.substring(0, idx);
+        var expr = spec.substring(idx + 1);
+        try {
+          var val = evalExpr(expr, state, el);
+          if (attrName === 'value') {
+            if (el.value !== val) el.value = val !== undefined ? String(val) : '';
+          } else {
+            el.setAttribute(attrName, val !== undefined ? String(val) : '');
+          }
+        } catch(e) {}
+      });
+
       // 3. Update conditional blocks
       $$('[data-kx-if]').forEach(function(tmpl) {
         var cond = tmpl.getAttribute('data-kx-if');

@@ -46,17 +46,24 @@ fn render_element(el: &ElementNode) -> String {
         attrs.push_str(&format!(r#" class="{}""#, html_escape_attr(&classes)));
     }
     for prop in &el.props {
-        let val = render_expr_attr(&prop.value);
-        let key = &prop.key;
-        // Skip JS-injection risks
-        if key.starts_with("on") && val.to_lowercase().contains("javascript:") {
-            continue;
+        if is_expr_dynamic(&prop.value) {
+            let expr_raw = render_expr_raw(&prop.value);
+            attrs.push_str(&format!(
+                " data-kx-bind-attr=\"{}:{}\"",
+                prop.key, expr_raw
+            ));
+        } else {
+            let val = render_expr_attr(&prop.value);
+            let key = &prop.key;
+            if key.starts_with("on") && val.to_lowercase().contains("javascript:") {
+                continue;
+            }
+            attrs.push_str(&format!(
+                r#" {}="{}""#,
+                html_attr_key(key),
+                html_escape_attr(&val)
+            ));
         }
-        attrs.push_str(&format!(
-            r#" {}="{}""#,
-            html_attr_key(key),
-            html_escape_attr(&val)
-        ));
     }
 
     // Encode events as data attributes for runtime
@@ -177,6 +184,9 @@ pub fn render_expr_raw(e: &Expr) -> String {
                 .join(", ");
             format!("{}({})", render_expr_raw(callee), a)
         }
+        Expr::Index { object, index } => {
+            format!("{}[{}]", render_expr_raw(object), render_expr_raw(index))
+        }
         _ => String::new(),
     }
 }
@@ -274,7 +284,13 @@ fn korlix_codegen_api_stub(node: &Node) -> Option<String> {
 
 fn render_expr_state(e: &Expr) -> String {
     match e {
-        Expr::Identifier(s) => format!("__state.{}", s),
+        Expr::Identifier(s) => {
+            if s == "event" {
+                s.clone()
+            } else {
+                format!("__state.{}", s)
+            }
+        },
         Expr::Member { object, field } => format!("{}.{}", render_expr_state(object), field),
         Expr::Binary { left, op, right } => {
             use korlix_ast::expression::BinaryOp;
@@ -307,6 +323,9 @@ fn render_expr_state(e: &Expr) -> String {
                 .collect::<Vec<_>>()
                 .join(", ");
             format!("{}({})", render_expr_state(callee), a)
+        }
+        Expr::Index { object, index } => {
+            format!("{}[{}]", render_expr_state(object), render_expr_state(index))
         }
         _ => render_expr_raw(e),
     }
@@ -349,4 +368,11 @@ pub fn html_escape_attr(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('"', "&quot;")
         .replace('<', "&lt;")
+}
+
+fn is_expr_dynamic(e: &Expr) -> bool {
+    match e {
+        Expr::String(_) | Expr::Number(_) | Expr::Bool(_) | Expr::Null => false,
+        _ => true,
+    }
 }

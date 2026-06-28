@@ -17,6 +17,7 @@ Welcome to the Korlix documentation. Korlix is an ultra-light frontend language 
 | 09 | [State, Events & Functions](./09-state-events-functions.md) | Reactive state, event handlers, built-ins |
 | 10 | [Error Codes](./10-error-codes.md) | All KX-E, KX-S, KX-A, KX-SEO, KX-P codes |
 | 11 | [Compiler Architecture](./11-compiler-architecture.md) | 12-crate system, pipeline, extension points |
+| 12 | [Developer Manual](./usermanual.md) | Comprehensive end-to-end detailed developer handbook |
 
 ## Quick Reference
 

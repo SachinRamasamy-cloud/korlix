@@ -5,7 +5,7 @@ use korlix_ast::{
     program::{Item, Module},
 };
 
-use crate::js::expr_to_js;
+
 
 // ── Public surface ─────────────────────────────────────────────────────────
 
@@ -111,7 +111,7 @@ fn generate_reload(r: &ApiReloadNode) -> String {
 /// Convert an expression to JS suitable for an API request body.
 /// Delegates to the shared `expr_to_js` from `js.rs` for consistency.
 fn expr_to_api_js(expr: &Expr) -> String {
-    expr_to_js(expr)
+    crate::js::expr_to_js_state(expr)
 }
 
 /// Format a Rust string as a JSON-safe JS string literal.

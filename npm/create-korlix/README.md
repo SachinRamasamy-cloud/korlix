@@ -57,16 +57,15 @@ If no folder name is provided, Korlix asks:
 Project name (my-korlix-app):
 ```
 
-After that, it automatically:
+After that, it:
 
 ```text
 creates the project
 sets SPA mode
-installs dependencies
-starts the dev server
 ```
 
-No extra setup is required.
+Then it prints the commands to install dependencies and start the dev server.
+This follows the modern React/Vite-style flow and avoids Windows `npm.cmd` child-process issues.
 
 ---
 
@@ -78,7 +77,13 @@ No extra setup is required.
 npm create korlix@latest my-app
 ```
 
-The creator will scaffold the project, install dependencies, and start the dev server.
+The creator will scaffold the project and print the next commands:
+
+```bash
+cd my-app
+npm install
+npm run dev
+```
 
 Open:
 
@@ -100,7 +105,19 @@ Korlix will ask for the project name:
 Project name (my-korlix-app):
 ```
 
-Then it creates the project, installs dependencies, and starts the dev server.
+Then it creates the project and prints the commands to install dependencies and start the dev server.
+
+To install dependencies during creation, pass the Korlix creator option after `--`:
+
+```bash
+npm create korlix@latest my-app -- --install
+```
+
+To install and immediately start the dev server:
+
+```bash
+npm create korlix@latest my-app -- --start
+```
 
 ---
 
@@ -406,7 +423,13 @@ Without name:
 npm create korlix@latest
 ```
 
-Korlix asks for the project name, creates the app, installs dependencies, and starts the dev server.
+Korlix asks for the project name if needed, creates the app, and prints:
+
+```bash
+cd my-app
+npm install
+npm run dev
+```
 
 ---
 
