@@ -5,8 +5,6 @@ use korlix_ast::{
     program::{Item, Module},
 };
 
-
-
 // ── Public surface ─────────────────────────────────────────────────────────
 
 /// Generate `KorlixRuntime.api.query(...)` calls for every `get` declaration

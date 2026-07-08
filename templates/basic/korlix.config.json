@@ -5,6 +5,6 @@
   "public": "public",
   "dist": "dist",
   "mode": "spa",
-  "theme": { "default": "dark", "dark": true },
+  "theme": { "default": "light", "dark": false },
   "server": { "port": 3000 }
 }

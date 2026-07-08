@@ -80,7 +80,6 @@ pub enum TokenKind {
     Newline,
     Eof,
 
-
     // ── Api ───────────────────────────────────────────────────────
     Get,
     Post,

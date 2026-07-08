@@ -195,7 +195,8 @@ impl<'a> Lexer<'a> {
 
             // ── class (.something) ─────────────────────────────────────
             if ch == '.' {
-                let preceded_by_alphanumeric = self.pos > 0 && self.chars[self.pos - 1].is_alphanumeric();
+                let preceded_by_alphanumeric =
+                    self.pos > 0 && self.chars[self.pos - 1].is_alphanumeric();
                 // check next char is ident-start
                 if !preceded_by_alphanumeric && self.peek2().is_some() {
                     let nc = self.peek2().unwrap();

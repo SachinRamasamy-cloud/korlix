@@ -218,7 +218,7 @@ async function main() {
 
     pkg.devDependencies = {
       ...(pkg.devDependencies || {}),
-      korlix: "0.1.2"
+      korlix: "0.1.3"
     };
 
     writeJson(packagePath, pkg);

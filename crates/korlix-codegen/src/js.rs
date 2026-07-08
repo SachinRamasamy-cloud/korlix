@@ -103,7 +103,7 @@ fn collect_actions(nodes: &[Node], out: &mut Vec<String>) {
 /// Collect API query registrations from a flat node list (top-level of a page body).
 fn generate_api_init_from_nodes(nodes: &[Node]) -> String {
     use crate::api::generate_api_init;
-    use korlix_ast::program::{Module, Item, PageDecl};
+    use korlix_ast::program::{Item, Module, PageDecl};
     use korlix_core::Span;
     use std::path::PathBuf;
 
@@ -296,7 +296,7 @@ pub fn expr_to_js_state(e: &Expr) -> String {
             } else {
                 format!("__state.{}", s)
             }
-        },
+        }
         Expr::Member { object, field } => format!("{}.{}", expr_to_js_state(object), field),
         Expr::Index { object, index } => {
             format!("{}[{}]", expr_to_js_state(object), expr_to_js_state(index))

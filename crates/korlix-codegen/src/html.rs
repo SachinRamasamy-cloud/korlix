@@ -48,10 +48,7 @@ fn render_element(el: &ElementNode) -> String {
     for prop in &el.props {
         if is_expr_dynamic(&prop.value) {
             let expr_raw = render_expr_raw(&prop.value);
-            attrs.push_str(&format!(
-                " data-kx-bind-attr=\"{}:{}\"",
-                prop.key, expr_raw
-            ));
+            attrs.push_str(&format!(" data-kx-bind-attr=\"{}:{}\"", prop.key, expr_raw));
         } else {
             let val = render_expr_attr(&prop.value);
             let key = &prop.key;
@@ -211,7 +208,9 @@ fn nodes_to_js_stub(nodes: &[Node]) -> String {
                 return api_js;
             }
             match n {
-                Node::Assign(a) => format!("__state.{} = {}", a.target, render_expr_state(&a.value)),
+                Node::Assign(a) => {
+                    format!("__state.{} = {}", a.target, render_expr_state(&a.value))
+                }
                 Node::Call(c) => format!(
                     "KorlixRuntime.call('{}', [{}])",
                     c.callee,
@@ -228,7 +227,9 @@ fn nodes_to_js_stub(nodes: &[Node]) -> String {
                         .filter_map(|child| {
                             if let Node::Text(t) = child {
                                 Some(match &t.value {
-                                    Expr::Identifier(s) => format!("\"{}\"", s.replace('"', "\\\"")),
+                                    Expr::Identifier(s) => {
+                                        format!("\"{}\"", s.replace('"', "\\\""))
+                                    }
                                     other => render_expr_state(other),
                                 })
                             } else {
@@ -272,7 +273,10 @@ fn korlix_codegen_api_stub(node: &Node) -> Option<String> {
                 Some(b) => render_expr_raw(b),
                 None => "undefined".into(),
             };
-            Some(format!("KorlixRuntime.api.request({},{},{})", method, url, body))
+            Some(format!(
+                "KorlixRuntime.api.request({},{},{})",
+                method, url, body
+            ))
         }
         Node::ApiReload(r) => {
             let name = format!("{:?}", r.target.as_str());
@@ -290,7 +294,7 @@ fn render_expr_state(e: &Expr) -> String {
             } else {
                 format!("__state.{}", s)
             }
-        },
+        }
         Expr::Member { object, field } => format!("{}.{}", render_expr_state(object), field),
         Expr::Binary { left, op, right } => {
             use korlix_ast::expression::BinaryOp;
@@ -325,7 +329,11 @@ fn render_expr_state(e: &Expr) -> String {
             format!("{}({})", render_expr_state(callee), a)
         }
         Expr::Index { object, index } => {
-            format!("{}[{}]", render_expr_state(object), render_expr_state(index))
+            format!(
+                "{}[{}]",
+                render_expr_state(object),
+                render_expr_state(index)
+            )
         }
         _ => render_expr_raw(e),
     }

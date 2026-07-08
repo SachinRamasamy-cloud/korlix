@@ -1,10 +1,10 @@
 use crate::parser::Parser;
 use korlix_ast::{
+    api::{ApiMutationNode, ApiQueryNode, ApiReloadNode, HttpMethod},
     declarations::{
         ActionDecl, DataDecl, DerivedDecl, ImportDecl, LetDecl, MetaBlock, RouteDecl, StateDecl,
         ThemeDecl,
     },
-    api::{ApiMutationNode, ApiQueryNode, ApiReloadNode, HttpMethod},
     expression::Expr,
     node::{AssignNode, CallNode, ForNode, IfNode, Node, TextNode},
     program::{AppDecl, ComponentDecl, Item, LayoutDecl, MountDecl, PageDecl},
@@ -585,7 +585,10 @@ impl<'t> Parser<'t> {
         } else {
             self.diagnostics.error(
                 "KX-E010",
-                format!("Expected URL string after `get {name}`, found `{}`", self.current_kind()),
+                format!(
+                    "Expected URL string after `get {name}`, found `{}`",
+                    self.current_kind()
+                ),
             );
             return None;
         };
@@ -629,7 +632,10 @@ impl<'t> Parser<'t> {
             other => {
                 self.diagnostics.error(
                     "KX-E011",
-                    format!("Expected HTTP mutation keyword (post/put/patch/delete), found `{}`", other),
+                    format!(
+                        "Expected HTTP mutation keyword (post/put/patch/delete), found `{}`",
+                        other
+                    ),
                 );
                 return None;
             }
@@ -643,7 +649,11 @@ impl<'t> Parser<'t> {
         } else {
             self.diagnostics.error(
                 "KX-E012",
-                format!("Expected URL string after `{}`, found `{}`", method.as_str(), self.current_kind()),
+                format!(
+                    "Expected URL string after `{}`, found `{}`",
+                    method.as_str(),
+                    self.current_kind()
+                ),
             );
             return None;
         };
@@ -653,9 +663,7 @@ impl<'t> Parser<'t> {
         // - For others, if the next token is a newline/dedent/EOF we skip body.
         let body = if matches!(method, HttpMethod::Delete | HttpMethod::Head) {
             None
-        } else if self.check(&TokenKind::Newline)
-            || self.check(&TokenKind::Dedent)
-            || self.is_eof()
+        } else if self.check(&TokenKind::Newline) || self.check(&TokenKind::Dedent) || self.is_eof()
         {
             None
         } else {
