@@ -1,155 +1,125 @@
-# ◈ Korlix
+# Korlix
 
-**Ultra-light frontend language** — Korlix compiles `.klx` files into clean HTML, CSS, and JavaScript.
+Korlix is an indentation-based frontend language. `.klx` source files compile to browser-native HTML, CSS and JavaScript without requiring React, Vue, Bootstrap, Tailwind or another client framework at runtime.
 
 ```klx
-page index route "/":
-  section .min-h-screen .center .bg-dark:
-    h1 .text-6xl .font-bold .text-primary "Hello Korlix"
-    p .text-muted "Build websites with clean syntax."
+page Counter at "/counter"
+  state count: int = 0
 
-    btn .primary "Show Toast" on:click:
-      toast success "Korlix is working!"
+  card variant=raised
+    h1 "Count: {count}"
+    button "Increase" variant=primary click=increment
 
-    state count: int = 0
-    btn .ghost "Count: " on:click:
-      count = count + 1
-    text count
+  fn increment
+    count += 1
 ```
 
-## What Korlix replaces
+## Implemented V2 foundation
 
-| Tool | Korlix equivalent |
-|------|------------------|
-| React | Page + Component + State system |
-| Tailwind CSS | Built-in JIT utility engine |
-| React Router | Built-in SPA router |
-| React Toastify | Built-in `toast` component |
-| React Modal | Built-in `modal` component |
-| React Hook Form | Built-in `form` + validation |
-| Framer Motion | Built-in `motion` utilities |
+- Simplified `page Name at "/route"` and `fn` syntax, while retaining V1 syntax
+- Optional trailing colons for indentation blocks
+- Modern native HTML element registry, including common inline SVG primitives
+- Korlix-native color vocabulary: `surface-*`, `content-*`, `outline-*`, `accent-*`, `fill-*`, `stroke-*`, `ring-color-*` and `caret-color-*`
+- Semantic theme tokens and `light`, `dark`, or `auto` application modes
+- Built-in `theme-toggle`
+- More than 100 registered components across navigation, cards, forms, feedback, overlays, data, media and layout
+- User components with typed props, defaults, required-prop validation and default slots
+- Reactive state, local values, derived values, functions/actions, conditions, loops, interpolation and compound assignment
+- HTTP queries and `get`, `post`, `put`, `patch`, `delete`, and `reload` statements
+- Built-in pagination with explicit page counts or total-record calculation and optional URL synchronization
+- Default application layouts and imported aliases
+- Duplicate route/declaration validation and basic literal type checking
+- Static multipage output and experimental SPA build output
 
-## Quick Start
+## Quick start
 
 ```bash
-cargo install korlix
-korlix new my-site
+cargo build --release
+./target/release/korlix new my-site
 cd my-site
-korlix dev
+../target/release/korlix dev
 ```
 
-Open `http://localhost:3000`.
-
-## CLI Commands
+Build and check an existing project:
 
 ```bash
-korlix new <name>         Create a new project
-korlix dev                Start dev server with hot drop
-korlix build              Build for production (static)
-korlix build --mode spa   Build as SPA
-korlix check              Lint all .klx files
-korlix check --ast        Print AST to stdout
-korlix preview            Preview production build
+korlix check
+korlix build --mode static
 ```
 
-## Features — Phase 1
+## Project structure
 
-- **KLX Language** — Clean, indentation-based syntax
-- **Lexer + Parser + AST** — Full compiler pipeline in Rust
-- **12 Rust crates** — Modular, extensible workspace
-- **JIT CSS engine** — Only ships classes you use
-- **Full color system** — 17 palettes × 11 shades + semantic tokens
-- **100+ utility classes** — Layout, spacing, typography, effects, variants
-- **100+ components** — Button, modal, toast, avatar, pagination, forms, and more
-- **Component expander** — All components expand to HTML at compile time
-- **SPA router** — Built-in client-side routing
-- **Hot drop** — CSS, route, and component hot reload in dev
-- **TypeScript runtime** — Modular browser runtime (~20kb)
-- **Error overlay** — Browser error display during development
-
-## Project Structure
-
-```
+```text
 my-site/
 ├── korlix.config.json
 ├── src/
-│   ├── main.klx          # Entry point
-│   ├── app.klx           # App config + routes
-│   ├── pages/            # Route-mapped pages
-│   ├── layouts/          # Layout wrappers
-│   ├── components/       # Reusable components
-│   └── theme/            # Design tokens
-└── dist/                 # Build output
-    ├── index.html
-    └── assets/
-        ├── korlix.css
-        ├── korlix.runtime.js
-        └── app.js
+│   ├── main.klx
+│   ├── app.klx
+│   ├── pages/
+│   ├── layouts/
+│   └── components/
+├── public/
+└── dist/
 ```
 
-## Syntax Highlights
+## Components and themes
 
-### Page with state and events
 ```klx
-page counter route "/counter":
-  state count: int = 0
+app Store
+  layout MainLayout
+  theme auto
 
-  div .flex .flex-col .items-center .gap-4 .py-20:
-    h1 .text-5xl .font-bold count
-    div .flex .gap-3:
-      btn .primary "+" on:click:
-        count = count + 1
-      btn .ghost "-" on:click:
-        count = count - 1
-      btn .danger "Reset" on:click:
-        count = 0
-```
+layout MainLayout
+  navbar variant=glass
+    strong "Store"
+    theme-toggle
+  main
+    slot
 
-### Component with props
-```klx
-component user-card:
+component product-summary
   prop name: string
-  prop role: string = "Member"
-  prop avatar: string
+  prop price: number
 
-  card .p-6 .rounded-xl:
-    avatar src=avatar name=name size="lg"
-    h3 .font-bold .mt-3 name
-    p .text-muted role
+  product-card variant=raised
+    h3 name
+    p "Price: {price}"
 ```
 
-### Data fetching
+## API and pagination
+
 ```klx
-page products route "/products":
-  data items = get "/api/products":
-    loading skeleton-card count=6
-    error empty-state icon="warning" title="Failed to load"
-    empty empty-state icon="box" title="No products"
+page Products at "/products"
+  state page: int = 1
+  get products "/api/products"
 
-  div .grid .grid-cols-3 .gap-6:
-    for item in items:
-      product-card product=item
+  if products.loading
+    spinner
+  else
+    for product in products.data
+      product-card product=product
+
+  pagination page=page total=products.total size=20 url-sync
+
+  fn createProduct
+    post "/api/products" { name: name }
+    reload products
 ```
 
-## Architecture
+## Verification
 
+```bash
+cargo fmt --all -- --check
+cargo check --workspace
+cargo test --workspace
+node --check crates/korlix-compiler/runtime-bundle/korlix.runtime.js
 ```
-.klx files
-   ↓ File Resolver
-   ↓ Lexer (korlix-lexer)
-   ↓ Parser (korlix-parser)
-   ↓ AST (korlix-ast)
-   ↓ Resolver (korlix-resolver)
-   ↓ Validator (korlix-validator)
-   ↓ Component Expander (korlix-components)
-   ↓ Style Scanner (korlix-style)
-   ↓ Runtime Analyzer (korlix-runtime-plan)
-   ↓ HTML/CSS/JS Generator (korlix-codegen)
-   ↓ dist/
-```
+
+See [the documentation index](docs/00-index.md), the [implementation-status matrix](docs/18-implementation-status.md), and the runnable [`examples/v2-showcase`](examples/v2-showcase).
+
+## Current scope
+
+The repository now contains a tested V2 language foundation. Static multipage compilation is the stable target. Advanced record-shape inference, lifecycle APIs, full JavaScript interoperability, a package manager, LSP tooling and production-complete behavior for every catalog component remain separate future phases.
 
 ## License
 
-MIT © Korlix Contributors
-# korlix
-# korlix
+MIT

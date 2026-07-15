@@ -74,7 +74,7 @@ fn item_body(item: &Item) -> &[Node] {
 /// `KorlixRuntime.api.query("users", "/api/users");`
 fn generate_query(q: &ApiQueryNode) -> String {
     format!(
-        "KorlixRuntime.api.query({}, {});",
+        "KorlixRuntime.api.query({}, {}, {{}}, __state);",
         js_str(&q.name),
         js_str(&q.url)
     )

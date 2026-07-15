@@ -1,13 +1,11 @@
 use korlix_ast::{
     declarations::StateDecl,
-    expression::Expr,
+    expression::{Expr, StringPart},
     node::Node,
     program::{Item, Module, PageDecl},
 };
 use korlix_resolver::route_resolver::RouteEntry;
-use std::collections::HashMap;
-
-use crate::api::generate_api_statement;
+use std::collections::{HashMap, HashSet};
 
 pub fn generate_app_js(module: &Module, routes: &HashMap<String, RouteEntry>) -> String {
     let mut js = String::new();
@@ -51,8 +49,15 @@ fn gen_page_js(page: &PageDecl) -> String {
     collect_actions(&page.body, &mut actions);
 
     if !states.is_empty() || !api_init.is_empty() || !actions.is_empty() {
+        let route = page.route.as_deref().unwrap_or("/");
         js.push_str(&format!("// Page: {}\n(function() {{\n", page.name));
         js.push_str("  if (typeof KorlixRuntime === 'undefined') return;\n");
+        js.push_str(&format!("  var __route = {:?};\n", route));
+        js.push_str(r"  var __path = window.location.pathname.replace(/\/$/, '') || '/';");
+        js.push('\n');
+        js.push_str(r"  var __expected = __route.replace(/\/$/, '') || '/';");
+        js.push('\n');
+        js.push_str("  if (__path !== __expected) return;\n");
 
         if !states.is_empty() || !api_init.is_empty() || !actions.is_empty() {
             js.push_str("  var __state = KorlixRuntime.createState({\n");
@@ -64,6 +69,13 @@ fn gen_page_js(page: &PageDecl) -> String {
                 ));
             }
             js.push_str("  });\n");
+            js.push_str(
+                "  window.__KORLIX_STATE_BY_PAGE__ = window.__KORLIX_STATE_BY_PAGE__ || {};\n",
+            );
+            js.push_str(&format!(
+                "  window.__KORLIX_STATE_BY_PAGE__[{:?}] = __state;\n",
+                page.name
+            ));
             js.push_str("  window.__KORLIX_STATE__ = __state;\n");
         }
 
@@ -90,11 +102,22 @@ fn gen_page_js(page: &PageDecl) -> String {
 
 fn collect_actions(nodes: &[Node], out: &mut Vec<String>) {
     for node in nodes {
-        if let Node::Action(a) = node {
-            let body_js = gen_handler_body(&a.body);
+        if let Node::Action(action) = node {
+            let mut locals: HashSet<String> = action
+                .params
+                .iter()
+                .map(|param| param.name.clone())
+                .collect();
+            let body_js = gen_handler_body(&action.body, &mut locals);
+            let params = action
+                .params
+                .iter()
+                .map(|param| param.name.as_str())
+                .collect::<Vec<_>>()
+                .join(", ");
             out.push(format!(
-                "window.{} = async function() {{\n    {}\n  }};",
-                a.name, body_js
+                "window.{} = async function({}) {{\n    {}\n  }};",
+                action.name, params, body_js
             ));
         }
     }
@@ -162,7 +185,7 @@ fn gen_event_bindings(nodes: &[Node], js: &mut String) {
         match node {
             Node::Element(el) => {
                 for ev in &el.events {
-                    let handler = gen_handler_body(&ev.body);
+                    let handler = gen_handler_body(&ev.body, &mut HashSet::new());
                     js.push_str(&format!(
                         "  KorlixRuntime.bindEvent('[data-on-{}]', '{}', function(__state){{ {} }}, __state);\n",
                         ev.event, ev.event, handler
@@ -172,7 +195,7 @@ fn gen_event_bindings(nodes: &[Node], js: &mut String) {
             }
             Node::Component(c) => {
                 for ev in &c.events {
-                    let handler = gen_handler_body(&ev.body);
+                    let handler = gen_handler_body(&ev.body, &mut HashSet::new());
                     js.push_str(&format!(
                         "  KorlixRuntime.bindEvent('[data-on-{}]', '{}', function(__state){{ {} }}, __state);\n",
                         ev.event, ev.event, handler
@@ -192,46 +215,193 @@ fn gen_event_bindings(nodes: &[Node], js: &mut String) {
     }
 }
 
-#[allow(dead_code)]
-fn gen_handler_body(nodes: &[Node]) -> String {
-    nodes
-        .iter()
-        .map(|n| {
-            // API mutation/reload nodes take priority — emit them as async await calls.
-            if let Some(api_js) = generate_api_statement(n) {
-                return api_js;
+fn gen_handler_body(nodes: &[Node], locals: &mut HashSet<String>) -> String {
+    let mut output = String::new();
+    for node in nodes {
+        let statement = match node {
+            Node::Let(declaration) => {
+                let value = expr_to_js_scoped(&declaration.value, locals);
+                locals.insert(declaration.name.clone());
+                format!("let {} = {};", declaration.name, value)
             }
+            Node::Assign(assignment) => {
+                let target = if locals.contains(&assignment.target) {
+                    assignment.target.clone()
+                } else {
+                    format!("__state.{}", assignment.target)
+                };
+                format!(
+                    "{} = {};",
+                    target,
+                    expr_to_js_scoped(&assignment.value, locals)
+                )
+            }
+            Node::Call(call) => {
+                let args = call
+                    .args
+                    .iter()
+                    .map(|expr| expr_to_js_scoped(expr, locals))
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                if let Some(method) = call.callee.strip_prefix("api.") {
+                    format!("await KorlixRuntime.api.{}({});", method, args)
+                } else {
+                    format!("KorlixRuntime.call({:?}, [{}]);", call.callee, args)
+                }
+            }
+            Node::ApiMutation(mutation) => {
+                let body = mutation
+                    .body
+                    .as_ref()
+                    .map(|body| expr_to_js_scoped(body, locals))
+                    .unwrap_or_else(|| "undefined".into());
+                format!(
+                    "await KorlixRuntime.api.request({:?}, {:?}, {});",
+                    mutation.method.as_str(),
+                    mutation.url,
+                    body
+                )
+            }
+            Node::ApiReload(reload) => {
+                format!("await KorlixRuntime.api.reload({:?});", reload.target)
+            }
+            Node::If(statement) => {
+                let mut then_locals = locals.clone();
+                let then_body = gen_handler_body(&statement.then_body, &mut then_locals);
+                let else_body = statement.else_body.as_ref().map(|body| {
+                    let mut else_locals = locals.clone();
+                    gen_handler_body(body, &mut else_locals)
+                });
+                if let Some(else_body) = else_body {
+                    format!(
+                        "if ({}) {{ {} }} else {{ {} }}",
+                        expr_to_js_scoped(&statement.condition, locals),
+                        then_body,
+                        else_body
+                    )
+                } else {
+                    format!(
+                        "if ({}) {{ {} }}",
+                        expr_to_js_scoped(&statement.condition, locals),
+                        then_body
+                    )
+                }
+            }
+            Node::For(statement) => {
+                let mut loop_locals = locals.clone();
+                loop_locals.insert(statement.var.clone());
+                let body = gen_handler_body(&statement.body, &mut loop_locals);
+                format!(
+                    "for (const {} of {}) {{ {} }}",
+                    statement.var,
+                    expr_to_js_scoped(&statement.iterable, locals),
+                    body
+                )
+            }
+            Node::Component(component) => {
+                let args = component
+                    .children
+                    .iter()
+                    .filter_map(|child| match child {
+                        Node::Text(text) => Some(expr_to_js_scoped(&text.value, locals)),
+                        _ => None,
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                format!("KorlixRuntime.call({:?}, [{}]);", component.name, args)
+            }
+            _ => String::new(),
+        };
+        if !statement.is_empty() {
+            output.push_str(&statement);
+            output.push('\n');
+        }
+    }
+    output
+}
 
-            match n {
-                Node::Assign(a) => format!("__state.{}={};", a.target, expr_to_js_state(&a.value)),
-                Node::Call(c) => {
-                    let args = c
-                        .args
-                        .iter()
-                        .map(|e| expr_to_js(e))
-                        .collect::<Vec<_>>()
-                        .join(",");
-                    format!("KorlixRuntime.call('{}', [{}]);", c.callee, args)
-                }
-                Node::Component(c) => {
-                    let args = c
-                        .children
-                        .iter()
-                        .filter_map(|child| {
-                            if let Node::Text(t) = child {
-                                Some(expr_to_js(&t.value))
-                            } else {
-                                None
-                            }
-                        })
-                        .collect::<Vec<_>>()
-                        .join(",");
-                    format!("KorlixRuntime.call('{}', [{}]);", c.name, args)
-                }
-                _ => String::new(),
+fn expr_to_js_scoped(expr: &Expr, locals: &HashSet<String>) -> String {
+    match expr {
+        Expr::Identifier(name) => {
+            if name == "event" || locals.contains(name) {
+                name.clone()
+            } else {
+                format!("__state.{}", name)
             }
-        })
-        .collect()
+        }
+        Expr::Interpolated(parts) => parts
+            .iter()
+            .map(|part| match part {
+                StringPart::Literal(value) => format!("{:?}", value),
+                StringPart::Expr(value) => format!("String({})", expr_to_js_scoped(value, locals)),
+            })
+            .collect::<Vec<_>>()
+            .join(" + "),
+        Expr::Member { object, field } => {
+            format!("{}.{}", expr_to_js_scoped(object, locals), field)
+        }
+        Expr::Index { object, index } => format!(
+            "{}[{}]",
+            expr_to_js_scoped(object, locals),
+            expr_to_js_scoped(index, locals)
+        ),
+        Expr::Binary { left, op, right } => {
+            use korlix_ast::expression::BinaryOp;
+            let operator = match op {
+                BinaryOp::Add => "+",
+                BinaryOp::Sub => "-",
+                BinaryOp::Mul => "*",
+                BinaryOp::Div => "/",
+                BinaryOp::Mod => "%",
+                BinaryOp::Eq => "===",
+                BinaryOp::Ne => "!==",
+                BinaryOp::Lt => "<",
+                BinaryOp::Le => "<=",
+                BinaryOp::Gt => ">",
+                BinaryOp::Ge => ">=",
+                BinaryOp::And => "&&",
+                BinaryOp::Or => "||",
+            };
+            format!(
+                "({} {} {})",
+                expr_to_js_scoped(left, locals),
+                operator,
+                expr_to_js_scoped(right, locals)
+            )
+        }
+        Expr::Unary { op, operand } => {
+            let operator = match op {
+                korlix_ast::expression::UnaryOp::Not => "!",
+                korlix_ast::expression::UnaryOp::Neg => "-",
+            };
+            format!("{}{}", operator, expr_to_js_scoped(operand, locals))
+        }
+        Expr::Call { callee, args } => format!(
+            "{}({})",
+            expr_to_js_scoped(callee, locals),
+            args.iter()
+                .map(|arg| expr_to_js_scoped(arg, locals))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
+        Expr::Object(entries) => format!(
+            "{{ {} }}",
+            entries
+                .iter()
+                .map(|(key, value)| format!("{}: {}", key, expr_to_js_scoped(value, locals)))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
+        Expr::List(items) => format!(
+            "[{}]",
+            items
+                .iter()
+                .map(|item| expr_to_js_scoped(item, locals))
+                .collect::<Vec<_>>()
+                .join(", ")
+        ),
+        _ => expr_to_js(expr),
+    }
 }
 
 pub fn expr_to_js(e: &Expr) -> String {
@@ -240,6 +410,14 @@ pub fn expr_to_js(e: &Expr) -> String {
         Expr::Number(n) => n.to_string(),
         Expr::Bool(b) => b.to_string(),
         Expr::Null => "null".into(),
+        Expr::Interpolated(parts) => parts
+            .iter()
+            .map(|part| match part {
+                StringPart::Literal(value) => format!("{:?}", value),
+                StringPart::Expr(value) => format!("String({})", expr_to_js(value)),
+            })
+            .collect::<Vec<_>>()
+            .join(" + "),
         Expr::Identifier(s) => s.clone(),
         Expr::Member { object, field } => format!("{}.{}", expr_to_js(object), field),
         Expr::Index { object, index } => {
@@ -288,62 +466,6 @@ fn expr_to_js_literal(e: &Expr) -> String {
 }
 
 #[allow(dead_code)]
-pub fn expr_to_js_state(e: &Expr) -> String {
-    match e {
-        Expr::Identifier(s) => {
-            if s == "event" {
-                s.clone()
-            } else {
-                format!("__state.{}", s)
-            }
-        }
-        Expr::Member { object, field } => format!("{}.{}", expr_to_js_state(object), field),
-        Expr::Index { object, index } => {
-            format!("{}[{}]", expr_to_js_state(object), expr_to_js_state(index))
-        }
-        Expr::Binary { left, op, right } => {
-            use korlix_ast::expression::BinaryOp;
-            let op_str = match op {
-                BinaryOp::Add => "+",
-                BinaryOp::Sub => "-",
-                BinaryOp::Mul => "*",
-                BinaryOp::Div => "/",
-                BinaryOp::Mod => "%",
-                BinaryOp::Eq => "===",
-                BinaryOp::Ne => "!==",
-                BinaryOp::Lt => "<",
-                BinaryOp::Le => "<=",
-                BinaryOp::Gt => ">",
-                BinaryOp::Ge => ">=",
-                BinaryOp::And => "&&",
-                BinaryOp::Or => "||",
-            };
-            format!(
-                "({} {} {})",
-                expr_to_js_state(left),
-                op_str,
-                expr_to_js_state(right)
-            )
-        }
-        Expr::Call { callee, args } => {
-            let a = args
-                .iter()
-                .map(expr_to_js_state)
-                .collect::<Vec<_>>()
-                .join(", ");
-            format!("{}({})", expr_to_js_state(callee), a)
-        }
-        Expr::Object(pairs) => {
-            let p: Vec<String> = pairs
-                .iter()
-                .map(|(k, v)| format!("{}: {}", k, expr_to_js_state(v)))
-                .collect();
-            format!("{{ {} }}", p.join(", "))
-        }
-        Expr::List(items) => {
-            let it: Vec<String> = items.iter().map(|item| expr_to_js_state(item)).collect();
-            format!("[{}]", it.join(", "))
-        }
-        _ => expr_to_js(e),
-    }
+pub fn expr_to_js_state(expr: &Expr) -> String {
+    expr_to_js_scoped(expr, &HashSet::new())
 }

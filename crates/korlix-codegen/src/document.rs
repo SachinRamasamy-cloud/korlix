@@ -20,6 +20,7 @@ pub fn generate_document(
     css_path: &str,
     js_paths: &[&str],
     app_name: &str,
+    theme_mode: &str,
 ) -> String {
     let page_body = render_nodes(&page.body);
     let content = if let Some(layout) = layout_html {
@@ -51,17 +52,27 @@ pub fn generate_document(
         .collect::<Vec<_>>()
         .join("\n    ");
 
+    let theme_mode = match theme_mode {
+        "light" | "dark" | "auto" => theme_mode,
+        _ => "auto",
+    };
+    let theme_bootstrap = format!(
+        r#"<script>(function(){{var m={mode:?};var s=localStorage.getItem('kx-theme');var t=s||(m==='auto'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):m);document.documentElement.dataset.kxTheme=t;}})();</script>"#,
+        mode = theme_mode
+    );
+
     format!(
         r#"<!doctype html>
-<html lang="en">
+<html lang="en" data-kx-theme="{theme_mode}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
   {desc}
+  {theme_bootstrap}
   <link rel="stylesheet" href="{css}" />
 </head>
-<body class="dark">
+<body>
   <div id="korlix-root">{content}</div>
   {js}
 </body>
@@ -75,6 +86,8 @@ pub fn generate_document(
                 html_escape(&description)
             )
         },
+        theme_mode = theme_mode,
+        theme_bootstrap = theme_bootstrap,
         css = css_path,
         content = content,
         js = js_tags,

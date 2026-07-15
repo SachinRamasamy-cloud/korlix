@@ -28,7 +28,7 @@ enum Commands {
     Dev,
     /// Build the project for production
     Build {
-        /// Build mode: static|spa|ssg
+        /// Build mode: static|spa
         #[arg(long, default_value = "static")]
         mode: String,
     },
