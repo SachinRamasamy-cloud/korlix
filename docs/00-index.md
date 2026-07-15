@@ -18,6 +18,13 @@ Welcome to the Korlix documentation. Korlix is an ultra-light frontend language 
 | 10 | [Error Codes](./10-error-codes.md) | All KX-E, KX-S, KX-A, KX-SEO, KX-P codes |
 | 11 | [Compiler Architecture](./11-compiler-architecture.md) | 12-crate system, pipeline, extension points |
 | 12 | [Developer Manual](./usermanual.md) | Comprehensive end-to-end detailed developer handbook |
+| 13 | [Korlix V2 Language](./12-korlix-v2-language.md) | Simplified syntax, props, layouts and semantic checks |
+| 14 | [HTML Reference](./13-html-reference.md) | Native modern HTML support |
+| 15 | [Korlix Colors & Themes](./14-korlix-colors-and-themes.md) | Native color vocabulary and light/dark/auto themes |
+| 16 | [V2 Component Catalog](./15-component-catalog-v2.md) | 100+ schema-driven components |
+| 17 | [Scripting, API & Pagination](./16-scripting-api-pagination.md) | Daily-use logic, HTTP and pagination |
+| 18 | [Testing & Conformance](./17-testing-and-conformance.md) | Test suite and release gates |
+| 19 | [Implementation Status](./18-implementation-status.md) | Stable, experimental and planned feature matrix |
 
 ## Quick Reference
 
