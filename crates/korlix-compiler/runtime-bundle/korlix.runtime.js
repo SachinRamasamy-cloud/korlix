@@ -43,22 +43,31 @@
         } catch(e) {}
       });
 
-      // Update all data-kx-bind-attr elements reactively
-      $$('[data-kx-bind-attr]').forEach(function(el) {
-        var spec = el.getAttribute('data-kx-bind-attr');
-        var idx = spec.indexOf(':');
-        if (idx === -1) return;
-        var attrName = spec.substring(0, idx);
-        var expr = spec.substring(idx + 1);
-        try {
-          var val = evalExpr(expr, state, el);
-          if (attrName === 'value') {
-            if (el.value !== val) el.value = val !== undefined ? String(val) : '';
-          } else {
-            el.setAttribute(attrName, val !== undefined ? String(val) : '');
-          }
-        } catch(e) {}
+      // Update dynamic attributes reactively. Multiple bindings are stored in
+      // one attribute so the browser never drops duplicate attributes.
+      $$('[data-kx-bind-attrs], [data-kx-bind-attr]').forEach(function(el) {
+        var raw = el.getAttribute('data-kx-bind-attrs') || el.getAttribute('data-kx-bind-attr') || '';
+        raw.split(';;').forEach(function(spec) {
+          var idx = spec.indexOf(':');
+          if (idx === -1) return;
+          var attrName = spec.substring(0, idx);
+          var expr = spec.substring(idx + 1);
+          try {
+            var val = evalExpr(expr, state, el);
+            if (attrName === 'value') {
+              if (el.value !== val) el.value = val !== undefined ? String(val) : '';
+            } else if (val === false || val === null || val === undefined) {
+              el.removeAttribute(attrName);
+            } else {
+              el.setAttribute(attrName, val === true ? '' : String(val));
+            }
+          } catch(e) {}
+        });
       });
+
+      if (typeof Pagination !== 'undefined' && Pagination && Pagination.refresh) {
+        Pagination.refresh();
+      }
 
       // 3. Update conditional blocks
       $$('[data-kx-if]').forEach(function(tmpl) {
@@ -400,20 +409,46 @@
 
   // ── Theme ─────────────────────────────────────────────────────────────
   var Theme = (function() {
+    function systemTheme() {
+      return global.matchMedia && global.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark' : 'light';
+    }
+    function resolve(theme) {
+      return theme === 'auto' ? systemTheme() : (theme === 'light' ? 'light' : 'dark');
+    }
     function init() {
-      var saved = localStorage.getItem('kx-theme') || 'dark';
-      apply(saved);
+      var configured = document.documentElement.dataset.kxTheme || 'auto';
+      var saved = localStorage.getItem('kx-theme-mode');
+      apply(saved || configured, false);
+      if (global.matchMedia) {
+        global.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function() {
+          if ((localStorage.getItem('kx-theme-mode') || configured) === 'auto') apply('auto', false);
+        });
+      }
+      document.querySelectorAll('[data-kx-theme-toggle]').forEach(function(button) {
+        if (button._kxThemeBound) return;
+        button._kxThemeBound = true;
+        button.addEventListener('click', toggle);
+      });
     }
-    function apply(theme) {
-      document.body.classList.toggle('dark',  theme === 'dark');
-      document.body.classList.toggle('light', theme === 'light');
-      localStorage.setItem('kx-theme', theme);
+    function apply(theme, persist) {
+      var mode = theme === 'light' || theme === 'dark' || theme === 'auto' ? theme : 'auto';
+      var resolved = resolve(mode);
+      document.documentElement.dataset.kxTheme = resolved;
+      document.documentElement.dataset.kxThemeMode = mode;
+      document.documentElement.style.colorScheme = resolved;
+      if (persist !== false) localStorage.setItem('kx-theme-mode', mode);
+      global.dispatchEvent(new CustomEvent('kx:theme-change', { detail: { mode: mode, theme: resolved } }));
+      return resolved;
     }
+    function light() { return apply('light'); }
+    function dark() { return apply('dark'); }
+    function auto() { return apply('auto'); }
     function toggle() {
-      var current = localStorage.getItem('kx-theme') || 'dark';
-      apply(current === 'dark' ? 'light' : 'dark');
+      var current = document.documentElement.dataset.kxTheme || systemTheme();
+      return apply(current === 'dark' ? 'light' : 'dark');
     }
-    return { init, apply, toggle };
+    return { init: init, apply: apply, toggle: toggle, light: light, dark: dark, auto: auto };
   })();
 
   // ── Media (lazy images) ───────────────────────────────────────────────
@@ -443,46 +478,70 @@
   // ── Pagination ─────────────────────────────────────────────────────────
   var Pagination = (function() {
     function init() {
+      document.querySelectorAll('[data-kx-pagination]').forEach(function(el) { render(el); });
+    }
+    function refresh() {
       document.querySelectorAll('[data-kx-pagination]').forEach(function(el) {
-        render(el);
+        var signature = [el.dataset.page, el.dataset.pages, el.dataset.total, el.dataset.perPage].join(':');
+        if (el._kxPaginationSignature !== signature) render(el);
       });
     }
-
     function render(el) {
-      var page    = parseInt(el.dataset.page, 10)    || 1;
-      var total   = parseInt(el.dataset.total, 10)   || 0;
+      var page = parseInt(el.dataset.page, 10) || 1;
+      var explicitPages = parseInt(el.dataset.pages, 10) || 0;
+      var total = parseInt(el.dataset.total, 10) || 0;
       var perPage = parseInt(el.dataset.perPage, 10) || 10;
-      var pages   = Math.ceil(total / perPage) || 1;
+      var pages = explicitPages || Math.ceil(total / perPage) || 1;
+      page = Math.min(Math.max(page, 1), pages);
+      el._kxPaginationSignature = [page, explicitPages, total, perPage].join(':');
       el.innerHTML = '';
 
-      function btn(label, page_, disabled, active) {
-        var b = document.createElement('button');
-        b.textContent = label;
-        b.disabled = disabled;
-        if (active) b.classList.add('active');
-        b.setAttribute('aria-label', 'Page ' + label);
-        if (!disabled) {
-          b.addEventListener('click', function() {
-            el.dataset.page = page_;
-            el.dispatchEvent(new CustomEvent('kx:page-change', { detail: { page: page_ }, bubbles: true }));
-            render(el);
-          });
+      function changePage(nextPage) {
+        el.dataset.page = String(nextPage);
+        if (el.hasAttribute('data-url-sync')) {
+          var url = new URL(global.location.href);
+          url.searchParams.set(el.dataset.pageParam || 'page', String(nextPage));
+          global.history.pushState({}, '', url);
         }
-        return b;
+        var detail = { page: nextPage, pages: pages };
+        el.dispatchEvent(new CustomEvent('change', { detail: detail, bubbles: true }));
+        el.dispatchEvent(new CustomEvent('kx:page-change', { detail: detail, bubbles: true }));
+        render(el);
       }
 
-      el.appendChild(btn('‹', page - 1, page <= 1));
-      var start = Math.max(1, page - 2), end = Math.min(pages, start + 4);
-      if (start > 1) el.appendChild(btn('1', 1, false));
-      if (start > 2) { var dots = document.createElement('span'); dots.textContent = '…'; el.appendChild(dots); }
-      for (var i = start; i <= end; i++) {
-        el.appendChild(btn(String(i), i, false, i === page));
+      function btn(label, nextPage, disabled, active, ariaLabel) {
+        var button = document.createElement('button');
+        button.type = 'button';
+        button.textContent = label;
+        button.disabled = !!disabled;
+        if (active) {
+          button.classList.add('active');
+          button.setAttribute('aria-current', 'page');
+        }
+        button.setAttribute('aria-label', ariaLabel || ('Page ' + label));
+        if (!disabled) button.addEventListener('click', function() { changePage(nextPage); });
+        return button;
       }
-      if (end < pages - 1) { var dots2 = document.createElement('span'); dots2.textContent = '…'; el.appendChild(dots2); }
-      if (end < pages) el.appendChild(btn(String(pages), pages, false));
-      el.appendChild(btn('›', page + 1, page >= pages));
+
+      el.appendChild(btn('«', 1, page <= 1, false, 'First page'));
+      el.appendChild(btn('‹', page - 1, page <= 1, false, 'Previous page'));
+      var siblings = parseInt(el.dataset.siblings, 10);
+      siblings = Number.isFinite(siblings) ? siblings : 1;
+      var start = Math.max(1, page - siblings);
+      var end = Math.min(pages, page + siblings);
+      if (start > 1) {
+        el.appendChild(btn('1', 1, false, page === 1));
+        if (start > 2) { var leftDots = document.createElement('span'); leftDots.textContent = '…'; el.appendChild(leftDots); }
+      }
+      for (var i = start; i <= end; i++) el.appendChild(btn(String(i), i, false, i === page));
+      if (end < pages) {
+        if (end < pages - 1) { var rightDots = document.createElement('span'); rightDots.textContent = '…'; el.appendChild(rightDots); }
+        el.appendChild(btn(String(pages), pages, false, page === pages));
+      }
+      el.appendChild(btn('›', page + 1, page >= pages, false, 'Next page'));
+      el.appendChild(btn('»', pages, page >= pages, false, 'Last page'));
     }
-    return { init, render };
+    return { init: init, render: render, refresh: refresh };
   })();
 
   // ── HMR client (dev mode) ──────────────────────────────────────────────
@@ -624,55 +683,74 @@
       });
     }
 
-    function setGlobalValue(name, value) {
+    function setGlobalValue(name, value, targetState) {
+      if (targetState) {
+        targetState[name] = value;
+        return;
+      }
       if (global.__KORLIX_STATE__) {
         global.__KORLIX_STATE__[name] = value;
-      }
-      var runtime = global.KorlixRuntime;
-      if (runtime && runtime.state) {
-        runtime.state[name] = value;
       } else {
         global[name] = value;
       }
-      if (runtime && typeof runtime.updateBindings === 'function') {
-        runtime.updateBindings();
-      }
-      if (runtime && typeof runtime.render === 'function') {
-        runtime.render();
-      }
     }
 
-    function runQuery(name, url) {
-      var state = { data: null, loading: true, error: null, url: url };
+    function buildUrl(url, options) {
+      options = options || {};
+      var params = options.params || {};
+      var keys = Object.keys(params).filter(function(key) {
+        return params[key] !== undefined && params[key] !== null && params[key] !== '';
+      });
+      if (!keys.length) return url;
+      var parsed = new URL(url, global.location.origin);
+      keys.forEach(function(key) { parsed.searchParams.set(key, String(params[key])); });
+      return parsed.origin === global.location.origin
+        ? parsed.pathname + parsed.search + parsed.hash
+        : parsed.toString();
+    }
+
+    function runQuery(name, url, options, targetState) {
+      options = options || {};
+      var requestUrl = buildUrl(url, options);
+      var state = {
+        data: null,
+        loading: true,
+        error: null,
+        url: url,
+        options: options,
+        targetState: targetState
+      };
       queries.set(name, state);
 
-      setGlobalValue(name, []);
-      setGlobalValue(name + 'Loading', true);
-      setGlobalValue(name + 'Error', null);
+      setGlobalValue(name, [], targetState);
+      setGlobalValue(name + 'Loading', true, targetState);
+      setGlobalValue(name + 'Error', null, targetState);
 
-      return fetchJson(url)
+      return fetchJson(requestUrl, { headers: options.headers || {} })
         .then(function(data) {
           state.data = data;
           state.loading = false;
           state.error = null;
-          setGlobalValue(name, data);
-          setGlobalValue(name + 'Loading', false);
-          setGlobalValue(name + 'Error', null);
+          setGlobalValue(name, data, targetState);
+          setGlobalValue(name + 'Loading', false, targetState);
+          setGlobalValue(name + 'Error', null, targetState);
           return data;
         })
         .catch(function(err) {
           var message = err && err.message ? err.message : String(err);
           state.loading = false;
           state.error = message;
-          setGlobalValue(name + 'Loading', false);
-          setGlobalValue(name + 'Error', message);
+          setGlobalValue(name + 'Loading', false, targetState);
+          setGlobalValue(name + 'Error', message, targetState);
           throw err;
         });
     }
 
-    function request(method, url, body) {
-      return fetchJson(url, {
+    function request(method, url, body, options) {
+      options = options || {};
+      return fetchJson(buildUrl(url, options), {
         method: method,
+        headers: options.headers || {},
         body: body === undefined ? undefined : JSON.stringify(body)
       });
     }
@@ -680,17 +758,28 @@
     function reload(name) {
       var existing = queries.get(name);
       if (!existing) {
-        // Graceful: warn instead of throwing so timing issues don't crash the page.
-        console.warn(
-          '[Korlix] reload("' + name + '"): query not registered yet. ' +
-          'Did you forget `get ' + name + ' "url"`?'
-        );
+        console.warn('[Korlix] reload("' + name + '"): query is not registered.');
         return Promise.resolve();
       }
-      return runQuery(name, existing.url);
+      return runQuery(name, existing.url, existing.options, existing.targetState);
     }
 
-    return { query: runQuery, request: request, reload: reload };
+    function get(url, options) { return fetchJson(buildUrl(url, options || {}), options || {}); }
+    function post(url, body, options) { return request('POST', url, body, options); }
+    function put(url, body, options) { return request('PUT', url, body, options); }
+    function patch(url, body, options) { return request('PATCH', url, body, options); }
+    function remove(url, options) { return request('DELETE', url, undefined, options); }
+
+    return {
+      query: runQuery,
+      request: request,
+      reload: reload,
+      get: get,
+      post: post,
+      put: put,
+      patch: patch,
+      delete: remove
+    };
   })();
 
   // Merge Api into KorlixRuntime (may be called before the public API object

@@ -342,6 +342,14 @@ impl<'a> Lexer<'a> {
             // ── two-char operators ─────────────────────────────────────
             self.advance();
             let kind = match (ch, self.peek()) {
+                ('+', Some('=')) => {
+                    self.advance();
+                    TokenKind::PlusEq
+                }
+                ('-', Some('=')) => {
+                    self.advance();
+                    TokenKind::MinusEq
+                }
                 ('=', Some('=')) => {
                     self.advance();
                     TokenKind::EqEq
