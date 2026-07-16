@@ -98,6 +98,13 @@ impl<'t> Parser<'t> {
                 break;
             }
 
+            if self.check(&TokenKind::Import) {
+                if let Some(import) = self.parse_import() {
+                    module.imports.push(import);
+                }
+                continue;
+            }
+
             if let Some(item) = self.parse_top_level_item() {
                 module.items.push(item);
             } else {

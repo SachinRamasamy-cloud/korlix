@@ -1,5 +1,5 @@
 use crate::parser::Parser;
-use korlix_ast::expression::{BinaryOp, Expr, UnaryOp};
+use korlix_ast::expression::{BinaryOp, Expr, StringPart, UnaryOp};
 use korlix_lexer::token::TokenKind;
 
 impl<'t> Parser<'t> {
@@ -176,7 +176,7 @@ impl<'t> Parser<'t> {
             TokenKind::StringLit(s) => {
                 let s = s.clone();
                 self.advance();
-                Some(Expr::String(s))
+                Some(parse_string_expression(&s))
             }
             TokenKind::Number(n) => {
                 let n = *n;
@@ -248,6 +248,69 @@ impl<'t> Parser<'t> {
             Some(s)
         } else {
             None
+        }
+    }
+}
+
+fn parse_string_expression(value: &str) -> Expr {
+    if !value.contains('{') {
+        return Expr::String(value.into());
+    }
+
+    let mut parts = Vec::new();
+    let mut rest = value;
+    while let Some(open) = rest.find('{') {
+        let (before, after_open) = rest.split_at(open);
+        if !before.is_empty() {
+            parts.push(StringPart::Literal(before.into()));
+        }
+        let after_open = &after_open[1..];
+        let Some(close) = after_open.find('}') else {
+            parts.push(StringPart::Literal(format!("{{{}", after_open)));
+            rest = "";
+            break;
+        };
+        let (binding, after_close) = after_open.split_at(close);
+        if binding.is_empty()
+            || !binding.split('.').all(|part| {
+                !part.is_empty() && part.chars().all(|c| c.is_alphanumeric() || c == '_')
+            })
+        {
+            parts.push(StringPart::Literal(format!("{{{binding}}}")));
+        } else {
+            let mut segments = binding.split('.');
+            let mut expr = Expr::Identifier(segments.next().unwrap_or_default().into());
+            for field in segments {
+                expr = Expr::Member {
+                    object: Box::new(expr),
+                    field: field.into(),
+                };
+            }
+            parts.push(StringPart::Expr(expr));
+        }
+        rest = &after_close[1..];
+    }
+    if !rest.is_empty() {
+        parts.push(StringPart::Literal(rest.into()));
+    }
+
+    if parts.iter().any(|part| matches!(part, StringPart::Expr(_))) {
+        Expr::Interpolated(parts)
+    } else {
+        Expr::String(value.into())
+    }
+}
+
+#[cfg(test)]
+mod interpolation_tests {
+    use super::*;
+
+    #[test]
+    fn parses_simple_and_member_interpolation() {
+        let value = parse_string_expression("Hello {user.name}, count {count}");
+        match value {
+            Expr::Interpolated(parts) => assert_eq!(parts.len(), 4),
+            _ => panic!("expected interpolated expression"),
         }
     }
 }
