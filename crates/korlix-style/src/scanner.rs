@@ -41,7 +41,11 @@ fn scan_node(node: &Node, out: &mut HashSet<String>) {
             }
         }
         Node::Component(c) => {
-            scan_classes_list(&c.classes, out);
+            for class_ref in &c.classes {
+                if !is_component_variant(&class_ref.name) {
+                    out.insert(class_ref.name.clone());
+                }
+            }
             scan_nodes(&c.children, out);
         }
         Node::If(i) => {
@@ -60,4 +64,27 @@ fn scan_classes_list(classes: &[ClassRef], out: &mut HashSet<String>) {
     for c in classes {
         out.insert(c.name.clone());
     }
+}
+
+fn is_component_variant(name: &str) -> bool {
+    matches!(
+        name,
+        "default"
+            | "primary"
+            | "secondary"
+            | "success"
+            | "danger"
+            | "warning"
+            | "info"
+            | "ghost"
+            | "outline"
+            | "soft"
+            | "link"
+            | "glass"
+            | "raised"
+            | "bordered"
+            | "filled"
+            | "floating"
+            | "compact"
+    )
 }

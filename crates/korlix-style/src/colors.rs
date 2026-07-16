@@ -314,6 +314,28 @@ pub fn build_palette() -> HashMap<String, String> {
         }
     }
 
+    // Additional Korlix family names. Aliases keep the palette compact while
+    // presenting a broad, memorable vocabulary to language users.
+    for (alias, source) in [
+        ("neutral", "gray"),
+        ("ash", "slate"),
+        ("stone", "zinc"),
+        ("sand", "amber"),
+        ("lime", "green"),
+        ("mint", "emerald"),
+        ("sky", "cyan"),
+        ("coral", "orange"),
+        ("magenta", "pink"),
+    ] {
+        for shade in [
+            "50", "100", "200", "300", "400", "500", "600", "700", "800", "900", "950",
+        ] {
+            if let Some(value) = m.get(&format!("{}-{}", source, shade)).cloned() {
+                m.insert(format!("{}-{}", alias, shade), value);
+            }
+        }
+    }
+
     m
 }
 

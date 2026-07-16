@@ -9,6 +9,7 @@ pub struct CssRule {
     pub selector: String,
     pub declarations: Vec<(String, String)>,
     pub media_query: Option<String>,
+    pub selector_is_raw: bool,
 }
 
 impl CssRule {
@@ -17,6 +18,7 @@ impl CssRule {
             selector: selector.into(),
             declarations: vec![],
             media_query: None,
+            selector_is_raw: false,
         }
     }
 
@@ -30,6 +32,12 @@ impl CssRule {
         self
     }
 
+    pub fn raw_selector(mut self, selector: impl Into<String>) -> Self {
+        self.selector = selector.into();
+        self.selector_is_raw = true;
+        self
+    }
+
     pub fn to_css(&self) -> String {
         let decls = self
             .declarations
@@ -38,13 +46,12 @@ impl CssRule {
             .collect::<Vec<_>>()
             .join("\n");
 
-        let rule = format!(".kx-{}{{\n{}\n}}", escape_selector(&self.selector), decls);
-
-        if let Some(mq) = &self.media_query {
-            format!("{}{{\n{}\n}}", mq, rule)
+        let selector = if self.selector_is_raw {
+            self.selector.clone()
         } else {
-            rule
-        }
+            format!(".kx-{}", escape_selector(&self.selector))
+        };
+        format!("{}{{\n{}\n}}", selector, decls)
     }
 }
 
@@ -421,6 +428,95 @@ fn build_registry() -> IndexMap<String, CssRule> {
             };
             add!(cls, rule);
         }
+    }
+
+    // ── Korlix-native color vocabulary ──────────────────────────────
+    // .surface-blue-7 .content-blue-10 .outline-blue-3
+    // Korlix uses a 13-step scale. Existing 50-950 palettes occupy levels
+    // 1-11, while levels 0 and 12 provide consistent white/black endpoints.
+    let level_map = [
+        ("50", "1"),
+        ("100", "2"),
+        ("200", "3"),
+        ("300", "4"),
+        ("400", "5"),
+        ("500", "6"),
+        ("600", "7"),
+        ("700", "8"),
+        ("800", "9"),
+        ("900", "10"),
+        ("950", "11"),
+    ];
+    for (color_name, hex) in &palette {
+        if let Some((family, old_level)) = color_name.rsplit_once('-') {
+            if let Some((_, level)) = level_map.iter().find(|(old, _)| *old == old_level) {
+                for (prefix, property) in [
+                    ("surface", "background-color"),
+                    ("content", "color"),
+                    ("outline", "border-color"),
+                    ("accent", "--kx-accent"),
+                    ("fill", "fill"),
+                    ("stroke", "stroke"),
+                    ("ring-color", "--kx-ring-color"),
+                    ("caret-color", "caret-color"),
+                ] {
+                    let cls = format!("{}-{}-{}", prefix, family, level);
+                    add!(cls.clone(), CssRule::new(&cls).prop(property, hex));
+                }
+            }
+        }
+    }
+    let families: std::collections::HashSet<String> = palette
+        .keys()
+        .filter_map(|name| name.rsplit_once('-').map(|(family, _)| family.to_string()))
+        .collect();
+    for family in families {
+        for (level, hex) in [("0", "#ffffff"), ("12", "#000000")] {
+            for (prefix, property) in [
+                ("surface", "background-color"),
+                ("content", "color"),
+                ("outline", "border-color"),
+                ("accent", "--kx-accent"),
+                ("fill", "fill"),
+                ("stroke", "stroke"),
+                ("ring-color", "--kx-ring-color"),
+                ("caret-color", "caret-color"),
+            ] {
+                let cls = format!("{}-{}-{}", prefix, family, level);
+                add!(cls.clone(), CssRule::new(&cls).prop(property, hex));
+            }
+        }
+    }
+
+    for (token, css_var) in [
+        ("canvas", "--kx-canvas"),
+        ("surface", "--kx-surface"),
+        ("raised", "--kx-raised"),
+        ("overlay", "--kx-overlay"),
+        ("content", "--kx-content"),
+        ("content-muted", "--kx-content-muted"),
+        ("outline", "--kx-outline"),
+        ("brand", "--kx-brand"),
+        ("success", "--kx-success"),
+        ("warning", "--kx-warning"),
+        ("danger", "--kx-danger"),
+        ("info", "--kx-info"),
+    ] {
+        let surface = format!("surface-{}", token);
+        add!(
+            surface.clone(),
+            CssRule::new(&surface).prop("background-color", format!("var({})", css_var))
+        );
+        let content = format!("content-{}", token);
+        add!(
+            content.clone(),
+            CssRule::new(&content).prop("color", format!("var({})", css_var))
+        );
+        let outline = format!("outline-{}", token);
+        add!(
+            outline.clone(),
+            CssRule::new(&outline).prop("border-color", format!("var({})", css_var))
+        );
     }
 
     // ── Border ───────────────────────────────────────────────────────
