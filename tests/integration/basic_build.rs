@@ -3,7 +3,6 @@
 #[cfg(test)]
 mod tests {
     use korlix_compiler::{compile, project::Project};
-    use std::path::PathBuf;
     use tempfile::tempdir;
 
     fn make_project(src_content: &str) -> (tempfile::TempDir, Project) {

@@ -123,4 +123,20 @@ mod tests {
             names.len()
         );
     }
+    #[test]
+    fn test_korlix_native_color_scale() {
+        for class in [
+            "surface-blue-0",
+            "surface-blue-6",
+            "surface-blue-12",
+            "content-violet-10",
+            "outline-emerald-4",
+            "ring-color-red-7",
+        ] {
+            assert!(
+                lookup(class).is_some(),
+                "Missing native color class: {class}"
+            );
+        }
+    }
 }
