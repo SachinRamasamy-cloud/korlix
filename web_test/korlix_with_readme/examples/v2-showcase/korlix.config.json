@@ -1,9 +1,0 @@
-{
-  "name": "korlix-v2-showcase",
-  "version": "0.2.0",
-  "src": "src",
-  "public": "public",
-  "dist": "dist",
-  "mode": "static",
-  "server": { "port": 3000 }
-}

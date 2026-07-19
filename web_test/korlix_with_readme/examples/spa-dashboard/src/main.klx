@@ -1,2 +1,0 @@
-import App from "./app.klx"
-mount App to "#korlix-root"
