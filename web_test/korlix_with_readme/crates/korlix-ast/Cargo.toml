@@ -1,0 +1,9 @@
+[package]
+name = "korlix-ast"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+korlix-core = { path = "../korlix-core" }
+serde = { workspace = true }
+serde_json = { workspace = true }

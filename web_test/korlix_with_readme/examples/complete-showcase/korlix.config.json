@@ -1,0 +1,16 @@
+{
+  "name": "korlix-complete-showcase",
+  "version": "0.2.0",
+  "src": "src",
+  "public": "public",
+  "dist": "dist",
+  "mode": "static",
+  "theme": {
+    "default": "auto",
+    "dark": true
+  },
+  "server": {
+    "port": 3100,
+    "host": "localhost"
+  }
+}

@@ -1,0 +1,22 @@
+layout dashboard:
+  div .flex .min-h-screen .bg-background:
+    aside .w-60 .bg-surface .border-r .border-border .flex .flex-col:
+      div .p-6 .border-b .border-border:
+        p .font-bold .text-primary .text-lg "Korlix"
+        p .text-muted .text-xs "Dashboard Demo"
+
+      nav .p-4 .flex-1:
+        div .space-y-1:
+          link href="/" .flex .items-center .gap-3 .px-3 .py-2 .rounded-lg .text-muted .hover:bg-background "Dashboard"
+          link href="/users" .flex .items-center .gap-3 .px-3 .py-2 .rounded-lg .text-muted .hover:bg-background "Users"
+          link href="/settings" .flex .items-center .gap-3 .px-3 .py-2 .rounded-lg .text-muted .hover:bg-background "Settings"
+
+      div .p-4 .border-t .border-border:
+        div .flex .items-center .gap-3:
+          avatar name="Sachin" size="sm"
+          div:
+            p .text-sm .font-medium "Sachin"
+            p .text-muted .text-xs "Admin"
+
+    div .flex-1 .overflow-auto:
+      slot

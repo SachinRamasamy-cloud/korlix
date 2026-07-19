@@ -1,0 +1,26 @@
+page about route "/about":
+  meta:
+    title "About — Korlix"
+
+  section .py-20 .px-6 .bg-background:
+    div .max-w-3xl .mx-auto:
+      h1 .text-5xl .font-bold .mb-6 "About Korlix"
+      p .text-xl .text-muted .mb-8 "A frontend-only language that compiles to HTML, CSS, and JavaScript."
+
+      div .bg-surface .border .border-border .rounded-2xl .p-8 .mb-8:
+        h2 .text-2xl .font-bold .mb-6 "Design Philosophy"
+        div .grid .grid-cols-2 .gap-6:
+          div:
+            h3 .font-semibold .text-primary .mb-2 "Compile-time first"
+            p .text-muted "More in the compiler, less at runtime."
+          div:
+            h3 .font-semibold .text-primary .mb-2 "Registry-driven"
+            p .text-muted "Every feature in a typed registry."
+          div:
+            h3 .font-semibold .text-primary .mb-2 "Modular runtime"
+            p .text-muted "Only ship modules your page needs."
+          div:
+            h3 .font-semibold .text-primary .mb-2 "Frontend-only"
+            p .text-muted "Not a backend language. Pure frontend."
+
+      link href="/" .text-primary "Back to Home"

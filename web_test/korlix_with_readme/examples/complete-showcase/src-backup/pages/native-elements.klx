@@ -1,0 +1,216 @@
+import SectionTitle from "../components/showcase-section-title.klx"
+
+page NativeElements at "/native-elements"
+  meta
+    title "Korlix HTML and SVG Elements"
+    description "Semantic HTML, forms, tables, media, interactive elements and SVG primitives in Korlix."
+
+  section .px-6 .py-12
+    container size=full
+      SectionTitle eyebrow="Native web platform" title="Write semantic HTML and SVG directly" description="Korlix recognizes modern native element names and renders them as browser-native markup. The examples below cover the main supported categories."
+
+      alert type=info title="Element registry"
+        p "The compiler currently recognizes 137 HTML and SVG names and 13 void elements."
+
+  section .surface-raised .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "Semantic document structure"
+
+      article .surface-surface .outline-outline .border .rounded-xl .p-6 .mt-6
+        header
+          badge variant=soft "article"
+          h3 .text-2xl .font-semibold .mt-3 "Building a frontend language"
+          p
+            span "Published "
+            time datetime="2026-07-19" "19 July 2026"
+            span " by "
+            strong "Korlix Team"
+
+        section .mt-5
+          p "Semantic elements communicate the purpose of a page to browsers, assistive technologies and search engines."
+          blockquote cite="https://example.com"
+            p "Readable source should produce meaningful browser output."
+
+        figure .mt-6
+          img src="/assets/korlix-demo.svg" alt="Korlix compiler illustration" width=960 height=540 loading="lazy"
+          figcaption .content-content-muted "A native figure containing an image and caption."
+
+        footer .mt-6
+          address
+            a href="mailto:hello@example.com" "hello@example.com"
+
+      aside .surface-violet-1 .dark:surface-neutral-10 .rounded-xl .p-5 .mt-5
+        h3 "Related semantic elements"
+        p "header, footer, main, nav, section, article, aside, address, search and heading levels are all recognized."
+
+  section .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "Inline text semantics"
+      card variant=outline .mt-6
+        p
+          strong "Strong text"
+          span ", "
+          em "emphasized text"
+          span ", "
+          mark "highlighted text"
+          span ", "
+          small "small print"
+          span ", H"
+          sub "2"
+          span "O and x"
+          sup "2"
+          span "."
+        p
+          abbr title="Korlix Language Extension" "KLX"
+          span " files can include "
+          code "state count = 0"
+          span ". Press "
+          kbd "Ctrl"
+          span " + "
+          kbd "K"
+          span " to search."
+        p
+          q "Korlix keeps visible intent close to the interface structure."
+          span " — "
+          cite "Korlix design principle"
+        p
+          span "A long_identifier_can_wrap"
+          wbr
+          span "at an allowed opportunity."
+
+  section .surface-raised .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "Lists and disclosure"
+      grid .grid-cols-1 .md:grid-cols-3 .gap-5 .mt-6
+        card
+          h3 "Unordered list"
+          ul
+            li "Lexer"
+            li "Parser"
+            li "Code generator"
+        card
+          h3 "Ordered list"
+          ol
+            li "Create project"
+            li "Run checks"
+            li "Build output"
+        card
+          h3 "Description list"
+          dl
+            dt "KLX"
+            dd "Korlix source file"
+            dt "JIT CSS"
+            dd "Styles generated from used classes"
+
+      details open .surface-surface .outline-outline .border .rounded-xl .p-5 .mt-6
+        summary .font-semibold "Why use details and summary?"
+        p .mt-3 "They provide a native keyboard-accessible disclosure interaction without additional JavaScript."
+
+  section .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "Forms"
+      form submit=submitNativeForm .surface-raised .outline-outline .border .rounded-xl .p-6 .mt-6
+        fieldset
+          legend .font-semibold "Developer profile"
+
+          grid .grid-cols-1 .md:grid-cols-2 .gap-5 .mt-4
+            div
+              label for="native-name" "Name"
+              input id="native-name" name="name" type="text" placeholder="Your name" autocomplete="name" required
+            div
+              label for="native-email" "Email"
+              input id="native-email" name="email" type="email" placeholder="you@example.com" autocomplete="email" required
+            div
+              label for="native-role" "Role"
+              select id="native-role" name="role"
+                option value="frontend" "Frontend developer"
+                option value="backend" "Backend developer"
+                option value="student" "Student"
+            div
+              label for="native-level" "Experience"
+              input id="native-level" name="level" type="range" min=0 max=10 value=6
+
+          div .mt-5
+            label for="native-message" "What would you build?"
+            textarea id="native-message" name="message" rows=4 placeholder="Describe a Korlix project"
+
+          row .items-center .gap-5 .mt-5
+            label
+              input type="checkbox" name="updates" checked
+              span " Receive updates"
+            label
+              input type="radio" name="plan" value="community" checked
+              span " Community plan"
+
+          row .gap-3 .mt-6
+            button type="submit" .bg-primary .text-white .px-5 .py-3 .rounded-lg "Submit native form"
+            button type="reset" .surface-raised .outline-outline .border .px-5 .py-3 .rounded-lg "Reset"
+
+  section .surface-raised .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "Tables and measurements"
+      div .overflow-x-auto .mt-6
+        table .w-full
+          caption .text-left .font-semibold .mb-3 "Compiler stages"
+          colgroup
+            col
+            col
+            col
+          thead
+            tr
+              th scope="col" "Stage"
+              th scope="col" "Input"
+              th scope="col" "Output"
+          tbody
+            tr
+              td "Lexer"
+              td ".klx source"
+              td "Tokens"
+            tr
+              td "Parser"
+              td "Tokens"
+              td "AST"
+            tr
+              td "Code generation"
+              td "Lowered nodes"
+              td "HTML, CSS and JavaScript"
+          tfoot
+            tr
+              td colspan=3 "Standard browser output"
+
+      grid .grid-cols-1 .md:grid-cols-2 .gap-5 .mt-6
+        card
+          label for="compile-progress" "Compilation progress"
+          progress id="compile-progress" value=72 max=100 "72%"
+        card
+          label for="quality-meter" "Conformance quality"
+          meter id="quality-meter" min=0 max=100 low=40 high=80 optimum=100 value=88 "88"
+
+  section .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "Embedded content and SVG"
+      grid .grid-cols-1 .lg:grid-cols-2 .gap-6 .mt-6
+        figure .surface-raised .rounded-xl .p-6
+          picture
+            source srcset="/assets/korlix-demo.svg" type="image/svg+xml"
+            img src="/assets/korlix-demo.svg" alt="Korlix browser preview"
+          figcaption "The picture and source elements provide responsive media selection."
+
+        figure .surface-neutral-12 .rounded-xl .p-6
+          svg viewBox="0 0 320 180" width=320 height=180 role="img" aria-label="Korlix SVG shapes"
+            defs
+              linearGradient id="native-gradient" x1="0" y1="0" x2="1" y2="1"
+                stop offset="0" stop-color="#7457f5"
+                stop offset="1" stop-color="#17c9c3"
+            rect x=10 y=10 width=300 height=160 rx=24 fill="url(#native-gradient)"
+            circle cx=85 cy=90 r=38 fill="#ffffff" opacity=0.9
+            polygon points="150,45 205,90 150,135" fill="#ffffff" opacity=0.9
+            line x1=230 y1=55 x2=285 y2=125 stroke="#ffffff" stroke-width=12
+          figcaption .content-neutral-3 "SVG, defs, gradients, shapes and lines are emitted as native elements."
+
+      dialog open .surface-surface .content-content .outline-outline .border .rounded-xl .p-5 .mt-6
+        h3 "Native dialog example"
+        p "Korlix also includes a specialized modal component on the overlays page."
+
+  fn submitNativeForm
+    toast("success", "Native form submitted")

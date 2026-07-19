@@ -1,0 +1,143 @@
+import SectionTitle from "../components/showcase-section-title.klx"
+import CodePanel from "../components/showcase-code.klx"
+
+page ApiExamples at "/api"
+  meta
+    title "Korlix API Calls"
+    description "GET queries, mutations, loading and error state, reload and direct runtime API calls."
+
+  state mutationStatus: string = "No mutation has run"
+  get users "http://localhost:8787/api/users"
+  get products "/data/products.json"
+
+  section .px-6 .py-12
+    container size=full
+      SectionTitle eyebrow="Fetch-based runtime" title="Declarative API queries and HTTP mutations" description="Korlix generates browser Fetch API calls and exposes query data, loading and error values through page state."
+
+      alert type=info title="Start the local mock API"
+        code "npm run api"
+        p "The users query targets http://localhost:8787. The products query uses a public JSON file and works with the Korlix development server alone."
+
+      grid .grid-cols-1 .lg:grid-cols-2 .gap-8 .mt-8
+        CodePanel title="Reactive GET query" codeText="get users \"http://localhost:8787/api/users\"\n\nif usersLoading\n  spinner\nelse\n  for user in users\n    profile-card name=user.name"
+        CodePanel title="Mutation and reload" codeText="fn createUser\n  post \"http://localhost:8787/api/users\" { name: \"New User\", role: \"Developer\" }\n  reload users"
+
+  section .surface-raised .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "Static JSON query"
+      p .content-content-muted "This query reads /public/data/products.json through the generated site."
+
+      if productsLoading
+        skeleton-grid count=3
+      else
+        if productsError
+          alert type=error title="Products request failed"
+            p productsError
+        else
+          grid .grid-cols-1 .md:grid-cols-3 .gap-5 .mt-6
+            for product in products.items
+              product-card variant=raised
+                h3 product.name
+                p product.category
+                strong product.price
+
+  section .px-6 .py-12
+    container size=full
+      row .items-center .justify-between .gap-4
+        div
+          h2 .text-3xl .font-bold "Mock API users"
+          p .content-content-muted "Loading, success and error branches are rendered with Korlix conditions."
+        btn variant=ghost click=refreshUsers "Reload users"
+
+      if usersLoading
+        grid .grid-cols-1 .md:grid-cols-3 .gap-5 .mt-6
+          skeleton-card count=1 lines=3
+          skeleton-card count=1 lines=3
+          skeleton-card count=1 lines=3
+      else
+        if usersError
+          empty-state icon="server" title="Mock API is not running" description="Run npm run api in another terminal, then reload the query."
+        else
+          grid .grid-cols-1 .md:grid-cols-2 .xl:grid-cols-3 .gap-5 .mt-6
+            for user in users
+              profile-card name=user.name role=user.role
+
+      card variant=outline .mt-8
+        h3 "Mutation controls"
+        p .content-content-muted "The mock server keeps records in memory. Each operation is followed by reload users."
+        row .flex-wrap .gap-3 .mt-4
+          btn variant=primary click=createUser "POST create"
+          btn variant=secondary click=replaceFirstUser "PUT replace user 1"
+          btn variant=ghost click=patchFirstUser "PATCH user 1"
+          btn variant=danger click=deleteThirdUser "DELETE user 3"
+          btn variant=outline click=directHealthCheck "api.get call"
+        p .mt-4
+          strong "Latest operation: "
+          span mutationStatus
+
+  section .surface-raised .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "Runtime API surface"
+      table striped=true hoverable=true .mt-6
+        thead
+          tr
+            th "Function"
+            th "Use"
+        tbody
+          tr
+            td "KorlixRuntime.api.query"
+            td "Register and execute a named reactive query"
+          tr
+            td "api.get"
+            td "Run a GET request inside a function"
+          tr
+            td "api.post"
+            td "Send a JSON POST body"
+          tr
+            td "api.put"
+            td "Replace a resource"
+          tr
+            td "api.patch"
+            td "Partially update a resource"
+          tr
+            td "api.delete"
+            td "Delete a resource"
+          tr
+            td "reload users"
+            td "Re-execute a named GET query"
+
+      alert type=warning title="Current API-language boundary"
+        p "Declarative params, headers, authentication, timeout, retry, caching and cancellation blocks are not yet part of the stable KLX syntax."
+
+  fn refreshUsers
+    reload users
+    mutationStatus = "Users reloaded"
+
+  fn createUser
+    post "http://localhost:8787/api/users" { name: "New Korlix User", role: "Developer", active: true }
+    reload users
+    mutationStatus = "POST completed"
+    toast("success", "User created")
+
+  fn replaceFirstUser
+    put "http://localhost:8787/api/users/1" { name: "Updated User", role: "Compiler Engineer", active: true }
+    reload users
+    mutationStatus = "PUT completed"
+    toast("success", "User replaced")
+
+  fn patchFirstUser
+    patch "http://localhost:8787/api/users/1" { role: "Language Architect" }
+    reload users
+    mutationStatus = "PATCH completed"
+    toast("success", "User patched")
+
+  fn deleteThirdUser
+    delete "http://localhost:8787/api/users/3"
+    reload users
+    mutationStatus = "DELETE completed"
+    toast("warning", "User deleted")
+
+  fn directHealthCheck
+    api.get("http://localhost:8787/api/health")
+    mutationStatus = "Direct api.get completed"
+    log("Health request completed")

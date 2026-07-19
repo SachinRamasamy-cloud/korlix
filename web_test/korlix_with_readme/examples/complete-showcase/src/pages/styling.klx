@@ -1,0 +1,218 @@
+import SectionTitle from "../components/showcase-section-title.klx"
+import CodePanel from "../components/showcase-code.klx"
+
+page Styling at "/styling"
+  meta
+    title "Korlix Colors and Styling"
+    description "Korlix color families, semantic tokens, utility classes, variants and arbitrary values."
+
+  section .px-6 .py-12
+    container size=full
+      SectionTitle eyebrow="JIT style engine" title="Korlix-native colors and utility styling" description="The compiler scans classes used by the project and generates only the required CSS rules."
+
+      grid .grid-cols-1 .lg:grid-cols-2 .gap-8
+        CodePanel title="Korlix-native colors" codeText="card .surface-violet-2 .content-violet-11 .outline-violet-4\n  h2 \"Theme-aware card\""
+        CodePanel title="Responsive and state variants" codeText="grid .grid-cols-1 .md:grid-cols-2 .xl:grid-cols-4\nbutton .surface-violet-7 .hover:surface-violet-8"
+
+  section .surface-raised .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "All public color families"
+      p .content-content-muted "Each family exposes Korlix levels 0 through 12. Aliases map to the base palette while preserving Korlix-specific naming."
+      grid .grid-cols-2 .md:grid-cols-3 .lg:grid-cols-4 .xl:grid-cols-6 .gap-4 .mt-6
+        article .surface-neutral-7 .text-white .rounded-xl .p-4
+          strong "neutral"
+          small .block "levels 0-12"
+        article .surface-ash-7 .text-white .rounded-xl .p-4
+          strong "ash"
+          small .block "levels 0-12"
+        article .surface-slate-7 .text-white .rounded-xl .p-4
+          strong "slate"
+          small .block "levels 0-12"
+        article .surface-stone-7 .text-white .rounded-xl .p-4
+          strong "stone"
+          small .block "levels 0-12"
+        article .surface-sand-6 .content-neutral-12 .rounded-xl .p-4
+          strong "sand"
+          small .block "levels 0-12"
+        article .surface-red-7 .text-white .rounded-xl .p-4
+          strong "red"
+          small .block "levels 0-12"
+        article .surface-coral-7 .text-white .rounded-xl .p-4
+          strong "coral"
+          small .block "levels 0-12"
+        article .surface-orange-7 .text-white .rounded-xl .p-4
+          strong "orange"
+          small .block "levels 0-12"
+        article .surface-amber-6 .content-neutral-12 .rounded-xl .p-4
+          strong "amber"
+          small .block "levels 0-12"
+        article .surface-yellow-6 .content-neutral-12 .rounded-xl .p-4
+          strong "yellow"
+          small .block "levels 0-12"
+        article .surface-lime-6 .content-neutral-12 .rounded-xl .p-4
+          strong "lime"
+          small .block "levels 0-12"
+        article .surface-green-7 .text-white .rounded-xl .p-4
+          strong "green"
+          small .block "levels 0-12"
+        article .surface-emerald-7 .text-white .rounded-xl .p-4
+          strong "emerald"
+          small .block "levels 0-12"
+        article .surface-mint-7 .text-white .rounded-xl .p-4
+          strong "mint"
+          small .block "levels 0-12"
+        article .surface-teal-7 .text-white .rounded-xl .p-4
+          strong "teal"
+          small .block "levels 0-12"
+        article .surface-cyan-7 .text-white .rounded-xl .p-4
+          strong "cyan"
+          small .block "levels 0-12"
+        article .surface-sky-7 .text-white .rounded-xl .p-4
+          strong "sky"
+          small .block "levels 0-12"
+        article .surface-blue-7 .text-white .rounded-xl .p-4
+          strong "blue"
+          small .block "levels 0-12"
+        article .surface-indigo-7 .text-white .rounded-xl .p-4
+          strong "indigo"
+          small .block "levels 0-12"
+        article .surface-violet-7 .text-white .rounded-xl .p-4
+          strong "violet"
+          small .block "levels 0-12"
+        article .surface-purple-7 .text-white .rounded-xl .p-4
+          strong "purple"
+          small .block "levels 0-12"
+        article .surface-magenta-7 .text-white .rounded-xl .p-4
+          strong "magenta"
+          small .block "levels 0-12"
+        article .surface-pink-7 .text-white .rounded-xl .p-4
+          strong "pink"
+          small .block "levels 0-12"
+        article .surface-rose-7 .text-white .rounded-xl .p-4
+          strong "rose"
+          small .block "levels 0-12"
+        article .surface-gray-7 .text-white .rounded-xl .p-4
+          strong "gray"
+          small .block "levels 0-12"
+        article .surface-zinc-7 .text-white .rounded-xl .p-4
+          strong "zinc"
+          small .block "levels 0-12"
+
+  section .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "The 13-level violet scale"
+      p .content-content-muted "Level 0 is the light endpoint, level 6 is the central vivid tone and level 12 is the dark endpoint."
+      grid .grid-cols-2 .md:grid-cols-5 .xl:grid-cols-12 .gap-3 .mt-6
+        div .surface-violet-0 .content-neutral-12 .rounded-lg .p-4
+          strong "0"
+        div .surface-violet-1 .content-neutral-12 .rounded-lg .p-4
+          strong "1"
+        div .surface-violet-2 .content-neutral-12 .rounded-lg .p-4
+          strong "2"
+        div .surface-violet-3 .content-neutral-12 .rounded-lg .p-4
+          strong "3"
+        div .surface-violet-4 .content-neutral-12 .rounded-lg .p-4
+          strong "4"
+        div .surface-violet-5 .content-neutral-12 .rounded-lg .p-4
+          strong "5"
+        div .surface-violet-6 .text-white .rounded-lg .p-4
+          strong "6"
+        div .surface-violet-7 .text-white .rounded-lg .p-4
+          strong "7"
+        div .surface-violet-8 .text-white .rounded-lg .p-4
+          strong "8"
+        div .surface-violet-9 .text-white .rounded-lg .p-4
+          strong "9"
+        div .surface-violet-10 .text-white .rounded-lg .p-4
+          strong "10"
+        div .surface-violet-11 .text-white .rounded-lg .p-4
+          strong "11"
+        div .surface-violet-12 .text-white .rounded-lg .p-4
+          strong "12"
+
+  section .surface-raised .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "Semantic theme tokens"
+      p .content-content-muted "Semantic classes change meaningfully between light and dark themes without duplicating component markup."
+      grid .grid-cols-1 .md:grid-cols-2 .xl:grid-cols-4 .gap-4 .mt-6
+        card .surface-canvas .content-content .outline-outline .border
+          strong "canvas"
+          p .content-content-muted "Application background"
+        card .surface-surface .content-content .outline-outline .border
+          strong "surface"
+          p .content-content-muted "Primary component surface"
+        card .surface-raised .content-content .outline-outline .border
+          strong "raised"
+          p .content-content-muted "Elevated section surface"
+        card .surface-overlay .content-content .outline-outline .border
+          strong "overlay"
+          p .content-content-muted "Overlay surface"
+        card .surface-brand .text-white
+          strong "brand"
+          p "Primary brand action"
+        card .surface-success .text-white
+          strong "success"
+          p "Positive status"
+        card .surface-warning .content-neutral-12
+          strong "warning"
+          p "Attention status"
+        card .surface-danger .text-white
+          strong "danger"
+          p "Destructive status"
+
+  section .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "Utility categories"
+      grid .grid-cols-1 .md:grid-cols-2 .xl:grid-cols-3 .gap-5 .mt-6
+        card variant=outline
+          h3 "Layout"
+          p "display, position, flexbox, grid, alignment, spacing, dimensions, overflow and z-index"
+          row .gap-2 .mt-3
+            badge variant=soft ".flex"
+            badge variant=soft ".grid"
+            badge variant=soft ".gap-4"
+        card variant=outline
+          h3 "Typography"
+          p "font size, weight, alignment, line height, tracking, decoration and transforms"
+          row .gap-2 .mt-3
+            badge variant=soft ".text-xl"
+            badge variant=soft ".font-bold"
+        card variant=outline
+          h3 "Visual effects"
+          p "borders, radius, shadows, opacity, transforms, filters, transitions and cursor behavior"
+          row .gap-2 .mt-3
+            badge variant=soft ".rounded-xl"
+            badge variant=soft ".shadow-md"
+
+  section .surface-raised .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "Responsive variants"
+      p .content-content-muted "Resize the browser to see the card count change at sm, md, lg, xl and 2xl breakpoints."
+      grid .grid-cols-1 .sm:grid-cols-2 .md:grid-cols-3 .lg:grid-cols-4 .xl:grid-cols-5 .gap-4 .mt-6
+        card "sm"
+        card "md"
+        card "lg"
+        card "xl"
+        card "2xl"
+        card "wide"
+
+  section .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "Interaction and environment variants"
+      grid .grid-cols-1 .md:grid-cols-2 .xl:grid-cols-4 .gap-4 .mt-6
+        btn .surface-violet-7 .text-white .hover:surface-violet-8 .focus:ring-color-violet-4 "Hover and focus"
+        btn .surface-emerald-7 .text-white .active:surface-emerald-9 "Active state"
+        btn disabled .disabled:opacity-50 "Disabled state"
+        card .surface-neutral-1 .dark:surface-neutral-10 "Dark variant"
+
+  section .surface-raised .px-6 .py-12
+    container size=full
+      h2 .text-3xl .font-bold "Arbitrary values"
+      p .content-content-muted "Bracket syntax allows project-specific values while the engine rejects unsafe JavaScript-like expressions."
+      grid .grid-cols-1 .md:grid-cols-2 .gap-5 .mt-6
+        div .w-[320px] .max-w-full .surface-[#101827] .text-white .rounded-xl .p-5
+          strong "Custom width and HEX surface"
+          p ".w-[320px] .surface-[#101827]"
+        div .grid .grid-cols-[120px_1fr] .gap-[18px] .surface-[oklch(94%_0.04_250)] .content-neutral-12 .rounded-xl .p-5
+          strong "Custom grid"
+          p "Arbitrary grid columns, gap and OKLCH color"

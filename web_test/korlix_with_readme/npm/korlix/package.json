@@ -1,0 +1,33 @@
+{
+  "name": "korlix",
+  "version": "0.1.3",
+  "description": "Korlix frontend-first language compiler and CLI",
+  "license": "MIT",
+  "type": "commonjs",
+  "bin": {
+    "korlix": "./bin/korlix.js"
+  },
+  "files": [
+    "bin/korlix.js",
+    "bin/korlix-linux-x64",
+    "bin/korlix-win32-x64.exe",
+    "README.md"
+  ],
+  "scripts": {
+    "build:linux": "cargo build --release -p korlix-cli --manifest-path ../../Cargo.toml && cp ../../target/release/korlix ./bin/korlix-linux-x64 && chmod +x ./bin/korlix-linux-x64 ./bin/korlix.js",
+    "build:windows": "cargo build --release -p korlix-cli --manifest-path ../../Cargo.toml --target x86_64-pc-windows-gnu && cp ../../target/x86_64-pc-windows-gnu/release/korlix.exe ./bin/korlix-win32-x64.exe",
+    "verify": "node --check ./bin/korlix.js && node ./bin/korlix.js --help",
+    "prepack": "npm run build:linux && npm run build:windows && npm run verify"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "korlix",
+    "klx",
+    "compiler",
+    "frontend",
+    "language",
+    "spa"
+  ]
+}

@@ -2,7 +2,11 @@ use colored::Colorize;
 
 pub fn print_banner() {
     println!();
-    println!("  {}  Korlix v0.1.0", "◈".cyan().bold());
+    println!(
+        "  {}  Korlix v{}",
+        "◈".cyan().bold(),
+        env!("CARGO_PKG_VERSION")
+    );
     println!("  {}", "Ultra-light frontend language compiler".dimmed());
     println!();
 }

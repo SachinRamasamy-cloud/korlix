@@ -7,7 +7,7 @@ mod output;
 #[derive(Parser)]
 #[command(
     name    = "korlix",
-    version = "0.1.0",
+    version ,
     author  = "Korlix Team",
     about   = "◈  Korlix — ultra-light frontend language compiler",
     long_about = None,

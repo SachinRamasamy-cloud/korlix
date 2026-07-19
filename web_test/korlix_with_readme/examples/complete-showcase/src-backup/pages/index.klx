@@ -1,0 +1,120 @@
+import Feature from "../components/showcase-feature.klx"
+import CodePanel from "../components/showcase-code.klx"
+import SectionTitle from "../components/showcase-section-title.klx"
+
+page Home at "/"
+  meta
+    title "Korlix Complete Showcase"
+    description "A complete sample project for the implemented Korlix language features."
+
+  state count: int = 0
+  state active: bool = true
+  state capabilities = [{ name: "Pages and layouts", status: "stable" }, { name: "Korlix styling", status: "stable" }, { name: "Static multipage builds", status: "stable" }, { name: "SPA page mounting", status: "experimental" }]
+  let releaseLabel: string = "Korlix V2"
+  derived doubleCount = count * 2
+
+  hero variant=split size=xl .surface-violet-1 .dark:surface-neutral-11
+    container size=full .grid .grid-cols-1 .lg:grid-cols-2 .gap-10 .items-center .px-6 .py-16
+      div
+        badge variant=soft "Korlix V2 source showcase"
+        h1 .text-5xl .font-bold .mt-5 "Build complete websites with readable .klx files."
+        p .text-xl .content-content-muted .mt-4 "This sample demonstrates the implemented language syntax, native elements, components, colors, themes, state, events, API calls, overlays and pagination."
+
+        row .flex-wrap .gap-3 .mt-6
+          btn variant=primary size=lg click=openLanguage "Explore the language"
+          btn variant=ghost size=lg click=copyInstall "Copy build command"
+          btn variant=secondary size=lg on:click:
+            count += 1
+
+        row .items-center .gap-4 .mt-6
+          stat-card variant=soft
+            small "Interactive count"
+            strong .text-3xl count
+          stat-card variant=soft
+            small "Current mode"
+            strong "Static multipage"
+
+      image src="/assets/korlix-demo.svg" alt="Korlix source compiling into a browser interface" width=960 height=540 fit="cover"
+
+  section .px-6 .py-16
+    container size=full
+      SectionTitle eyebrow="Project coverage" title="A multipage example for the actual compiler" description="Each page isolates one major Korlix area so developers can study, copy and test it independently."
+
+      grid .grid-cols-1 .md:grid-cols-2 .xl:grid-cols-3 .gap-5
+        Feature title="Language syntax" description="Applications, pages, layouts, imports, components, props, state, functions, conditions and loops."
+          link href="/language" "Open syntax examples"
+        Feature title="HTML and SVG" description="Semantic native elements, forms, tables, media, interactive elements and common SVG primitives."
+          link href="/native-elements" "Open native elements"
+        Feature title="Styling and colors" description="Utility classes, 26 color families, semantic tokens, responsive variants, states and arbitrary values."
+          link href="/styling" "Open styling gallery"
+        Feature title="Component catalogue" description="The complete registered component catalogue, including specialized and generic semantic components."
+          link href="/components" "Open components"
+        Feature title="State and events" description="Reactive state, expressions, event handlers, functions, runtime utilities, conditions and list rendering."
+          link href="/state-events" "Open behavior examples"
+        Feature title="Data and APIs" description="GET queries, POST, PUT, PATCH and DELETE mutations, reload behavior and loading or error states."
+          link href="/api" "Open API examples"
+
+  section .surface-raised .px-6 .py-16
+    container size=full
+      SectionTitle eyebrow="Reactive rendering" title="State, conditions and loops" description="The interface below is produced from Korlix state and control-flow syntax."
+
+      grid .grid-cols-1 .lg:grid-cols-2 .gap-8
+        card variant=raised
+          row .items-center .justify-between
+            div
+              h2 "Counter"
+              p .content-content-muted "Direct functions and legacy inline event blocks are both shown."
+            badge variant=primary "{count}"
+
+          row .flex-wrap .gap-3 .mt-5
+            btn variant=primary click=increment "Increase"
+            btn variant=secondary click=incrementByFive "Add five"
+            btn variant=ghost click=reset "Reset"
+            btn variant=outline click=toggleStatus "Toggle status"
+
+          if active
+            alert type=success title="Reactive condition"
+              p "The active branch is currently visible."
+          else
+            alert type=warning title="Reactive condition"
+              p "The inactive branch is currently visible."
+
+        card variant=outline
+          h2 "Capability list"
+          list-group .mt-4
+            for capability in capabilities
+              list-item
+                row .items-center .justify-between .gap-3
+                  span capability.name
+                  badge variant=soft capability.status
+
+  section .px-6 .py-16
+    container size=full
+      SectionTitle eyebrow="Readable output" title="Korlix keeps structure and behavior together" description="This source sample compiles into route HTML, generated CSS, application JavaScript and the browser runtime."
+
+      grid .grid-cols-1 .lg:grid-cols-2 .gap-8
+        CodePanel title="Counter source" codeText="page Counter at \"/counter\"\n  state count = 0\n  button \"Increase\" click=increment\n\n  fn increment\n    count += 1"
+        CodePanel title="Build commands" codeText="korlix check\nkorlix build --mode static\nkorlix preview --port 4173"
+
+  fn increment
+    count += 1
+    log("Count increased")
+
+  fn incrementByFive
+    let amount: int = 5
+    count = count + amount
+    toast("success", "Added five")
+
+  action reset
+    count = 0
+    toast("info", "Counter reset")
+
+  fn toggleStatus
+    active = !active
+
+  fn openLanguage
+    navigate("/language")
+
+  fn copyInstall
+    copyToClipboard("korlix build --mode static")
+    toast("success", "Build command copied")

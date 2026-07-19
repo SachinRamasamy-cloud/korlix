@@ -1,0 +1,40 @@
+page index route "/":
+  meta:
+    title "Korlix — Ultra-light frontend language"
+    description "Build modern websites with clean, expressive syntax."
+
+  section .min-h-screen .flex .flex-col .items-center .justify-center .bg-background .px-6 .text-center:
+    div .mb-8:
+      badge .primary "New"
+      span .text-sm .text-muted .ml-2 "Phase 1 is live"
+
+    h1 .text-7xl .font-black .text-white .mb-6 "Build websites faster"
+
+    p .text-xl .text-muted .max-w-2xl .mx-auto .mb-10 "Korlix replaces React, Tailwind, and form libraries with one clean language."
+
+    div .flex .gap-4 .justify-center:
+      btn .primary "Get Started" on:click:
+        navigate("/about")
+      btn .ghost "Docs" on:click:
+        navigate("/about")
+
+  section .py-24 .px-6 .bg-surface:
+    div .max-w-6xl .mx-auto:
+      h2 .text-4xl .font-bold .text-center .mb-16 "Everything you need"
+      div .grid .grid-cols-3 .gap-8:
+        card .p-8 .rounded-2xl .bg-background .border .border-border:
+          h3 .text-xl .font-bold .mb-3 "Compile-time first"
+          p .text-muted "AST-based compiler. Tiny runtime, maximum performance."
+        card .p-8 .rounded-2xl .bg-background .border .border-border:
+          h3 .text-xl .font-bold .mb-3 "JIT CSS engine"
+          p .text-muted "Only classes you use are included. Full utility system built-in."
+        card .p-8 .rounded-2xl .bg-background .border .border-border:
+          h3 .text-xl .font-bold .mb-3 "100+ Components"
+          p .text-muted "Button, modal, toast, pagination — all compile-time expanded."
+
+  section .py-24 .px-6 .bg-background .text-center:
+    div .max-w-2xl .mx-auto:
+      h2 .text-5xl .font-black .mb-6 "Start building today"
+      p .text-xl .text-muted .mb-10 "Free and open source."
+      btn .primary "korlix new my-site" on:click:
+        toast info "Run this command in your terminal!"

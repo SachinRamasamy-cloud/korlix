@@ -1,0 +1,66 @@
+page settings route "/settings":
+  meta:
+    title "Settings — Dashboard"
+
+  div .p-8:
+    h1 .text-3xl .font-bold .mb-8 "Settings"
+
+    div .grid .grid-cols-3 .gap-8:
+      div .col-span-2 .space-y-6:
+        card .p-6 .rounded-xl .bg-surface .border .border-border:
+          h3 .font-semibold .mb-4 "Profile"
+          div .space-y-4:
+            form-field:
+              label "Display Name"
+              input type="text" value="Sachin"
+            form-field:
+              label "Email"
+              input type="email" value="sachin@example.com"
+            form-field:
+              label "Bio"
+              textarea rows=3 "Full-stack developer building Korlix"
+          btn .primary "Save Profile" on:click:
+            toast success "Profile saved"
+
+        card .p-6 .rounded-xl .bg-surface .border .border-border:
+          h3 .font-semibold .mb-4 "Notifications"
+          div .space-y-4:
+            div .flex .items-center .justify-between:
+              div:
+                p .font-medium "Email notifications"
+                p .text-muted .text-sm "Receive updates via email"
+              switch checked=true
+            div .flex .items-center .justify-between:
+              div:
+                p .font-medium "Push notifications"
+                p .text-muted .text-sm "Browser push alerts"
+              switch checked=false
+            div .flex .items-center .justify-between:
+              div:
+                p .font-medium "Weekly digest"
+                p .text-muted .text-sm "Summary every Monday"
+              switch checked=true
+          btn .primary "Save" on:click:
+            toast success "Notification settings saved"
+
+      div .space-y-6:
+        card .p-6 .rounded-xl .bg-surface .border .border-border:
+          h3 .font-semibold .mb-4 "Appearance"
+          div .space-y-3:
+            btn .ghost .w-full "Dark mode" on:click:
+              toggleTheme()
+              toast info "Theme toggled"
+        card .p-6 .rounded-xl .bg-surface .border .border-border:
+          h3 .font-semibold .mb-4 "Danger Zone"
+          p .text-muted .text-sm .mb-4 "Irreversible actions"
+          btn .danger .w-full "Delete Account" on:click:
+            openModal("confirm-delete")
+
+    modal id="confirm-delete" title="Delete Account?":
+      p .text-muted "This action cannot be undone. All your data will be permanently deleted."
+      slot:footer:
+        btn .danger "Delete My Account" on:click:
+          closeModal("confirm-delete")
+          toast error "Account scheduled for deletion"
+        btn .ghost "Keep Account" on:click:
+          closeModal("confirm-delete")

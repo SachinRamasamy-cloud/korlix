@@ -1,0 +1,43 @@
+layout ShowcaseLayout
+  navbar sticky=true .surface-surface .outline-outline .border-b
+    container size=full .flex .items-center .justify-between .gap-4 .px-6 .py-4
+      row .items-center .gap-3
+        span .surface-violet-7 .content-white .rounded-lg .px-3 .py-2 .font-bold "K"
+        div
+          strong .text-lg "Korlix Complete Showcase"
+          small .block .content-content-muted ".klx language feature project"
+
+      nav .hidden .xl:flex .items-center .gap-4 aria-label="Primary navigation"
+        link href="/" "Home"
+        link href="/language" "Language"
+        link href="/native-elements" "HTML and SVG"
+        link href="/styling" "Styling"
+        link href="/components" "Components"
+        link href="/forms" "Forms"
+        link href="/state-events" "State"
+        link href="/api" "API"
+        link href="/overlays" "Overlays"
+        link href="/pagination" "Pagination"
+        link href="/themes" "Themes"
+
+      row .items-center .gap-2
+        theme-toggle aria-label="Change color theme"
+        link href="https://github.com/SachinRamasamy-cloud/korlix" external=true "GitHub"
+
+  main .min-h-screen .surface-canvas .content-content
+    slot
+
+  footer .surface-raised .outline-outline .border-t
+    container size=full .grid .grid-cols-1 .md:grid-cols-3 .gap-8 .px-6 .py-10
+      div
+        strong "Korlix"
+        p .content-content-muted "A frontend-first language that compiles readable .klx files into HTML, CSS and JavaScript."
+      div
+        strong "Explore"
+        nav .flex .flex-col .gap-2
+          link href="/language" "Language syntax"
+          link href="/components" "Component catalogue"
+          link href="/api" "API examples"
+      div
+        strong "Project status"
+        p .content-content-muted "Static multipage output is the stable target. SPA routing and several advanced component behaviors remain experimental."

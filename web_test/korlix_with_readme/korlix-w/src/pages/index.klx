@@ -1,0 +1,458 @@
+page index route "/":
+  meta:
+    title "Korlix — Build the Future"
+    description "Ultra-light frontend language with zero boilerplate."
+
+  # ══════════════════════════════════════
+  # NAVBAR
+  # ══════════════════════════════════════
+  nav .fixed .top-0 .left-0 .right-0 .z-50 .bg-[rgba(10,8,25,0.85)] .border-b .border-[rgba(124,58,237,0.2)]:
+    div .max-w-7xl .mx-auto .px-6 .py-4 .flex .items-center .justify-between:
+      div .flex .items-center .gap-3:
+        div .w-9 .h-9 .rounded-xl .bg-[linear-gradient(135deg,#7c3aed,#059669)] .flex .items-center .justify-center:
+          span .text-white .font-black .text-sm "K"
+        span .text-white .font-bold .text-xl "Korlix"
+
+      div .hidden .md:flex .gap-8:
+        a href="#features" .text-[#a78bfa] .hover:text-white .text-sm "Features"
+        a href="#showcase" .text-[#a78bfa] .hover:text-white .text-sm "Showcase"
+        a href="#stats" .text-[#a78bfa] .hover:text-white .text-sm "Stats"
+        a href="#pricing" .text-[#a78bfa] .hover:text-white .text-sm "Pricing"
+
+      div .flex .gap-3:
+        button .px-4 .py-2 .text-sm .text-[#a78bfa] .border .border-[rgba(124,58,237,0.4)] .rounded-lg .hover:bg-[rgba(124,58,237,0.1)] "Sign in"
+        button .px-4 .py-2 .text-sm .text-white .rounded-lg .bg-[linear-gradient(135deg,#7c3aed,#6d28d9)] .hover:opacity-90 "Get Started" on:click:
+          toast success "Welcome to Korlix!"
+
+  # ══════════════════════════════════════
+  # HERO SECTION
+  # ══════════════════════════════════════
+  section .relative .min-h-screen .flex .flex-col .items-center .justify-center .overflow-hidden .bg-[#0a0819] .pt-20:
+
+    # Triadic glow orbs
+    div .absolute .top-[-200px] .left-[-100px] .w-[600px] .h-[600px] .rounded-full .opacity-20 .blur-3xl .bg-[#7c3aed] .pointer-events-none
+    div .absolute .bottom-[-100px] .right-[-100px] .w-[500px] .h-[500px] .rounded-full .opacity-15 .blur-3xl .bg-[#059669] .pointer-events-none
+    div .absolute .top-[40%] .left-[60%] .w-[300px] .h-[300px] .rounded-full .opacity-10 .blur-3xl .bg-[#d97706] .pointer-events-none
+
+    # Grid pattern overlay
+    div .absolute .inset-0 .opacity-5 .pointer-events-none .bg-[url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")]
+
+    div .relative .z-10 .text-center .px-6 .max-w-5xl .mx-auto:
+
+      # Badge
+      div .inline-flex .items-center .gap-2 .mb-8 .px-4 .py-2 .rounded-full .border .border-[rgba(124,58,237,0.4)] .bg-[rgba(124,58,237,0.1)]:
+        div .w-2 .h-2 .rounded-full .bg-[#059669] .animate-pulse
+        span .text-[#a78bfa] .text-sm "Phase 1 · Now Available"
+
+      # Main heading
+      h1 .text-[clamp(2.5rem,7vw,5.5rem)] .font-black .leading-none .mb-6:
+        div .text-white "Build websites"
+        div .bg-[linear-gradient(135deg,#7c3aed_0%,#059669_50%,#d97706_100%)] .bg-clip-text .text-transparent "10x faster."
+
+      # Sub heading
+      p .text-[#94a3b8] .text-xl .max-w-2xl .mx-auto .mb-10 .leading-relaxed:
+        "Korlix is a frontend language that compiles .klx files into blazing-fast HTML, CSS, and JavaScript. No boilerplate. No config. Just code."
+
+      # CTA buttons
+      div .flex .flex-wrap .gap-4 .justify-center .mb-16:
+        button .px-8 .py-4 .text-white .font-semibold .rounded-xl .text-base .bg-[linear-gradient(135deg,#7c3aed,#059669)] .hover:opacity-90 .shadow-[0_0_40px_rgba(124,58,237,0.4)] "Start Building →" on:click:
+          toast success "Starting your Korlix journey!"
+
+        button .px-8 .py-4 .text-[#a78bfa] .font-semibold .rounded-xl .text-base .border .border-[rgba(124,58,237,0.3)] .hover:bg-[rgba(124,58,237,0.1)] "See Examples" on:click:
+          scrollTo("#features")
+
+      # Code preview card
+      div .max-w-3xl .mx-auto .rounded-2xl .overflow-hidden .border .border-[rgba(124,58,237,0.2)] .shadow-[0_0_80px_rgba(124,58,237,0.15)]:
+        div .flex .items-center .gap-2 .px-5 .py-3 .bg-[rgba(255,255,255,0.04)] .border-b .border-[rgba(255,255,255,0.06)]:
+          div .w-3 .h-3 .rounded-full .bg-[#ef4444]
+          div .w-3 .h-3 .rounded-full .bg-[#f59e0b]
+          div .w-3 .h-3 .rounded-full .bg-[#22c55e]
+          span .text-[#64748b] .text-xs .ml-3 "src/pages/index.klx"
+        div .bg-[#0d0b1e] .p-6 .text-left:
+          pre .text-sm .font-mono .leading-relaxed:
+            span .text-[#6366f1] "page "
+            span .text-[#34d399] "welcome "
+            span .text-[#64748b] "route "
+            span .text-[#fbbf24] '"/":' "\n"
+            span .text-[#64748b] "  "
+            span .text-[#f472b6] "state "
+            span .text-white "count"
+            span .text-[#64748b] ": int = "
+            span .text-[#fb923c] "0" "\n\n"
+            span .text-[#64748b] "  "
+            span .text-[#a78bfa] "section"
+            span .text-[#34d399] " .hero .center .bg-dark" ":\n"
+            span .text-[#64748b] "    "
+            span .text-[#a78bfa] "h1"
+            span .text-[#34d399] " .text-6xl .font-black .text-primary "
+            span .text-[#fbbf24] '"Hello Korlix"' "\n"
+            span .text-[#64748b] "    "
+            span .text-[#a78bfa] "btn"
+            span .text-[#34d399] " .primary "
+            span .text-[#fbbf24] '"Click me"'
+            span .text-[#64748b] " on:click" ":\n"
+            span .text-[#64748b] "      "
+            span .text-white "count = count + "
+            span .text-[#fb923c] "1" "\n"
+            span .text-[#64748b] "      "
+            span .text-[#f472b6] "toast "
+            span .text-[#34d399] "success "
+            span .text-[#fbbf24] '"Clicked " + count'
+
+  # ══════════════════════════════════════
+  # TRIADIC COLOR STRIP
+  # ══════════════════════════════════════
+  div .flex .h-1:
+    div .flex-1 .bg-[linear-gradient(90deg,#7c3aed,#6d28d9)]
+    div .flex-1 .bg-[linear-gradient(90deg,#059669,#047857)]
+    div .flex-1 .bg-[linear-gradient(90deg,#d97706,#b45309)]
+
+  # ══════════════════════════════════════
+  # FEATURES SECTION
+  # ══════════════════════════════════════
+  section .py-32 .px-6 .bg-[#080615] id="features":
+    div .max-w-7xl .mx-auto:
+
+      # Section header
+      div .text-center .mb-20:
+        span .inline-block .px-4 .py-1.5 .rounded-full .text-xs .font-semibold .bg-[rgba(5,150,105,0.15)] .text-[#34d399] .border .border-[rgba(5,150,105,0.3)] .mb-4 "FEATURES"
+        h2 .text-5xl .font-black .text-white .mb-4 "Everything built-in"
+        p .text-[#64748b] .text-lg "No plugins. No configuration. Zero boilerplate."
+
+      # Feature grid — 3 columns
+      div .grid .grid-cols-3 .gap-6:
+
+        # Feature 1 — Violet (primary)
+        div .group .p-8 .rounded-2xl .bg-[rgba(124,58,237,0.05)] .border .border-[rgba(124,58,237,0.15)] .hover:border-[rgba(124,58,237,0.5)] .hover:bg-[rgba(124,58,237,0.1)]:
+          div .w-12 .h-12 .rounded-xl .bg-[rgba(124,58,237,0.2)] .flex .items-center .justify-center .mb-6 .border .border-[rgba(124,58,237,0.3)]:
+            span .text-[#a78bfa] .text-2xl "⚡"
+          h3 .text-white .text-xl .font-bold .mb-3 "Compile-time first"
+          p .text-[#64748b] .leading-relaxed "AST-based Rust compiler. Every feature validated before output. Zero runtime surprises."
+          div .mt-6 .flex .flex-wrap .gap-2:
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(124,58,237,0.15)] .text-[#a78bfa] "Lexer"
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(124,58,237,0.15)] .text-[#a78bfa] "Parser"
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(124,58,237,0.15)] .text-[#a78bfa] "AST"
+
+        # Feature 2 — Emerald (secondary)
+        div .group .p-8 .rounded-2xl .bg-[rgba(5,150,105,0.05)] .border .border-[rgba(5,150,105,0.15)] .hover:border-[rgba(5,150,105,0.5)] .hover:bg-[rgba(5,150,105,0.1)]:
+          div .w-12 .h-12 .rounded-xl .bg-[rgba(5,150,105,0.2)] .flex .items-center .justify-center .mb-6 .border .border-[rgba(5,150,105,0.3)]:
+            span .text-[#34d399] .text-2xl "🎨"
+          h3 .text-white .text-xl .font-bold .mb-3 "JIT CSS Engine"
+          p .text-[#64748b] .leading-relaxed "1000+ utility classes, 17 color palettes, variants. Only ships what you actually use."
+          div .mt-6 .flex .flex-wrap .gap-2:
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(5,150,105,0.15)] .text-[#34d399] "JIT"
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(5,150,105,0.15)] .text-[#34d399] "Variants"
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(5,150,105,0.15)] .text-[#34d399] "Dark mode"
+
+        # Feature 3 — Amber (tertiary)
+        div .group .p-8 .rounded-2xl .bg-[rgba(217,119,6,0.05)] .border .border-[rgba(217,119,6,0.15)] .hover:border-[rgba(217,119,6,0.5)] .hover:bg-[rgba(217,119,6,0.1)]:
+          div .w-12 .h-12 .rounded-xl .bg-[rgba(217,119,6,0.2)] .flex .items-center .justify-center .mb-6 .border .border-[rgba(217,119,6,0.3)]:
+            span .text-[#fbbf24] .text-2xl "🧩"
+          h3 .text-white .text-xl .font-bold .mb-3 "100+ Components"
+          p .text-[#64748b] .leading-relaxed "Button, modal, toast, avatar, pagination, forms — all compile-time expanded to pure HTML."
+          div .mt-6 .flex .flex-wrap .gap-2:
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(217,119,6,0.15)] .text-[#fbbf24] "Modal"
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(217,119,6,0.15)] .text-[#fbbf24] "Toast"
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(217,119,6,0.15)] .text-[#fbbf24] "Forms"
+
+        # Feature 4 — mixed
+        div .group .p-8 .rounded-2xl .bg-[rgba(124,58,237,0.05)] .border .border-[rgba(124,58,237,0.15)] .hover:border-[rgba(124,58,237,0.5)]:
+          div .w-12 .h-12 .rounded-xl .bg-[rgba(124,58,237,0.2)] .flex .items-center .justify-center .mb-6 .border .border-[rgba(124,58,237,0.3)]:
+            span .text-[#a78bfa] .text-2xl "🔀"
+          h3 .text-white .text-xl .font-bold .mb-3 "SPA Router"
+          p .text-[#64748b] .leading-relaxed "Built-in client-side routing with params, active links, and route manifest. Zero config."
+          div .mt-6 .flex .flex-wrap .gap-2:
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(124,58,237,0.15)] .text-[#a78bfa] "Params"
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(124,58,237,0.15)] .text-[#a78bfa] "History"
+
+        # Feature 5 — emerald
+        div .group .p-8 .rounded-2xl .bg-[rgba(5,150,105,0.05)] .border .border-[rgba(5,150,105,0.15)] .hover:border-[rgba(5,150,105,0.5)]:
+          div .w-12 .h-12 .rounded-xl .bg-[rgba(5,150,105,0.2)] .flex .items-center .justify-center .mb-6 .border .border-[rgba(5,150,105,0.3)]:
+            span .text-[#34d399] .text-2xl "♻️"
+          h3 .text-white .text-xl .font-bold .mb-3 "Hot Drop"
+          p .text-[#64748b] .leading-relaxed "CSS updates without page reload. State preserved. Error overlay in browser. Real-time feedback."
+          div .mt-6 .flex .flex-wrap .gap-2:
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(5,150,105,0.15)] .text-[#34d399] "WebSocket"
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(5,150,105,0.15)] .text-[#34d399] "HMR"
+
+        # Feature 6 — amber
+        div .group .p-8 .rounded-2xl .bg-[rgba(217,119,6,0.05)] .border .border-[rgba(217,119,6,0.15)] .hover:border-[rgba(217,119,6,0.5)]:
+          div .w-12 .h-12 .rounded-xl .bg-[rgba(217,119,6,0.2)] .flex .items-center .justify-center .mb-6 .border .border-[rgba(217,119,6,0.3)]:
+            span .text-[#fbbf24] .text-2xl "🔒"
+          h3 .text-white .text-xl .font-bold .mb-3 "Safe by default"
+          p .text-[#64748b] .leading-relaxed "Automatic HTML escaping, accessibility checks, and SEO validation — all at compile time."
+          div .mt-6 .flex .flex-wrap .gap-2:
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(217,119,6,0.15)] .text-[#fbbf24] "XSS safe"
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(217,119,6,0.15)] .text-[#fbbf24] "A11y"
+            span .px-2 .py-1 .rounded .text-xs .bg-[rgba(217,119,6,0.15)] .text-[#fbbf24] "SEO"
+
+  # ══════════════════════════════════════
+  # SHOWCASE / DEMO SECTION
+  # ══════════════════════════════════════
+  section .py-32 .px-6 .bg-[#0a0819] id="showcase":
+    div .max-w-7xl .mx-auto:
+
+      div .text-center .mb-20:
+        span .inline-block .px-4 .py-1.5 .rounded-full .text-xs .font-semibold .bg-[rgba(124,58,237,0.15)] .text-[#a78bfa] .border .border-[rgba(124,58,237,0.3)] .mb-4 "SHOWCASE"
+        h2 .text-5xl .font-black .text-white .mb-4 "See it in action"
+        p .text-[#64748b] .text-lg "Real Korlix code. Real output."
+
+      div .grid .grid-cols-2 .gap-8:
+
+        # Left: KLX Code
+        div .rounded-2xl .overflow-hidden .border .border-[rgba(124,58,237,0.2)]:
+          div .flex .items-center .justify-between .px-5 .py-3 .bg-[rgba(124,58,237,0.1)] .border-b .border-[rgba(124,58,237,0.2)]:
+            div .flex .items-center .gap-2:
+              div .w-2.5 .h-2.5 .rounded-full .bg-[#7c3aed]
+              span .text-[#a78bfa] .text-sm .font-medium "counter.klx"
+            span .text-[#64748b] .text-xs "Korlix source"
+          div .bg-[#060412] .p-6:
+            pre .text-sm .font-mono .leading-[1.8]:
+              span .text-[#64748b] "# Interactive counter component\n"
+              span .text-[#6366f1] "page "
+              span .text-[#34d399] "counter"
+              span .text-[#64748b] " route "
+              span .text-[#fbbf24] '"/counter"' ":\n\n"
+              span .text-[#f472b6] "  state "
+              span .text-white "count"
+              span .text-[#64748b] ": int = "
+              span .text-[#fb923c] "0" "\n"
+              span .text-[#f472b6] "  state "
+              span .text-white "theme"
+              span .text-[#64748b] ": string = "
+              span .text-[#fbbf24] '"violet"' "\n\n"
+              span .text-[#64748b] "  "
+              span .text-[#a78bfa] "section"
+              span .text-[#34d399] " .min-h-screen .center .bg-[#0a0819]" ":\n"
+              span .text-[#64748b] "    "
+              span .text-[#a78bfa] "h1"
+              span .text-[#34d399] " .text-8xl .font-black .text-[#7c3aed] "
+              span .text-white "count" "\n"
+              span .text-[#64748b] "    "
+              span .text-[#a78bfa] "p"
+              span .text-[#34d399] " .text-[#64748b] "
+              span .text-[#fbbf24] '"clicks"' "\n\n"
+              span .text-[#64748b] "    "
+              span .text-[#a78bfa] "div"
+              span .text-[#34d399] " .flex .gap-4 .mt-8" ":\n"
+              span .text-[#64748b] "      "
+              span .text-[#a78bfa] "btn"
+              span .text-[#34d399] " .primary .text-xl .px-10 .py-4"
+              span .text-[#fbbf24] ' "+"'
+              span .text-[#64748b] " on:click" ":\n"
+              span .text-[#64748b] "        "
+              span .text-white "count = count + "
+              span .text-[#fb923c] "1" "\n"
+              span .text-[#64748b] "        "
+              span .text-[#f472b6] "toast "
+              span .text-[#34d399] "success "
+              span .text-[#fbbf24] '"Count: " + count' "\n"
+              span .text-[#64748b] "      "
+              span .text-[#a78bfa] "btn"
+              span .text-[#34d399] " .danger .text-xl .px-10 .py-4"
+              span .text-[#fbbf24] ' "Reset"'
+              span .text-[#64748b] " on:click" ":\n"
+              span .text-[#64748b] "        "
+              span .text-white "count = "
+              span .text-[#fb923c] "0"
+
+        # Right: Live preview simulation
+        div .rounded-2xl .overflow-hidden .border .border-[rgba(5,150,105,0.2)]:
+          div .flex .items-center .justify-between .px-5 .py-3 .bg-[rgba(5,150,105,0.1)] .border-b .border-[rgba(5,150,105,0.2)]:
+            div .flex .items-center .gap-2:
+              div .w-2.5 .h-2.5 .rounded-full .bg-[#059669]
+              span .text-[#34d399] .text-sm .font-medium "Live Preview"
+            span .text-[#64748b] .text-xs "localhost:3000"
+          div .bg-[#0a0819] .p-8 .flex .flex-col .items-center .justify-center .min-h-[360px]:
+            state demoCount: int = 0
+
+            p .text-[#7c3aed] .text-8xl .font-black .mb-2 demoCount
+            p .text-[#64748b] .text-lg .mb-10 "clicks"
+            div .flex .gap-4:
+              button .px-10 .py-4 .text-xl .text-white .font-bold .rounded-xl .bg-[linear-gradient(135deg,#7c3aed,#6d28d9)] .shadow-[0_0_30px_rgba(124,58,237,0.5)] "+" on:click:
+                demoCount = demoCount + 1
+                toast success "Count: " + demoCount
+              button .px-10 .py-4 .text-xl .text-white .font-bold .rounded-xl .bg-[linear-gradient(135deg,#dc2626,#991b1b)] "Reset" on:click:
+                demoCount = 0
+            p .text-[#1e293b] .text-xs .mt-10 "← Click the buttons above"
+
+  # ══════════════════════════════════════
+  # STATS SECTION
+  # ══════════════════════════════════════
+  section .py-24 .px-6 .bg-[#080615] id="stats":
+    div .max-w-5xl .mx-auto:
+
+      div .grid .grid-cols-4 .gap-6:
+
+        div .p-8 .rounded-2xl .text-center .bg-[rgba(124,58,237,0.05)] .border .border-[rgba(124,58,237,0.15)]:
+          p .text-5xl .font-black .text-[#7c3aed] .mb-2 "12"
+          p .text-[#64748b] .text-sm "Rust crates"
+          div .w-12 .h-1 .bg-[linear-gradient(90deg,#7c3aed,transparent)] .mx-auto .mt-4
+
+        div .p-8 .rounded-2xl .text-center .bg-[rgba(5,150,105,0.05)] .border .border-[rgba(5,150,105,0.15)]:
+          p .text-5xl .font-black .text-[#059669] .mb-2 "1k+"
+          p .text-[#64748b] .text-sm "CSS utilities"
+          div .w-12 .h-1 .bg-[linear-gradient(90deg,#059669,transparent)] .mx-auto .mt-4
+
+        div .p-8 .rounded-2xl .text-center .bg-[rgba(217,119,6,0.05)] .border .border-[rgba(217,119,6,0.15)]:
+          p .text-5xl .font-black .text-[#d97706] .mb-2 "100+"
+          p .text-[#64748b] .text-sm "Components"
+          div .w-12 .h-1 .bg-[linear-gradient(90deg,#d97706,transparent)] .mx-auto .mt-4
+
+        div .p-8 .rounded-2xl .text-center .bg-[rgba(124,58,237,0.05)] .border .border-[rgba(124,58,237,0.15)]:
+          p .text-5xl .font-black .text-[#a78bfa] .mb-2 "20kb"
+          p .text-[#64748b] .text-sm "Runtime size"
+          div .w-12 .h-1 .bg-[linear-gradient(90deg,#a78bfa,transparent)] .mx-auto .mt-4
+
+  # ══════════════════════════════════════
+  # TESTIMONIALS
+  # ══════════════════════════════════════
+  section .py-32 .px-6 .bg-[#0a0819]:
+    div .max-w-6xl .mx-auto:
+
+      div .text-center .mb-16:
+        span .inline-block .px-4 .py-1.5 .rounded-full .text-xs .font-semibold .bg-[rgba(217,119,6,0.15)] .text-[#fbbf24] .border .border-[rgba(217,119,6,0.3)] .mb-4 "TESTIMONIALS"
+        h2 .text-4xl .font-black .text-white "Loved by developers"
+
+      div .grid .grid-cols-3 .gap-6:
+
+        div .p-8 .rounded-2xl .bg-[#0d0b1e] .border .border-[rgba(124,58,237,0.15)]:
+          div .flex .gap-1 .mb-4:
+            span .text-[#d97706] "★★★★★"
+          p .text-[#94a3b8] .leading-relaxed .mb-6 '"Finally a frontend language that thinks like I do. No jsx, no config, just clean syntax that actually makes sense."'
+          div .flex .items-center .gap-3:
+            div .w-10 .h-10 .rounded-full .bg-[linear-gradient(135deg,#7c3aed,#4f46e5)] .flex .items-center .justify-center:
+              span .text-white .font-bold .text-sm "S"
+            div:
+              p .text-white .text-sm .font-semibold "Sachin Dev"
+              p .text-[#64748b] .text-xs "Full-stack Developer"
+
+        div .p-8 .rounded-2xl .bg-[#0d0b1e] .border .border-[rgba(5,150,105,0.15)]:
+          div .flex .gap-1 .mb-4:
+            span .text-[#d97706] "★★★★★"
+          p .text-[#94a3b8] .leading-relaxed .mb-6 '"The JIT CSS engine is brilliant. I dropped Tailwind and this gives me everything I need, compiled down perfectly."'
+          div .flex .items-center .gap-3:
+            div .w-10 .h-10 .rounded-full .bg-[linear-gradient(135deg,#059669,#047857)] .flex .items-center .justify-center:
+              span .text-white .font-bold .text-sm "A"
+            div:
+              p .text-white .text-sm .font-semibold "Arun Kumar"
+              p .text-[#64748b] .text-xs "Frontend Engineer"
+
+        div .p-8 .rounded-2xl .bg-[#0d0b1e] .border .border-[rgba(217,119,6,0.15)]:
+          div .flex .gap-1 .mb-4:
+            span .text-[#d97706] "★★★★★"
+          p .text-[#94a3b8] .leading-relaxed .mb-6 '"Hot drop is insane. I change a class and the browser updates instantly. Never going back to webpack."'
+          div .flex .items-center .gap-3:
+            div .w-10 .h-10 .rounded-full .bg-[linear-gradient(135deg,#d97706,#b45309)] .flex .items-center .justify-center:
+              span .text-white .font-bold .text-sm "M"
+            div:
+              p .text-white .text-sm .font-semibold "Meera R"
+              p .text-[#64748b] .text-xs "UI/UX Developer"
+
+  # ══════════════════════════════════════
+  # PRICING
+  # ══════════════════════════════════════
+  section .py-32 .px-6 .bg-[#080615] id="pricing":
+    div .max-w-5xl .mx-auto:
+
+      div .text-center .mb-16:
+        span .inline-block .px-4 .py-1.5 .rounded-full .text-xs .font-semibold .bg-[rgba(5,150,105,0.15)] .text-[#34d399] .border .border-[rgba(5,150,105,0.3)] .mb-4 "PRICING"
+        h2 .text-5xl .font-black .text-white .mb-4 "Simple pricing"
+        p .text-[#64748b] .text-lg "No tricks. No hidden fees."
+
+      div .grid .grid-cols-3 .gap-6:
+
+        # Free tier
+        div .p-8 .rounded-2xl .bg-[#0d0b1e] .border .border-[rgba(255,255,255,0.06)]:
+          p .text-[#64748b] .text-sm .font-semibold .mb-4 "HOBBY"
+          p .text-5xl .font-black .text-white .mb-1:
+            span "$0"
+          p .text-[#64748b] .text-sm .mb-8 "forever"
+          div .space-y-3 .mb-8:
+            p .text-[#94a3b8] .text-sm "✓ Unlimited projects"
+            p .text-[#94a3b8] .text-sm "✓ Full compiler"
+            p .text-[#94a3b8] .text-sm "✓ All components"
+            p .text-[#94a3b8] .text-sm "✓ Hot drop"
+            p .text-[#475569] .text-sm "✗ Priority support"
+          button .w-full .py-3 .rounded-xl .text-[#a78bfa] .border .border-[rgba(124,58,237,0.4)] .hover:bg-[rgba(124,58,237,0.1)] "Get started free"
+
+        # Pro tier (featured)
+        div .p-8 .rounded-2xl .border .border-[rgba(124,58,237,0.5)] .relative .bg-[rgba(124,58,237,0.05)] .shadow-[0_0_60px_rgba(124,58,237,0.2)]:
+          div .absolute .top-[-12px] .left-1/2 .translate-x-[-50%] .px-4 .py-1 .rounded-full .text-xs .font-bold .bg-[linear-gradient(135deg,#7c3aed,#059669)] .text-white "MOST POPULAR"
+          p .text-[#a78bfa] .text-sm .font-semibold .mb-4 "PRO"
+          div .flex .items-baseline .gap-1 .mb-1:
+            span .text-5xl .font-black .text-white "$19"
+            span .text-[#64748b] " /mo"
+          p .text-[#64748b] .text-sm .mb-8 "billed monthly"
+          div .space-y-3 .mb-8:
+            p .text-[#94a3b8] .text-sm "✓ Everything in Hobby"
+            p .text-[#94a3b8] .text-sm "✓ Priority support"
+            p .text-[#94a3b8] .text-sm "✓ VS Code extension"
+            p .text-[#94a3b8] .text-sm "✓ LSP server"
+            p .text-[#94a3b8] .text-sm "✓ Private templates"
+          button .w-full .py-3 .rounded-xl .text-white .font-semibold .bg-[linear-gradient(135deg,#7c3aed,#6d28d9)] .hover:opacity-90 "Upgrade to Pro" on:click:
+            toast success "Pro plan — coming soon!"
+
+        # Enterprise tier
+        div .p-8 .rounded-2xl .bg-[#0d0b1e] .border .border-[rgba(217,119,6,0.2)]:
+          p .text-[#fbbf24] .text-sm .font-semibold .mb-4 "ENTERPRISE"
+          p .text-5xl .font-black .text-white .mb-1 "Custom"
+          p .text-[#64748b] .text-sm .mb-8 "contact us"
+          div .space-y-3 .mb-8:
+            p .text-[#94a3b8] .text-sm "✓ Everything in Pro"
+            p .text-[#94a3b8] .text-sm "✓ Custom components"
+            p .text-[#94a3b8] .text-sm "✓ Team seats"
+            p .text-[#94a3b8] .text-sm "✓ SLA guarantee"
+            p .text-[#94a3b8] .text-sm "✓ Dedicated support"
+          button .w-full .py-3 .rounded-xl .text-[#fbbf24] .border .border-[rgba(217,119,6,0.4)] .hover:bg-[rgba(217,119,6,0.1)] "Contact sales" on:click:
+            toast info "Contact us at hello@korlix.dev"
+
+  # ══════════════════════════════════════
+  # CTA SECTION
+  # ══════════════════════════════════════
+  section .py-32 .px-6 .relative .overflow-hidden .bg-[#0a0819]:
+    div .absolute .inset-0 .bg-[radial-gradient(ellipse_at_center,rgba(124,58,237,0.2),transparent_70%)] .pointer-events-none
+    div .absolute .bottom-0 .left-0 .right-0 .h-px .bg-[linear-gradient(90deg,transparent,rgba(124,58,237,0.5),transparent)]
+
+    div .relative .z-10 .max-w-3xl .mx-auto .text-center:
+      div .w-20 .h-20 .rounded-2xl .bg-[linear-gradient(135deg,#7c3aed,#059669)] .flex .items-center .justify-center .mx-auto .mb-8 .shadow-[0_0_60px_rgba(124,58,237,0.5)]:
+        span .text-4xl .font-black .text-white "K"
+
+      h2 .text-6xl .font-black .text-white .mb-6 "Build something"
+      h2 .text-6xl .font-black .mb-8:
+        span .bg-[linear-gradient(135deg,#7c3aed_0%,#059669_50%,#d97706_100%)] .bg-clip-text .text-transparent "remarkable."
+
+      p .text-[#64748b] .text-xl .mb-12 "Join developers who build faster with Korlix. Free forever. Open source."
+
+      div .flex .gap-4 .justify-center:
+        button .px-10 .py-4 .text-white .font-bold .text-lg .rounded-xl .bg-[linear-gradient(135deg,#7c3aed,#059669)] .hover:opacity-90 .shadow-[0_0_50px_rgba(124,58,237,0.4)] "Start for free" on:click:
+          toast success "Run: korlix new my-site"
+        button .px-10 .py-4 .text-[#a78bfa] .font-semibold .text-lg .rounded-xl .border .border-[rgba(124,58,237,0.3)] .hover:bg-[rgba(124,58,237,0.1)] "Read docs" on:click:
+          navigate("/about")
+
+  # ══════════════════════════════════════
+  # FOOTER
+  # ══════════════════════════════════════
+  footer .py-12 .px-6 .bg-[#060412] .border-t .border-[rgba(255,255,255,0.04)]:
+    div .max-w-7xl .mx-auto:
+      div .flex .items-center .justify-between .mb-8:
+        div .flex .items-center .gap-3:
+          div .w-8 .h-8 .rounded-lg .bg-[linear-gradient(135deg,#7c3aed,#059669)] .flex .items-center .justify-center:
+            span .text-white .font-black .text-sm "K"
+          span .text-white .font-bold "Korlix"
+        div .flex .gap-8:
+          a href="#features" .text-[#475569] .hover:text-[#a78bfa] .text-sm "Features"
+          a href="#showcase" .text-[#475569] .hover:text-[#a78bfa] .text-sm "Showcase"
+          a href="#stats" .text-[#475569] .hover:text-[#a78bfa] .text-sm "Stats"
+          a href="#pricing" .text-[#475569] .hover:text-[#a78bfa] .text-sm "Pricing"
+        div .flex .gap-4:
+          div .w-8 .h-8 .rounded-lg .border .border-[rgba(124,58,237,0.2)] .flex .items-center .justify-center .hover:bg-[rgba(124,58,237,0.1)] .cursor-pointer:
+            span .text-[#a78bfa] .text-sm "G"
+          div .w-8 .h-8 .rounded-lg .border .border-[rgba(5,150,105,0.2)] .flex .items-center .justify-center .hover:bg-[rgba(5,150,105,0.1)] .cursor-pointer:
+            span .text-[#34d399] .text-sm "T"
+      div .border-t .border-[rgba(255,255,255,0.04)] .pt-8 .flex .items-center .justify-between:
+        p .text-[#1e293b] .text-sm "© 2024 Korlix. Open source under MIT License."
+        div .flex .gap-2:
+          div .w-2 .h-2 .rounded-full .bg-[#7c3aed]
+          div .w-2 .h-2 .rounded-full .bg-[#059669]
+          div .w-2 .h-2 .rounded-full .bg-[#d97706]

@@ -1,0 +1,11 @@
+[package]
+name = "korlix-runtime-plan"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+korlix-core = { path = "../korlix-core" }
+korlix-ast = { path = "../korlix-ast" }
+serde = { workspace = true }
+serde_json = { workspace = true }
+indexmap = { workspace = true }

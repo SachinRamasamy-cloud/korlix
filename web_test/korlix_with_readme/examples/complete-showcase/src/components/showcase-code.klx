@@ -1,0 +1,10 @@
+component showcase-code
+  prop title: string
+  prop codeText: string
+
+  figure .surface-neutral-12 .content-neutral-1 .rounded-xl .overflow-hidden
+    figcaption .flex .items-center .justify-between .px-4 .py-3 .outline-neutral-9 .border-b
+      strong title
+      badge variant=soft ".klx"
+    pre .overflow-x-auto .p-5
+      code codeText

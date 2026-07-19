@@ -1,0 +1,70 @@
+page users route "/users":
+  meta:
+    title "Users — Dashboard"
+
+  div .p-8:
+    div .flex .items-center .justify-between .mb-8:
+      h1 .text-3xl .font-bold "Users"
+      btn .primary "Add User" on:click:
+        openModal("add-user")
+
+    state search: string = ""
+
+    div .bg-surface .border .border-border .rounded-xl .overflow-hidden:
+      div .p-4 .border-b .border-border:
+        input .w-full .bg-background placeholder="Search users..." on:input:
+          search = event.target.value
+
+      table .w-full:
+        thead .bg-background:
+          tr:
+            th .px-6 .py-3 .text-left .text-muted .text-sm "Name"
+            th .px-6 .py-3 .text-left .text-muted .text-sm "Email"
+            th .px-6 .py-3 .text-left .text-muted .text-sm "Role"
+            th .px-6 .py-3 .text-left .text-muted .text-sm "Status"
+            th .px-6 .py-3 .text-left .text-muted .text-sm "Actions"
+        tbody:
+          tr .border-b .border-border .hover:bg-surface:
+            td .px-6 .py-4:
+              div .flex .items-center .gap-3:
+                avatar name="Sachin Dev" size="sm"
+                span "Sachin Dev"
+            td .px-6 .py-4 .text-muted "sachin@example.com"
+            td .px-6 .py-4:
+              badge .primary "Admin"
+            td .px-6 .py-4:
+              badge .success "Active"
+            td .px-6 .py-4:
+              btn .ghost "Edit" on:click:
+                toast info "Edit user"
+          tr .border-b .border-border .hover:bg-surface:
+            td .px-6 .py-4:
+              div .flex .items-center .gap-3:
+                avatar name="Arun Kumar" size="sm"
+                span "Arun Kumar"
+            td .px-6 .py-4 .text-muted "arun@example.com"
+            td .px-6 .py-4:
+              badge .default "Developer"
+            td .px-6 .py-4:
+              badge .success "Active"
+            td .px-6 .py-4:
+              btn .ghost "Edit" on:click:
+                toast info "Edit user"
+
+    modal id="add-user" title="Add New User":
+      div .space-y-4:
+        form-field:
+          label "Full Name"
+          input type="text" placeholder="Enter name"
+        form-field:
+          label "Email"
+          input type="email" placeholder="user@example.com"
+        form-field:
+          label "Role"
+          select options=[{ label: "Admin", value: "admin" }, { label: "Developer", value: "dev" }, { label: "Viewer", value: "viewer" }]
+      slot:footer:
+        btn .primary "Add User" on:click:
+          closeModal("add-user")
+          toast success "User added successfully"
+        btn .ghost "Cancel" on:click:
+          closeModal("add-user")

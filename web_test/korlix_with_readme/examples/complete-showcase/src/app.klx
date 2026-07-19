@@ -1,0 +1,10 @@
+import ShowcaseLayout from "./layouts/showcase-layout.klx"
+
+app KorlixCompleteShowcase
+  layout ShowcaseLayout
+  theme auto
+
+  providers
+    toast
+    modal
+    theme

@@ -1,0 +1,16 @@
+component showcase-person
+  prop name: string
+  prop role: string = "Korlix Developer"
+  prop active: bool = true
+
+  article .surface-raised .outline-outline .border .rounded-xl .p-5
+    row .items-center .gap-4
+      avatar name=name status="online" size="lg"
+      div .flex-1
+        h3 name
+        p .content-content-muted role
+      if active
+        badge variant=success "Active"
+      else
+        badge variant=default "Offline"
+    slot

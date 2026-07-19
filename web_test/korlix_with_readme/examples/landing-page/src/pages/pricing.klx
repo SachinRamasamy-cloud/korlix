@@ -1,0 +1,21 @@
+page pricing route "/pricing":
+  meta:
+    title "Pricing — Korlix"
+
+  section .py-20 .px-6 .bg-background:
+    div .max-w-4xl .mx-auto .text-center:
+      h1 .text-5xl .font-bold .mb-4 "Simple Pricing"
+      p .text-xl .text-muted .mb-16 "Korlix is open source and free forever."
+
+      div .grid .grid-cols-2 .gap-8 .text-left:
+        card .p-8 .rounded-2xl .bg-surface .border .border-border:
+          h2 .text-3xl .font-bold .mb-4 "Free"
+          p .text-muted .mb-8 "For individuals and small teams"
+          btn .primary .w-full "Get Started" on:click:
+            navigate("/")
+
+        card .p-8 .rounded-2xl .bg-surface .border .border-primary:
+          h2 .text-3xl .font-bold .mb-4 "Enterprise"
+          p .text-muted .mb-8 "For larger teams — coming soon"
+          btn .ghost .w-full "Join Waitlist" on:click:
+            toast info "Waitlist opens soon!"

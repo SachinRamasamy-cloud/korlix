@@ -1,0 +1,8 @@
+{
+  "items": [
+    {"id":1,"name":"Korlix Starter","price":0,"category":"Template"},
+    {"id":2,"name":"Dashboard Kit","price":39,"category":"UI Kit"},
+    {"id":3,"name":"Commerce Kit","price":59,"category":"UI Kit"}
+  ],
+  "total": 3
+}

@@ -1,0 +1,14 @@
+{
+  "name": "korlix-complete-showcase",
+  "private": true,
+  "version": "0.2.0",
+  "description": "A comprehensive Korlix V2 sample application covering the implemented language, styling, components, runtime, API and compiler features.",
+  "scripts": {
+    "dev": "korlix dev",
+    "check": "korlix check",
+    "build": "korlix build --mode static",
+    "preview": "korlix preview --port 4173",
+    "api": "node mock-api/server.mjs",
+    "verify": "python scripts/verify_showcase.py"
+  }
+}

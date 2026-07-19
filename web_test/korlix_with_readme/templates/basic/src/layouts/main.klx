@@ -1,0 +1,13 @@
+layout main:
+  navbar .bg-surface .border-b .border-border .sticky .top-0 .z-50:
+    div .max-w-7xl .mx-auto .px-6 .py-4 .flex .items-center .justify-between:
+      link href="/" .text-primary .font-bold "{{name}}"
+      div .flex .gap-6:
+        link href="/" .text-muted "Home"
+        link href="/about" .text-muted "About"
+
+  main:
+    slot
+
+  footer .bg-surface .border-t .border-border .py-6 .text-center:
+    p .text-muted "Built with Korlix"

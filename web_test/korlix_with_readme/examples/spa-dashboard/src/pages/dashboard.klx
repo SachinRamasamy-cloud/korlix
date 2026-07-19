@@ -1,0 +1,89 @@
+page dashboard route "/":
+  meta:
+    title "Dashboard — Korlix Demo"
+
+  div .p-8:
+    div .flex .items-center .justify-between .mb-8:
+      div:
+        h1 .text-3xl .font-bold "Dashboard"
+        p .text-muted "Welcome back, Sachin"
+      div .flex .gap-3:
+        btn .ghost "Export" on:click:
+          toast info "Exporting data..."
+        btn .primary "New Report" on:click:
+          openModal("new-report")
+
+    div .grid .grid-cols-4 .gap-6 .mb-8:
+      card .p-6 .rounded-xl .bg-surface .border .border-border:
+        p .text-muted .text-sm .mb-1 "Total Revenue"
+        p .text-3xl .font-bold .text-primary "$48,295"
+        p .text-success .text-sm "+12.5% this month"
+
+      card .p-6 .rounded-xl .bg-surface .border .border-border:
+        p .text-muted .text-sm .mb-1 "Active Users"
+        p .text-3xl .font-bold "2,847"
+        p .text-success .text-sm "+8.1% this month"
+
+      card .p-6 .rounded-xl .bg-surface .border .border-border:
+        p .text-muted .text-sm .mb-1 "Conversion Rate"
+        p .text-3xl .font-bold "3.6%"
+        p .text-warning .text-sm "-0.3% this month"
+
+      card .p-6 .rounded-xl .bg-surface .border .border-border:
+        p .text-muted .text-sm .mb-1 "Support Tickets"
+        p .text-3xl .font-bold "14"
+        p .text-danger .text-sm "3 urgent"
+
+    div .grid .grid-cols-3 .gap-6:
+      div .col-span-2:
+        card .p-6 .rounded-xl .bg-surface .border .border-border:
+          h3 .font-semibold .mb-4 "Recent Activity"
+          div .space-y-4:
+            div .flex .items-center .gap-3 .py-3 .border-b .border-border:
+              avatar name="Arjun K" size="sm"
+              div .flex-1:
+                p .font-medium "Arjun K"
+                p .text-muted .text-sm "Upgraded to Pro plan"
+              badge .success "Pro"
+            div .flex .items-center .gap-3 .py-3 .border-b .border-border:
+              avatar name="Meera R" size="sm"
+              div .flex-1:
+                p .font-medium "Meera R"
+                p .text-muted .text-sm "Submitted support ticket"
+              badge .warning "Ticket"
+            div .flex .items-center .gap-3 .py-3:
+              avatar name="Dev T" size="sm"
+              div .flex-1:
+                p .font-medium "Dev T"
+                p .text-muted .text-sm "Joined the platform"
+              badge .default "New"
+
+      card .p-6 .rounded-xl .bg-surface .border .border-border:
+        h3 .font-semibold .mb-4 "Quick Actions"
+        div .space-y-3:
+          btn .primary .w-full "Add User" on:click:
+            navigate("/users")
+          btn .ghost .w-full "View Reports" on:click:
+            toast info "Reports page coming soon"
+          btn .ghost .w-full "Settings" on:click:
+            navigate("/settings")
+          btn .danger .w-full "Clear Cache" on:click:
+            openModal("confirm-clear")
+
+    modal id="new-report" title="New Report":
+      p "Configure your report settings here."
+      slot:footer:
+        btn .primary "Create" on:click:
+          closeModal("new-report")
+          toast success "Report created!"
+        btn .ghost "Cancel" on:click:
+          closeModal("new-report")
+
+    modal id="confirm-clear" title="Clear Cache?":
+      p "This will clear all cached data. Continue?"
+      slot:footer:
+        btn .danger "Clear Cache" on:click:
+          closeModal("confirm-clear")
+          toast success "Cache cleared"
+        btn .ghost "Cancel" on:click:
+          closeModal("confirm-clear")

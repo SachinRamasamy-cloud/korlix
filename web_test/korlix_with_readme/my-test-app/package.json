@@ -1,0 +1,14 @@
+{
+  "name": "my-test-app",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "korlix dev",
+    "build": "korlix build",
+    "preview": "korlix preview",
+    "check": "korlix check"
+  },
+  "devDependencies": {
+    "korlix": "file:/home/sachin/language/korlix-phase1/korlix/npm/korlix"
+  }
+}

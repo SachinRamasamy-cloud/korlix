@@ -1,0 +1,30 @@
+# Rust build artifacts
+/target/
+**/target/
+
+# Node modules and logs
+/node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+
+# Runtime build artifacts
+/runtime/dist/
+/runtime/build/
+
+# Generated editor files
+/.vscode/
+.idea/
+*.swp
+*.tmp
+*.temp
+*~
+.DS_Store
+Thumbs.db
+
+# Environment files
+.env
+.env.*
