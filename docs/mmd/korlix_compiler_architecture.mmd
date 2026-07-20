@@ -1,0 +1,350 @@
+flowchart TB
+    %% ============================================================
+    %% KORLIX COMPILER ARCHITECTURE
+    %% Detailed view of the current compiler, validation, codegen,
+    %% runtime packaging, and development-server workflow.
+    %% ============================================================
+
+    USER["Developer / CI"]:::actor
+
+    subgraph COMMANDS["1. CLI ENTRY — korlix-cli"]
+        direction LR
+        NEW["korlix new"]:::cli
+        CHECK["korlix check<br/>optional: --ast"]:::cli
+        BUILD["korlix build<br/>--mode static | spa"]:::cli
+        DEV["korlix dev"]:::cli
+        PREVIEW["korlix preview"]:::cli
+    end
+
+    USER --> NEW
+    USER --> CHECK
+    USER --> BUILD
+    USER --> DEV
+    USER --> PREVIEW
+
+    NEW --> SCAFFOLD["Copy project template<br/>create korlix.config.json<br/>create src/ and public/"]:::output
+
+    CHECK --> ORCHESTRATOR
+    BUILD --> ORCHESTRATOR
+    DEV --> DEV_BOOT
+    PREVIEW --> PREVIEW_SERVER["Serve existing dist/<br/>without recompiling"]:::dev
+
+    subgraph DEVWORKFLOW["DEVELOPMENT WORKFLOW — korlix-dev-server"]
+        direction TB
+        DEV_BOOT["Start development command"]:::dev
+        INITIAL_BUILD["Run initial compiler build"]:::dev
+        DEV_SERVER["HTTP server serves dist/"]:::dev
+        WATCHER["Watch .klx, config, runtime,<br/>and public asset changes"]:::dev
+        REBUILD["Trigger incremental full-project rebuild"]:::dev
+        WS["WebSocket / hot-drop notification"]:::dev
+        BROWSER_RELOAD["Browser updates or reloads changed output"]:::dev
+        DEV_BOOT --> INITIAL_BUILD
+        INITIAL_BUILD --> DEV_SERVER
+        INITIAL_BUILD --> WATCHER
+        WATCHER --> REBUILD
+        REBUILD --> WS
+        WS --> BROWSER_RELOAD
+    end
+
+    INITIAL_BUILD --> ORCHESTRATOR
+    REBUILD --> ORCHESTRATOR
+
+    subgraph COMPILER["2. WHOLE-PROJECT COMPILER — korlix-compiler"]
+        direction TB
+
+        ORCHESTRATOR["Compile orchestration<br/>select command and build mode"]:::core
+
+        subgraph PROJECTLOAD["2A. PROJECT AND SOURCE LOADING — korlix-core"]
+            direction TB
+            CONFIG["Read korlix.config.json<br/>name, src, public, dist,<br/>mode, theme, server"]:::stage
+            DISCOVER["Discover project files<br/>src/**/*.klx"]:::stage
+            PUBLIC_SCAN["Discover public assets"]:::stage
+            SOURCE_DB["Load UTF-8 source text<br/>assign file IDs and source spans"]:::stage
+            CONFIG --> DISCOVER
+            CONFIG --> PUBLIC_SCAN
+            DISCOVER --> SOURCE_DB
+        end
+
+        ORCHESTRATOR --> CONFIG
+
+        subgraph FRONTEND["2B. LANGUAGE FRONT END"]
+            direction TB
+
+            subgraph LEXER["LEXER — korlix-lexer"]
+                direction TB
+                CHAR_STREAM["Source characters"]:::stage
+                INDENT["Measure indentation<br/>emit INDENT / DEDENT"]:::stage
+                TOKENIZE["Recognize keywords, identifiers,<br/>numbers, strings, operators,<br/>classes, arbitrary values,<br/>events and HTTP methods"]:::stage
+                TOKEN_SPANS["Attach file, line, column,<br/>and byte-span information"]:::stage
+                TOKENS["Token stream"]:::artifact
+                CHAR_STREAM --> INDENT --> TOKENIZE --> TOKEN_SPANS --> TOKENS
+            end
+
+            subgraph PARSER["PARSER — korlix-parser"]
+                direction TB
+                MODULE_PARSE["Parse one module"]:::stage
+                DECL_PARSE["Top-level declarations:<br/>app, import, mount, page,<br/>layout, component"]:::stage
+                BODY_PARSE["Body declarations:<br/>prop, state, let, derived,<br/>fn/action, query, mutation"]:::stage
+                CONTROL_PARSE["Control flow:<br/>if / else, for"]:::stage
+                UI_PARSE["UI syntax:<br/>HTML/SVG elements,<br/>built-in and user components,<br/>attributes, classes, slots, events"]:::stage
+                EXPR_PARSE["Expressions:<br/>literals, lists, records,<br/>operators, calls, members,<br/>indexes, interpolation"]:::stage
+                AST_MODULE["Module AST<br/>with source spans"]:::artifact
+                MODULE_PARSE --> DECL_PARSE --> BODY_PARSE
+                BODY_PARSE --> CONTROL_PARSE
+                CONTROL_PARSE --> UI_PARSE
+                UI_PARSE --> EXPR_PARSE
+                EXPR_PARSE --> AST_MODULE
+            end
+
+            SOURCE_DB --> CHAR_STREAM
+            TOKENS --> MODULE_PARSE
+        end
+
+        subgraph RESOLUTION["2C. MODULE, NAME, AND ROUTE RESOLUTION — korlix-resolver"]
+            direction TB
+            MODULE_GRAPH["Build module graph"]:::stage
+            IMPORT_PATHS["Resolve relative import paths<br/>and imported aliases"]:::stage
+            DECL_INDEX["Index pages, layouts,<br/>components and imports"]:::stage
+            ROUTE_INDEX["Create route table<br/>and output-path mapping"]:::stage
+            SYMBOLS["Build whole-project symbol data"]:::artifact
+            AST_MODULE --> MODULE_GRAPH
+            MODULE_GRAPH --> IMPORT_PATHS
+            IMPORT_PATHS --> DECL_INDEX
+            DECL_INDEX --> ROUTE_INDEX
+            ROUTE_INDEX --> SYMBOLS
+        end
+
+        subgraph SEMANTIC["2D. WHOLE-PROGRAM VALIDATION"]
+            direction TB
+            DUPLICATES["Reject duplicate pages,<br/>layouts, components, props,<br/>symbols and routes"]:::validate
+            REFERENCES["Validate component and layout references"]:::validate
+            PROP_CHECK["Validate required component props<br/>and basic literal prop types"]:::validate
+            TYPE_CHECK["Basic literal type compatibility<br/>for state, values and props"]:::validate
+            HTML_CHECK["Recognize registered HTML/SVG tags<br/>and void-element metadata"]:::validate
+            UTILITY_CHECK["Validate utility classes<br/>and suggest close matches"]:::validate
+            MODE_CHECK["Validate build mode<br/>static is stable; SPA is experimental"]:::validate
+            SEMANTIC_RESULT["Validated project model"]:::artifact
+
+            SYMBOLS --> DUPLICATES
+            DUPLICATES --> REFERENCES
+            REFERENCES --> PROP_CHECK
+            PROP_CHECK --> TYPE_CHECK
+            TYPE_CHECK --> HTML_CHECK
+            HTML_CHECK --> UTILITY_CHECK
+            UTILITY_CHECK --> MODE_CHECK
+            MODE_CHECK --> SEMANTIC_RESULT
+        end
+
+        subgraph LOWERING["2E. COMPONENT AND LAYOUT LOWERING — korlix-components + compiler lowering"]
+            direction TB
+            APP_DEFAULTS["Resolve application defaults:<br/>default layout and theme"]:::stage
+            PAGE_LAYOUT["Select page layout:<br/>page-specific → app default → none"]:::stage
+            SLOT_COMPOSE["Inject page content into layout slot"]:::stage
+            USER_COMPONENT["Expand user components"]:::stage
+            PROP_BIND["Bind supplied props,<br/>apply defaults,<br/>substitute prop expressions"]:::stage
+            SLOT_BIND["Insert default slot children"]:::stage
+            RECURSION_GUARD["Prevent recursive expansion cycles"]:::validate
+            BUILTIN_COMPONENT["Lower registered built-in components<br/>through component schemas"]:::stage
+            NATIVE_LOWER["Preserve native HTML/SVG elements"]:::stage
+            NORMALIZED_TREE["Normalized page trees<br/>ready for code generation"]:::artifact
+
+            SEMANTIC_RESULT --> APP_DEFAULTS
+            APP_DEFAULTS --> PAGE_LAYOUT
+            PAGE_LAYOUT --> SLOT_COMPOSE
+            SLOT_COMPOSE --> USER_COMPONENT
+            USER_COMPONENT --> PROP_BIND
+            PROP_BIND --> SLOT_BIND
+            SLOT_BIND --> RECURSION_GUARD
+            RECURSION_GUARD --> BUILTIN_COMPONENT
+            BUILTIN_COMPONENT --> NATIVE_LOWER
+            NATIVE_LOWER --> NORMALIZED_TREE
+        end
+
+        subgraph STYLEPIPE["2F. STYLE PIPELINE — korlix-style"]
+            direction TB
+            STYLE_SCAN["Scan lowered trees for classes"]:::stage
+            CLASS_PARSE["Separate base utility and variants:<br/>responsive, hover, focus, active,<br/>disabled, dark, data, motion, print"]:::stage
+            REGISTRY["Resolve utilities from registry:<br/>layout, spacing, typography,<br/>color, border, effects, transforms"]:::stage
+            ARBITRARY["Validate and compile arbitrary values"]:::stage
+            THEME_VARS["Generate palette variables<br/>and semantic light/dark tokens"]:::stage
+            JIT_RULES["Generate only referenced CSS rules"]:::stage
+            CSS_DEDUPE["Group media rules and deduplicate output"]:::stage
+            CSS_FILE["assets/korlix.css"]:::output
+
+            NORMALIZED_TREE --> STYLE_SCAN
+            STYLE_SCAN --> CLASS_PARSE
+            CLASS_PARSE --> REGISTRY
+            REGISTRY --> ARBITRARY
+            ARBITRARY --> THEME_VARS
+            THEME_VARS --> JIT_RULES
+            JIT_RULES --> CSS_DEDUPE
+            CSS_DEDUPE --> CSS_FILE
+        end
+
+        subgraph RUNTIMEPLAN["2G. RUNTIME FEATURE ANALYSIS — korlix-runtime-plan"]
+            direction TB
+            FEATURE_SCAN["Inspect pages and components for runtime needs"]:::stage
+            FEATURE_SET["Feature set:<br/>state, events, API, router, theme,<br/>toast, overlays, pagination, HMR"]:::artifact
+            SHARED_RUNTIME["Use bundled browser runtime<br/>current output is shared runtime bundle"]:::partial
+            RUNTIME_FILE["assets/korlix.runtime.js"]:::output
+
+            NORMALIZED_TREE --> FEATURE_SCAN
+            FEATURE_SCAN --> FEATURE_SET
+            FEATURE_SET --> SHARED_RUNTIME
+            SHARED_RUNTIME --> RUNTIME_FILE
+        end
+
+        subgraph CODEGEN["2H. CODE GENERATION — korlix-codegen"]
+            direction TB
+
+            subgraph HTMLGEN["HTML GENERATION"]
+                direction TB
+                DOC_SHELL["Create HTML document shell"]:::stage
+                THEME_BOOT["Insert initial theme bootstrap"]:::stage
+                PAGE_HTML["Render lowered page tree"]:::stage
+                ASSET_LINKS["Link korlix.css,<br/>korlix.runtime.js and app.js"]:::stage
+                ROUTE_HTML["Route HTML files:<br/>/ → index.html<br/>/about → about/index.html"]:::output
+                DOC_SHELL --> THEME_BOOT --> PAGE_HTML --> ASSET_LINKS --> ROUTE_HTML
+            end
+
+            subgraph JSGEN["APPLICATION JAVASCRIPT GENERATION"]
+                direction TB
+                PAGE_STATE["Generate route-gated page state"]:::stage
+                ACTIONS["Generate functions and actions"]:::stage
+                BINDINGS["Generate event, condition,<br/>loop and interpolation bindings"]:::stage
+                API_CODE["Generate API query, mutation,<br/>loading, error and reload logic"]:::stage
+                PAGE_INIT["Generate page initialization"]:::stage
+                APP_JS["assets/app.js"]:::output
+                PAGE_STATE --> ACTIONS --> BINDINGS --> API_CODE --> PAGE_INIT --> APP_JS
+            end
+
+            subgraph METAOUT["ROUTE AND BUILD METADATA"]
+                direction TB
+                ROUTE_JSON["korlix.routes.json"]:::output
+                MANIFEST_JSON["korlix.manifest.json"]:::output
+            end
+
+            NORMALIZED_TREE --> DOC_SHELL
+            NORMALIZED_TREE --> PAGE_STATE
+            ROUTE_INDEX --> ROUTE_JSON
+            FEATURE_SET --> MANIFEST_JSON
+        end
+
+        subgraph OUTPUTWRITE["2I. OUTPUT ASSEMBLY"]
+            direction TB
+            DIST_CLEAN["Prepare dist/ directory"]:::stage
+            COPY_PUBLIC["Copy public/ assets"]:::stage
+            WRITE_FILES["Write generated HTML, CSS,<br/>JavaScript and JSON metadata"]:::stage
+            DIST_TREE["dist/<br/>index.html<br/>route/index.html<br/>assets/korlix.css<br/>assets/korlix.runtime.js<br/>assets/app.js<br/>korlix.routes.json<br/>korlix.manifest.json"]:::output
+
+            PUBLIC_SCAN --> COPY_PUBLIC
+            DIST_CLEAN --> COPY_PUBLIC
+            COPY_PUBLIC --> WRITE_FILES
+            ROUTE_HTML --> WRITE_FILES
+            CSS_FILE --> WRITE_FILES
+            RUNTIME_FILE --> WRITE_FILES
+            APP_JS --> WRITE_FILES
+            ROUTE_JSON --> WRITE_FILES
+            MANIFEST_JSON --> WRITE_FILES
+            WRITE_FILES --> DIST_TREE
+        end
+
+        ORCHESTRATOR --> DIST_CLEAN
+    end
+
+    subgraph DIAGNOSTICS["3. DIAGNOSTIC AND FAILURE PATH — korlix-core"]
+        direction TB
+        LEX_ERRORS["Lexer diagnostics"]:::error
+        PARSE_ERRORS["Parser diagnostics"]:::error
+        RESOLVE_ERRORS["Import, declaration and route diagnostics"]:::error
+        SEMANTIC_ERRORS["Component, prop, type and utility diagnostics"]:::error
+        REPORTER["CLI reporter<br/>file, line, column, code,<br/>message and hint"]:::error
+        STOP["Stop check/build output<br/>or keep last valid dev build"]:::error
+
+        LEX_ERRORS --> REPORTER
+        PARSE_ERRORS --> REPORTER
+        RESOLVE_ERRORS --> REPORTER
+        SEMANTIC_ERRORS --> REPORTER
+        REPORTER --> STOP
+    end
+
+    TOKENIZE -. failure .-> LEX_ERRORS
+    MODULE_PARSE -. failure .-> PARSE_ERRORS
+    MODULE_GRAPH -. failure .-> RESOLVE_ERRORS
+    DUPLICATES -. failure .-> SEMANTIC_ERRORS
+    REFERENCES -. failure .-> SEMANTIC_ERRORS
+    PROP_CHECK -. failure .-> SEMANTIC_ERRORS
+    TYPE_CHECK -. failure .-> SEMANTIC_ERRORS
+    UTILITY_CHECK -. warning or error .-> SEMANTIC_ERRORS
+
+    subgraph COMMANDRESULTS["4. COMMAND-SPECIFIC EXIT PATHS"]
+        direction LR
+        CHECK_RESULT["check:<br/>report diagnostics<br/>optionally print AST<br/>do not serve"]:::result
+        BUILD_RESULT["build:<br/>write production dist/"]:::result
+        DEV_RESULT["dev:<br/>serve dist/ and watch for changes"]:::result
+        PREVIEW_RESULT["preview:<br/>serve existing dist/"]:::result
+    end
+
+    SEMANTIC_RESULT --> CHECK_RESULT
+    DIST_TREE --> BUILD_RESULT
+    DIST_TREE --> DEV_RESULT
+    DEV_RESULT --> DEV_SERVER
+    PREVIEW_SERVER --> PREVIEW_RESULT
+
+    subgraph BROWSER["5. GENERATED APPLICATION IN THE BROWSER"]
+        direction TB
+        REQUEST["Browser requests route"]:::browser
+        HTML_LOAD["Load route HTML"]:::browser
+        CSS_LOAD["Apply generated JIT CSS<br/>and semantic theme variables"]:::browser
+        RUNTIME_LOAD["Initialize Korlix runtime"]:::browser
+        APP_LOAD["Initialize page state,<br/>actions and bindings"]:::browser
+        INTERACTIVE["Interactive Korlix application"]:::browser
+
+        REQUEST --> HTML_LOAD
+        HTML_LOAD --> CSS_LOAD
+        CSS_LOAD --> RUNTIME_LOAD
+        RUNTIME_LOAD --> APP_LOAD
+        APP_LOAD --> INTERACTIVE
+    end
+
+    BUILD_RESULT --> REQUEST
+    DEV_SERVER --> REQUEST
+    PREVIEW_SERVER --> REQUEST
+
+    %% Crate ownership links
+    CORECRATE["korlix-core<br/>config, source files, diagnostics"]:::crate
+    ASTCRATE["korlix-ast<br/>AST data structures"]:::crate
+    COMPCRATE["korlix-components<br/>component registry and schemas"]:::crate
+    CODECRATE["korlix-codegen<br/>HTML, JS, routes, manifests"]:::crate
+
+    CORECRATE -. supports .-> PROJECTLOAD
+    CORECRATE -. supports .-> DIAGNOSTICS
+    ASTCRATE -. defines .-> AST_MODULE
+    COMPCRATE -. owns .-> BUILTIN_COMPONENT
+    CODECRATE -. owns .-> CODEGEN
+
+    %% Legend
+    subgraph LEGEND["LEGEND"]
+        direction LR
+        L1["Compiler stage"]:::stage
+        L2["Validation"]:::validate
+        L3["Intermediate artifact"]:::artifact
+        L4["Generated output"]:::output
+        L5["Development server"]:::dev
+        L6["Partial / experimental"]:::partial
+        L7["Diagnostic path"]:::error
+    end
+
+    classDef actor fill:#111827,color:#ffffff,stroke:#111827,stroke-width:2px;
+    classDef cli fill:#ede9fe,color:#3b0764,stroke:#7c3aed,stroke-width:1.5px;
+    classDef core fill:#dbeafe,color:#172554,stroke:#2563eb,stroke-width:2px;
+    classDef stage fill:#eff6ff,color:#172554,stroke:#60a5fa,stroke-width:1.2px;
+    classDef validate fill:#ecfdf5,color:#064e3b,stroke:#10b981,stroke-width:1.2px;
+    classDef artifact fill:#fefce8,color:#713f12,stroke:#eab308,stroke-width:1.2px;
+    classDef output fill:#f0fdf4,color:#14532d,stroke:#22c55e,stroke-width:1.5px;
+    classDef dev fill:#ecfeff,color:#164e63,stroke:#06b6d4,stroke-width:1.2px;
+    classDef partial fill:#fff7ed,color:#7c2d12,stroke:#f97316,stroke-width:1.5px,stroke-dasharray:5 3;
+    classDef error fill:#fef2f2,color:#7f1d1d,stroke:#ef4444,stroke-width:1.5px;
+    classDef result fill:#f5f3ff,color:#4c1d95,stroke:#8b5cf6,stroke-width:1.5px;
+    classDef browser fill:#fdf4ff,color:#701a75,stroke:#d946ef,stroke-width:1.5px;
+    classDef crate fill:#f8fafc,color:#0f172a,stroke:#64748b,stroke-width:1.2px,stroke-dasharray:4 3;
