@@ -2,58 +2,202 @@
 
 # Korlix
 
-**A frontend-first programming language for building websites with readable `.klx` files.**
+### A frontend language for building websites with readable `.klx` files
 
-[![Korlix CLI](https://img.shields.io/npm/v/korlix?label=korlix\&color=7457F5)](https://www.npmjs.com/package/korlix)
-[![Create Korlix](https://img.shields.io/npm/v/create-korlix?label=create-korlix\&color=17C9C3)](https://www.npmjs.com/package/create-korlix)
-[![Compiler](https://img.shields.io/badge/compiler-Rust-CE422B)](https://www.rust-lang.org/)
+Korlix brings pages, components, styling, state, events, API calls, themes, and routing into one indentation-based language, then compiles the project into browser-native **HTML**, **CSS**, and **JavaScript**.
+
+<br />
+
+[![Korlix version](https://img.shields.io/npm/v/korlix?label=korlix&logo=npm&color=7457F5)](https://www.npmjs.com/package/korlix)
+[![create-korlix version](https://img.shields.io/npm/v/create-korlix?label=create-korlix&logo=npm&color=17C9C3)](https://www.npmjs.com/package/create-korlix)
+[![Korlix downloads](https://img.shields.io/npm/dt/korlix?label=korlix%20downloads&logo=npm&color=7457F5)](https://www.npmjs.com/package/korlix)
+[![create-korlix downloads](https://img.shields.io/npm/dt/create-korlix?label=create-korlix%20downloads&logo=npm&color=17C9C3)](https://www.npmjs.com/package/create-korlix)
+[![Rust compiler](https://img.shields.io/badge/compiler-Rust-CE422B?logo=rust)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/license-MIT-F0A529)](LICENSE)
 
+<br />
+
+[Getting Started](#quick-start) ·
+[Language Overview](#language-overview) ·
+[Components](#component-system) ·
+[Documentation](#documentation) ·
+[Examples](examples) ·
+[Roadmap](#roadmap)
+
+<br />
+
 **Korlix = Kor + Lix = The Core Matrix**
-
-Write pages, components, state, styles, themes, API requests and browser behavior in one language. Korlix compiles `.klx` source files into browser-native **HTML**, **CSS** and **JavaScript**.
-
-[Documentation](docs/00-index.md) · [Getting Started](docs/01-getting-started.md) · [Examples](examples) · [Implementation Status](docs/18-implementation-status.md) · [Report an Issue](https://github.com/SachinRamasamy-cloud/korlix/issues)
 
 </div>
 
 ---
 
-## Project Overview
+## What is Korlix?
 
-Korlix is an indentation-based frontend language and compiler designed to reduce the number of separate tools required to create ordinary websites and browser applications.
+Korlix is a frontend-focused programming language and compiler that uses the `.klx` file extension.
 
-A Korlix project can define:
+It is designed for developers who want to create websites and browser applications without splitting the interface across separate HTML templates, CSS frameworks, state libraries, component frameworks, and request utilities.
 
-* Pages and routes
-* Shared layouts
-* Reusable user components
-* Native HTML and SVG elements
-* Reactive state and event handlers
-* Functions, conditions and loops
-* Korlix-native colors and utility classes
-* Responsive and interaction variants
-* Light, dark and automatic themes
-* API queries and HTTP mutations
-* Pagination, toast notifications, modals and drawers
-* Static multipage output
-* Experimental SPA output
+A Korlix source file can define:
 
-Korlix applications do not require React, Vue, Angular, Bootstrap or Tailwind CSS at browser runtime. The compiler generates standard browser files and includes the Korlix runtime for application behavior.
+- Pages and routes
+- Shared layouts
+- Reusable components
+- Native HTML and SVG elements
+- Reactive state
+- Functions and events
+- Conditions and loops
+- Forms and validation-oriented controls
+- Responsive styles
+- Light and dark themes
+- API queries and HTTP mutations
+- Pagination, modals, drawers, toasts, and other UI behavior
+
+Korlix compiles these declarations into standard browser output:
 
 ```text
-Korlix source
-→ lexer
-→ parser
-→ semantic validation
-→ component and layout lowering
-→ JIT style generation
-→ HTML + CSS + JavaScript
+.klx source files
+        ↓
+Lexer and parser
+        ↓
+Semantic validation
+        ↓
+Component and layout lowering
+        ↓
+JIT style generation
+        ↓
+HTML + CSS + JavaScript
+```
+
+Korlix does not require React, Vue, Angular, Bootstrap, or Tailwind CSS in the generated browser application. Interactive features use the Korlix browser runtime.
+
+---
+
+## Why Korlix?
+
+Modern frontend development often requires several separate technologies before a page can become interactive:
+
+```text
+Markup
++ styling framework
++ component framework
++ state management
++ router
++ API client
++ build tooling
+```
+
+Korlix provides one language-level model for the common parts of that workflow.
+
+| Requirement | Korlix approach |
+|---|---|
+| Page structure | Indentation-based `.klx` elements |
+| Routing | Route declared directly on a page |
+| Components | Reusable components with props and slots |
+| Styling | JIT utilities, semantic colors, and responsive variants |
+| State | Reactive `state` declarations |
+| Interaction | Functions and event properties |
+| Data | Declarative queries and HTTP mutations |
+| Themes | Light, dark, and automatic modes |
+| Output | Standard HTML, CSS, and JavaScript |
+
+Korlix is intended to make ordinary frontend code easier to read while preserving browser-native output.
+
+---
+
+## Quick Start
+
+### Create a project with npm
+
+Requires Node.js 18 or newer.
+
+```bash
+npm create korlix@latest my-app
+cd my-app
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+Other package managers:
+
+```bash
+yarn create korlix my-app
+pnpm create korlix my-app
+bun create korlix my-app
+```
+
+### Install the Korlix CLI
+
+```bash
+npm install --global korlix
+```
+
+Verify the installation:
+
+```bash
+korlix --version
+```
+
+Create and run a project:
+
+```bash
+korlix new my-site
+cd my-site
+korlix check
+korlix dev
+```
+
+> Use `korlix dev` to run a project. There is no `korlix run` command.
+
+---
+
+## First Korlix Page
+
+Create `src/pages/index.klx`:
+
+```klx
+page Home at "/"
+  state count: int = 0
+
+  main .min-h-screen .surface-canvas .content-content
+    section .max-w-4xl .mx-auto .px-6 .py-20
+      badge variant=soft "Korlix"
+
+      h1 .text-5xl .font-bold "Build the web with simpler code"
+
+      p .text-lg .content-content-muted
+        "Pages, state, components, themes, and API calls in one language."
+
+      card variant=raised
+        h2 "Interactive counter"
+        p "Current value: {count}"
+
+        row .gap-3
+          button "Increase" variant=primary click
+            count += 1
+
+          button "Reset" variant=outline click
+            count = 0
+```
+
+Run:
+
+```bash
+korlix check
+korlix dev
 ```
 
 ---
 
 ## Korlix at a Glance
+
+The example below demonstrates an application layout, a reusable component, a page route, state, an API query, responsive styles, iteration, pagination, and an event-driven function.
 
 ```klx
 app StoreApplication
@@ -88,9 +232,15 @@ page Products at "/products"
   else
     grid .grid-cols-1 .md:grid-cols-2 .xl:grid-cols-4
       for product in products
-        ProductSummary name=product.name price=product.price
+        ProductSummary
+          name=product.name
+          price=product.price
 
-  pagination page=page total=100 perPage=20 url-sync
+  pagination
+    page=page
+    total=100
+    perPage=20
+    url-sync
 
   button "Count: {count}" variant=primary click=increment
 
@@ -98,115 +248,54 @@ page Products at "/products"
     count += 1
 ```
 
-This example includes:
+---
 
-* An application-level layout
-* Automatic light/dark theme selection
-* A reusable typed component
-* A routed page
-* Reactive state
-* A declarative API query
-* Loading-state rendering
-* Responsive layout utilities
-* List iteration
-* Pagination
-* An event-driven function
+## Current Implementation
+
+| Area | Current implementation |
+|---|---|
+| Source extension | `.klx` |
+| Compiler | Rust workspace |
+| Generated output | HTML, CSS, and JavaScript |
+| Stable build target | Static multipage applications |
+| Experimental target | SPA output |
+| Native element names | 137 HTML and SVG names |
+| Registered component names | 115 |
+| Schema-defined components | 35 |
+| Public color families | 26 |
+| Color levels | `0` through `12` |
+| Utility classes | More than 1,000 |
+| Color utility combinations | More than 5,500 |
+| Themes | Light, dark, and automatic |
+| Runtime modules | State, events, API, router, theme, toast, overlays, pagination, and HMR |
+
+> The 115 registered component names do not all have the same implementation depth. Some components have dedicated schemas and specialized rendering, while others currently use the generic component renderer.
 
 ---
 
-## Current Capability Summary
+# Language Overview
 
-| Area                       | Current implementation                                                 |
-| -------------------------- | ---------------------------------------------------------------------- |
-| Source extension           | `.klx`                                                                 |
-| Compiler                   | Rust workspace                                                         |
-| Generated output           | HTML, CSS and JavaScript                                               |
-| Stable target              | Static multipage builds                                                |
-| Experimental target        | SPA builds                                                             |
-| Native element names       | 137 HTML and SVG names                                                 |
-| Registered component names | 115                                                                    |
-| Schema-defined components  | 35                                                                     |
-| Public color families      | 26                                                                     |
-| Color levels               | `0` through `12`                                                       |
-| Utility classes            | More than 1,000                                                        |
-| Color utility combinations | More than 5,500                                                        |
-| Themes                     | Light, dark and automatic                                              |
-| Runtime modules            | State, events, API, router, theme, toast, overlays, pagination and HMR |
+## Applications
 
-> The component catalogue contains both specialized components and generic semantic components. All 115 names are registered, but they do not all have the same implementation maturity.
+An application declaration can configure a shared layout and theme.
 
----
+```klx
+app DocumentationSite
+  layout DocumentationLayout
+  theme auto
+```
 
-## Implementation Phases
+Supported theme modes:
 
-### Phase 1 — Compiler Foundation
-
-The first phase established the language-processing pipeline.
-
-* Twelve-crate Rust workspace
-* Indentation-aware lexer with `INDENT` and `DEDENT`
-* Parser for applications, pages, layouts, components and expressions
-* AST with source spans
-* File, route and import-resolution foundations
-* HTML, CSS and JavaScript generation
-* Static route output
-* CLI project scaffolding
-* Development and preview servers
-
-### Phase 2 — Styling and Browser Runtime
-
-The second phase added interface styling and browser-side behavior.
-
-* JIT utility CSS engine
-* Color palettes and semantic design tokens
-* Responsive and interaction variants
-* Reactive state runtime
-* Event binding
-* Toast notifications
-* Modal and drawer overlays
-* Theme switching
-* Router foundations
-* Development hot updates
-
-### Phase 3 — Components and Application Features
-
-The third phase expanded Korlix into an application-oriented frontend language.
-
-* Built-in component registry
-* User-created components
-* Typed props and default values
-* Default slots
-* Functions and actions
-* Conditions and loops
-* API queries and mutations
-* Pagination
-* Whole-project validation
-
-### Phase 4 — Korlix V2 Foundation
-
-The V2 phase simplified the syntax and expanded language coverage.
-
-* `page Home at "/"` page syntax
-* `fn` function declarations
-* Optional trailing colons
-* Indentation-only blocks
-* `+=` and `-=` assignment
-* String interpolation
-* Modern HTML and common SVG registry
-* Korlix-native color vocabulary
-* Thirteen-level color scale
-* Light, dark and automatic themes
-* More than 100 component names
-* Application default layouts
-* Imported component and layout aliases
-* Duplicate route and declaration validation
-* Expanded documentation and conformance tests
+```text
+light
+dark
+auto
+```
 
 ---
 
-## Language Features
-
-### Pages and Routes
+## Pages and Routes
 
 V2 syntax:
 
@@ -215,22 +304,36 @@ page About at "/about"
   h1 "About Korlix"
 ```
 
-V1 syntax remains accepted:
+Legacy V1 syntax remains accepted during migration:
 
 ```klx
 page About route "/about":
   h1 "About Korlix"
 ```
 
-### Layouts
+Static builds generate directory-based routes:
+
+```text
+/              → dist/index.html
+/about         → dist/about/index.html
+/products      → dist/products/index.html
+```
+
+---
+
+## Layouts
+
+Layouts define structure shared by multiple pages.
 
 ```klx
 layout MainLayout
   navbar
     link href="/" "Home"
     link href="/docs" "Documentation"
+    theme-toggle
 
-  slot
+  main
+    slot
 
   footer
     p "Built with Korlix"
@@ -242,7 +345,9 @@ Layout selection order:
 2. Application default layout
 3. No layout
 
-### Imports
+---
+
+## Imports
 
 ```klx
 import MainLayout from "./layouts/main.klx"
@@ -250,7 +355,133 @@ import UserCard from "./components/user-card.klx"
 import "./setup.klx"
 ```
 
-### User Components
+Imported aliases can be used for layouts and user-defined components.
+
+---
+
+## State and Values
+
+```klx
+state count: int = 0
+state loading: bool = false
+state users = []
+state currentUser = null
+
+let pageSize = 20
+derived total = price * quantity
+```
+
+Reactive page state is generated through the Korlix runtime.
+
+Current limitation:
+
+- Top-level `let` initialization is incomplete.
+- Reactive recomputation of top-level `derived` values is incomplete.
+
+---
+
+## Functions and Actions
+
+```klx
+fn increase(step)
+  count = count + step
+
+action reset
+  count = 0
+```
+
+Supported function-body operations include:
+
+- Local `let` values
+- Assignments
+- `+=` and `-=`
+- Function calls
+- Conditions
+- Loops
+- API requests
+- Query reloads
+
+---
+
+## Conditions
+
+```klx
+if loading
+  spinner
+else
+  p "Loaded"
+```
+
+---
+
+## Loops
+
+```klx
+for user in users
+  profile-card
+    h3 "{user.name}"
+    p "{user.role}"
+```
+
+---
+
+## Expressions
+
+Korlix supports:
+
+- String, integer, float, Boolean, and null literals
+- Lists and records
+- Arithmetic operators
+- Comparison operators
+- Logical operators
+- Member access
+- Index access
+- Function calls
+- String interpolation
+
+```klx
+state total = price * quantity
+state visible = active and not loading
+
+p "Welcome, {user.profile.name}"
+```
+
+---
+
+## Events
+
+Direct event function:
+
+```klx
+button "Save" click=save
+input input=updateSearch
+form submit=submitForm
+```
+
+Inline event block:
+
+```klx
+button "Increase" click
+  count += 1
+```
+
+Supported event groups include:
+
+- Click and double-click
+- Input and change
+- Form submission
+- Focus and blur
+- Keyboard events
+- Mouse events
+- Scroll
+- Drag and drop
+- Touch events
+
+---
+
+# Component System
+
+## User Components
 
 ```klx
 component UserCard
@@ -277,124 +508,73 @@ UserCard name="Sachin" role="Administrator"
 
 Implemented component-language features:
 
-* Required props
-* Typed props
-* Default prop values
-* Default slot content
-* Imported aliases
-* Recursive expansion protection
-* Missing-required-prop diagnostics
-* Basic literal type validation
+- Required props
+- Typed props
+- Default prop values
+- Default slots
+- Imported aliases
+- Recursive expansion protection
+- Missing required-prop diagnostics
+- Basic literal type validation
 
-### State and Values
-
-```klx
-state count: int = 0
-state loading: bool = false
-state users = []
-state currentUser = null
-
-let pageSize = 20
-derived total = price * quantity
-```
-
-Reactive page state is generated by the Korlix runtime. Top-level `let` initialization and reactive recomputation of `derived` declarations are still incomplete.
-
-### Functions and Actions
-
-```klx
-fn increase(step)
-  count = count + step
-
-action reset
-  count = 0
-```
-
-Supported function-body operations include:
-
-* Local `let` values
-* Assignments
-* `+=` and `-=`
-* Function calls
-* Conditions
-* Loops
-* API requests
-* Query reloads
-
-### Conditions
-
-```klx
-if loading
-  spinner
-else
-  p "Loaded"
-```
-
-### Loops
-
-```klx
-for user in users
-  profile-card
-    h3 "{user.name}"
-    p "{user.role}"
-```
-
-### Expressions
-
-Korlix supports:
-
-* Strings, integers, floating-point numbers and Booleans
-* `null`
-* Lists and records
-* Arithmetic operators
-* Comparison operators
-* Logical operators
-* Member and index access
-* Function calls
-* String interpolation
-
-```klx
-state total = price * quantity
-state visible = active and not loading
-p "Welcome, {user.profile.name}"
-```
-
-### Events
-
-Direct event property:
-
-```klx
-button "Save" click=save
-input input=updateSearch
-form submit=submitForm
-```
-
-Inline event block:
-
-```klx
-button "Increase" click
-  count += 1
-```
-
-Supported events include click, double-click, input, change, submit, focus, blur, keyboard, mouse, scroll, drag, drop and touch events.
+Current limitations include named-slot invocation, event forwarding, and complete component-instance state isolation.
 
 ---
 
-## HTML and SVG Support
+## Built-in Component Catalogue
 
-Korlix recognizes 137 native HTML and SVG names across:
+Korlix registers 115 component names across these groups:
 
-* Document metadata
-* Semantic structure
-* Text and inline semantics
-* Lists
-* Forms
-* Tables
-* Images, audio and video
-* Embedded content
-* Interactive elements
-* Templates
-* Common SVG shapes, gradients, masks, clipping and filters
+| Group | Representative components |
+|---|---|
+| Navigation | `navbar`, `sidebar`, `breadcrumb`, `tabs`, `stepper` |
+| Content | `card`, `product-card`, `profile-card`, `pricing-card`, `stat-card` |
+| Forms | `input`, `select`, `checkbox`, `switch`, `date-picker`, `file-upload` |
+| Feedback | `alert`, `toast`, `spinner`, `skeleton`, `empty-state` |
+| Overlays | `modal`, `drawer`, `tooltip`, `dropdown`, `popover` |
+| Data | `table`, `data-table`, `pagination`, `calendar`, `data-grid` |
+| Media | `carousel`, `gallery`, `video-player`, `audio-player` |
+| Layout | `container`, `row`, `column`, `grid`, `stack` |
+
+### Component maturity
+
+- **35 schema-defined components** have dedicated props, slots, and output rules.
+- **80 generic components** use shared variant, size, disabled, and slot behavior.
+- A smaller group has specialized lowering or browser-runtime behavior.
+
+Specialized components currently include:
+
+```text
+button, link, icon, image, avatar, card, navbar, footer,
+container, section, hero, badge, alert, spinner, skeleton,
+empty-state, toast, modal, drawer, pagination, progress,
+theme-toggle
+```
+
+See:
+
+- [Components](docs/07-components.md)
+- [V2 Component Catalogue](docs/15-component-catalog-v2.md)
+
+---
+
+# HTML and SVG Support
+
+Korlix recognizes 137 modern HTML and common SVG element names.
+
+Supported categories include:
+
+- Document metadata
+- Semantic page structure
+- Text and inline semantics
+- Lists
+- Forms
+- Tables
+- Images, audio, and video
+- Embedded content
+- Interactive elements
+- Templates
+- SVG shapes, gradients, masks, clipping, and filters
 
 Example:
 
@@ -407,7 +587,10 @@ article
   p "Korlix uses native semantic web elements."
 
   figure
-    img src="/images/compiler.png" alt="Korlix compiler architecture"
+    img
+      src="/images/compiler.png"
+      alt="Korlix compiler architecture"
+
     figcaption "The Korlix compilation pipeline"
 ```
 
@@ -420,31 +603,53 @@ input, link, meta, source, track, wbr
 
 ---
 
-## Korlix Styling System
+# Styling and Colors
 
-Korlix includes a JIT utility engine that generates rules for utility classes detected in the project source.
+Korlix includes a JIT style engine that generates CSS only for utilities detected in source files.
 
-### Traditional Utility Prefixes
+## Korlix-native color properties
 
 ```text
-text-, bg-, border-, ring-, fill-, stroke-, outline-, caret-, placeholder-
+surface-
+content-
+outline-
+accent-
+fill-
+stroke-
+ring-color-
+caret-color-
+```
+
+Example:
+
+```klx
+card
+  .surface-violet-2
+  .content-violet-11
+  .outline-violet-4
+```
+
+Traditional utility aliases are also supported:
+
+```text
+text-
+bg-
+border-
+ring-
+fill-
+stroke-
+outline-
+caret-
+placeholder-
 ```
 
 ```klx
 div .bg-indigo-600 .text-white .border-indigo-700
 ```
 
-### Korlix-Native Color Prefixes
+---
 
-```text
-surface-, content-, outline-, accent-, fill-, stroke-, ring-color-, caret-color-
-```
-
-```klx
-card .surface-violet-2 .content-violet-11 .outline-violet-4
-```
-
-### Color Families
+## Color Families
 
 Base families:
 
@@ -457,17 +662,36 @@ violet, purple, pink, rose
 Aliases:
 
 ```text
-neutral, ash, stone, sand, lime, mint, sky, coral, magenta
+neutral, ash, stone, sand, lime, mint,
+sky, coral, magenta
 ```
 
-Each public family exposes Korlix levels `0` through `12`.
-
-### Semantic Theme Tokens
+Each public family exposes Korlix levels:
 
 ```text
-canvas, surface, raised, overlay, content, content-muted,
-outline, brand, success, warning, danger, info
+0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
 ```
+
+---
+
+## Semantic Theme Tokens
+
+```text
+canvas
+surface
+raised
+overlay
+content
+content-muted
+outline
+brand
+success
+warning
+danger
+info
+```
+
+Example:
 
 ```klx
 section .surface-canvas .content-content
@@ -475,35 +699,58 @@ section .surface-canvas .content-content
     h2 "Theme-aware content"
 ```
 
-### Responsive Variants
+---
+
+## Responsive Variants
 
 | Prefix | Minimum width |
-| ------ | ------------: |
-| `sm:`  |        576 px |
-| `md:`  |        768 px |
-| `lg:`  |        992 px |
-| `xl:`  |       1200 px |
-| `2xl:` |       1400 px |
+|---|---:|
+| `sm:` | 576 px |
+| `md:` | 768 px |
+| `lg:` | 992 px |
+| `xl:` | 1200 px |
+| `2xl:` | 1400 px |
 
 ```klx
 grid .grid-cols-1 .md:grid-cols-2 .xl:grid-cols-4
 ```
 
-### State Variants
+---
 
-Korlix supports state variants such as:
+## Interaction Variants
 
 ```text
-hover, focus, focus-visible, active, visited, disabled,
-checked, invalid, valid, group-hover, peer-checked,
-dark, data-open, motion-safe, motion-reduce and print
+hover
+focus
+focus-visible
+active
+visited
+disabled
+checked
+invalid
+valid
+group-hover
+peer-checked
+dark
+data-open
+motion-safe
+motion-reduce
+print
 ```
+
+Example:
 
 ```klx
-button .bg-indigo-600 .hover:bg-indigo-700 .disabled:opacity-50
+button
+  .bg-indigo-600
+  .hover:bg-indigo-700
+  .focus:ring-indigo-400
+  .disabled:opacity-50
 ```
 
-### Arbitrary Values
+---
+
+## Arbitrary Values
 
 ```klx
 div .w-[320px]
@@ -514,30 +761,22 @@ div .grid-cols-[240px_1fr]
 
 ---
 
-## Light, Dark and Automatic Themes
+# Themes
 
-```klx
-app MyApplication
-  theme light
-```
-
-```klx
-app MyApplication
-  theme dark
-```
+Configure the application theme:
 
 ```klx
 app MyApplication
   theme auto
 ```
 
-Add the built-in theme switcher:
+Use the built-in control:
 
 ```klx
 theme-toggle
 ```
 
-Or call the runtime behavior:
+Or invoke theme behavior:
 
 ```klx
 button "Change theme" click=toggleTheme
@@ -545,76 +784,26 @@ button "Change theme" click=toggleTheme
 
 The runtime supports:
 
-* Light mode
-* Dark mode
-* Automatic system mode
-* Saved user preference
-* `data-kx-theme`
-* Browser `color-scheme`
-* System-theme change detection
-* `kx:theme-change` events
+- Light mode
+- Dark mode
+- Automatic system mode
+- Saved user preference
+- `data-kx-theme`
+- Browser `color-scheme`
+- System theme change detection
+- `kx:theme-change` events
 
 ---
 
-## Component Catalogue
+# API Requests
 
-Korlix registers 115 component names across:
-
-* Navigation
-* Forms
-* Content
-* Layout primitives
-* Overlays
-* Data display
-* Media
-* Feedback
-* Loaders
-* Marketing
-* Avatar and profile UI
-* E-commerce
-* Dashboard UI
-
-Representative components:
-
-```text
-navbar, sidebar, breadcrumb, tabs, stepper,
-card, product-card, profile-card, pricing-card, stat-card,
-button, input, select, checkbox, switch, date-picker, file-upload,
-alert, toast, spinner, skeleton, empty-state,
-modal, drawer, tooltip, dropdown,
-table, data-table, pagination, calendar,
-carousel, gallery, video-player,
-container, row, column, grid, stack
-```
-
-### Component Maturity
-
-* **35 schema-defined components** have dedicated props, slots and output rules.
-* **80 generic catalogue components** share common variant, size, disabled and slot behavior.
-* A smaller group has specialized lowering or runtime behavior.
-
-Specialized components currently include:
-
-```text
-button, link, icon, image, avatar, card, navbar, footer,
-container, section, hero, badge, alert, spinner, skeleton,
-empty-state, toast, modal, drawer, pagination, progress,
-theme-toggle
-```
-
-See [Components](docs/07-components.md) and the [V2 Component Catalogue](docs/15-component-catalog-v2.md).
-
----
-
-## API Requests
-
-### Declarative GET Query
+## Declarative GET Query
 
 ```klx
 get users "/api/users"
 ```
 
-The current compiler exposes:
+The compiler exposes:
 
 ```text
 users
@@ -636,7 +825,9 @@ page Users at "/users"
         h3 "{user.name}"
 ```
 
-### HTTP Mutations
+---
+
+## HTTP Mutations
 
 ```klx
 post "/api/users" user
@@ -645,13 +836,13 @@ patch "/api/users/1" changes
 delete "/api/users/1"
 ```
 
-### Reload a Query
+Reload a query:
 
 ```klx
 reload users
 ```
 
-### Runtime API
+Runtime API:
 
 ```javascript
 KorlixRuntime.api.get(url, options)
@@ -662,13 +853,13 @@ KorlixRuntime.api.delete(url, options)
 KorlixRuntime.api.reload(name)
 ```
 
-The browser runtime uses `fetch`, supports JSON and text responses, and stores query loading and error state.
+The runtime uses browser `fetch`, handles JSON and text responses, and tracks loading and error state.
 
-Declarative headers, query-parameter blocks, authentication, retries, caching, timeout and cancellation remain future API-language work.
+Current API-language limitations include declarative headers, authentication, retries, caching, timeouts, cancellation, and typed response shapes.
 
 ---
 
-## Pagination
+# Pagination
 
 ```klx
 pagination
@@ -681,24 +872,21 @@ pagination
 
 Implemented behavior:
 
-* First and last controls
-* Previous and next controls
-* Numbered pages
-* Ellipsis
-* Boundary disabled states
-* `aria-current`
-* Explicit page count
-* Total-record calculation
-* URL query synchronization
-* `change` and `kx:page-change` events
-
-Pagination emits page-change events. Updating application state still requires an attached event handler.
+- First and last page controls
+- Previous and next controls
+- Numbered pages
+- Ellipsis
+- Disabled boundary states
+- `aria-current`
+- Total-record calculation
+- URL query synchronization
+- `change` and `kx:page-change` events
 
 ---
 
-## Built-in Runtime Functions
+# Built-in Runtime Functions
 
-Korlix functions can dispatch built-in browser actions:
+Korlix functions can dispatch the following browser actions:
 
 ```text
 toast
@@ -725,120 +913,90 @@ fn copyCode
 
 Runtime modules include:
 
-* State and events
-* API requests
-* Router
-* Themes
-* Toast notifications
-* Overlays
-* Pagination
-* Development hot updates
+- Reactive state
+- Event handling
+- API requests
+- Router foundations
+- Theme management
+- Toast notifications
+- Modal and drawer overlays
+- Pagination
+- Development hot updates
 
 ---
 
-## Architecture
+# Architecture
 
 ```mermaid
 flowchart LR
-    A[.klx Source Files] --> B[Korlix Lexer]
-    B --> C[Korlix Parser]
+    A[.klx Source] --> B[Lexer]
+    B --> C[Parser]
     C --> D[AST]
     D --> E[Resolver and Validation]
     E --> F[Component and Layout Lowering]
     F --> G[Style Scanner]
-    G --> H[JIT CSS Generator]
+    G --> H[JIT CSS]
     F --> I[HTML Generator]
     F --> J[JavaScript Generator]
-    K[Runtime Feature Analysis] --> J
-    H --> L[korlix.css]
-    I --> M[Route HTML Files]
-    J --> N[app.js]
-    O[Korlix Runtime] --> P[korlix.runtime.js]
-    M --> Q[Browser Application]
-    L --> Q
-    N --> Q
-    P --> Q
+    H --> K[korlix.css]
+    I --> L[Route HTML Files]
+    J --> M[app.js]
+    N[Korlix Runtime] --> O[korlix.runtime.js]
+    K --> P[Browser]
+    L --> P
+    M --> P
+    O --> P
 ```
 
-### Rust Workspace
+## Rust Workspace
 
-| Crate                 | Responsibility                                    |
-| --------------------- | ------------------------------------------------- |
-| `korlix-cli`          | Command-line interface                            |
-| `korlix-core`         | Configuration, diagnostics and source handling    |
-| `korlix-lexer`        | Tokenization and indentation                      |
-| `korlix-parser`       | Tokens to AST                                     |
-| `korlix-ast`          | Language syntax structures                        |
-| `korlix-resolver`     | File, import, route and symbol resolution         |
-| `korlix-style`        | Utility registry and JIT CSS generation           |
-| `korlix-components`   | Component schemas and expansion                   |
-| `korlix-runtime-plan` | Runtime feature analysis                          |
-| `korlix-codegen`      | HTML, CSS, JavaScript and route generation        |
-| `korlix-dev-server`   | Development server, watcher and WebSocket updates |
-| `korlix-compiler`     | Whole-project compilation pipeline                |
+| Crate | Responsibility |
+|---|---|
+| `korlix-cli` | Command-line interface |
+| `korlix-core` | Configuration, diagnostics, and source handling |
+| `korlix-lexer` | Tokenization and indentation |
+| `korlix-parser` | Tokens to AST |
+| `korlix-ast` | Language syntax structures |
+| `korlix-resolver` | Imports, files, routes, and symbols |
+| `korlix-style` | Utility registry and JIT CSS |
+| `korlix-components` | Component schemas and expansion |
+| `korlix-runtime-plan` | Runtime feature analysis |
+| `korlix-codegen` | HTML, CSS, JavaScript, and route generation |
+| `korlix-dev-server` | Development server and hot updates |
+| `korlix-compiler` | Whole-project compilation pipeline |
 
 ---
 
-## Quick Start
+# CLI Reference
 
-### Create a Project with npm
+| Command | Purpose |
+|---|---|
+| `korlix new <name>` | Create a Korlix project |
+| `korlix dev` | Build and start the development server |
+| `korlix check` | Parse, validate, and lint `.klx` files |
+| `korlix check --ast` | Print the parsed AST as JSON |
+| `korlix build --mode static` | Build a static multipage website |
+| `korlix build --mode spa` | Build experimental SPA output |
+| `korlix preview --port 4173` | Preview the production build |
 
-Prerequisite: Node.js 18 or newer.
+The CLI currently accepts `--a11y`, `--security`, and `--seo`, but their dedicated analysis passes are not complete.
 
-```bash
-npm create korlix@latest my-app
-cd my-app
-npm install
-npm run dev
-```
+---
 
-Open:
+# Build from Source
 
-```text
-http://localhost:3000
-```
+Requirements:
 
-Optional creator flags:
-
-```bash
-npm create korlix@latest my-app -- --install
-npm create korlix@latest my-app -- --start
-```
-
-Other package managers:
-
-```bash
-yarn create korlix my-app
-pnpm create korlix my-app
-bun create korlix my-app
-```
-
-> The source repository can contain V2 changes ahead of a packaged npm binary. Build from source when validating the latest compiler behavior.
-
-### Build the Latest Compiler from Source
-
-Prerequisites:
-
-* Rust 1.75 or newer
-* Git
-* Node.js 18 or newer only when rebuilding the TypeScript runtime
+- Rust 1.75 or newer
+- Git
+- Node.js 18 or newer when rebuilding the TypeScript runtime
 
 ```bash
 git clone https://github.com/SachinRamasamy-cloud/korlix.git
 cd korlix
+
 cargo build --release
-```
-
-The binary is created at:
-
-```text
-target/release/korlix
-```
-
-Install globally:
-
-```bash
-cargo install --path crates/korlix-cli
+cargo install --path crates/korlix-cli --force
 ```
 
 Verify:
@@ -847,64 +1005,17 @@ Verify:
 korlix --version
 ```
 
-Create a project:
+Run the workspace checks:
 
 ```bash
-korlix new my-site
-cd my-site
-korlix dev
+cargo fmt --all -- --check
+cargo check --workspace
+cargo test --workspace
 ```
 
 ---
 
-## CLI Commands
-
-| Command                      | Purpose                                         |
-| ---------------------------- | ----------------------------------------------- |
-| `korlix new <name>`          | Create a Korlix project                         |
-| `korlix dev`                 | Start the development server with file watching |
-| `korlix check`               | Parse, validate and lint `.klx` files           |
-| `korlix check --ast`         | Print the parsed AST as JSON                    |
-| `korlix build --mode static` | Build a static multipage website                |
-| `korlix build --mode spa`    | Build experimental SPA output                   |
-| `korlix preview --port 4173` | Preview the production build                    |
-
-The CLI accepts `--a11y`, `--security` and `--seo`, but dedicated checks for those modes are not yet complete.
-
----
-
-## Generated Project Structure
-
-```text
-my-site/
-├── korlix.config.json
-├── package.json
-├── public/
-│   └── index.html
-├── src/
-│   ├── main.klx
-│   ├── app.klx
-│   ├── pages/
-│   │   └── index.klx
-│   ├── layouts/
-│   ├── components/
-│   └── theme/
-│       └── tokens.klx
-└── dist/
-```
-
-Generated npm scripts:
-
-```bash
-npm run dev
-npm run check
-npm run build
-npm run preview
-```
-
----
-
-## Repository Structure
+# Project Structure
 
 ```text
 korlix/
@@ -928,11 +1039,12 @@ korlix/
 ├── examples/
 │   ├── landing-page/
 │   ├── spa-dashboard/
-│   └── v2-showcase/
+│   ├── v2-showcase/
+│   └── complete-showcase/
 ├── docs/
+├── tests/
 ├── Cargo.toml
 ├── Cargo.lock
-├── SETUP.md
 ├── CHANGELOG.md
 ├── LICENSE
 └── README.md
@@ -940,7 +1052,7 @@ korlix/
 
 ---
 
-## Generated Build Output
+# Generated Application Output
 
 ```text
 dist/
@@ -957,76 +1069,23 @@ dist/
 └── korlix.manifest.json
 ```
 
-Public assets are copied into the output directory.
-
 ---
 
-## Project Configuration
+# Development and Testing
 
-`korlix.config.json`:
-
-```json
-{
-  "name": "my-korlix-app",
-  "version": "0.1.0",
-  "src": "src",
-  "public": "public",
-  "dist": "dist",
-  "mode": "static",
-  "theme": {
-    "default": "auto",
-    "dark": true
-  },
-  "server": {
-    "port": 3000,
-    "host": "localhost"
-  }
-}
-```
-
-Currently active configuration includes source, public and output paths, project name, server port and build mode.
-
----
-
-## Compiler Diagnostics
-
-The compiler checks include:
-
-* Lexer and parser errors
-* Unknown utility classes
-* Utility-class suggestions
-* Duplicate pages, layouts, components and routes
-* Duplicate local symbols and props
-* Unknown components
-* Missing required user-component props
-* Basic literal type mismatches
-* Unsupported build modes
-
-Representative diagnostic codes:
-
-```text
-KX-E001, KX-E002, KX-E010, KX-E011, KX-E012,
-KX-E201, KX-S101, KX-S102, KX-S110, KX-S111,
-KX-S210, KX-T101, KX-C301
-```
-
----
-
-## Development and Testing
-
-Format the Rust workspace:
+Format:
 
 ```bash
 cargo fmt --all
 ```
 
-Check the workspace:
+Check:
 
 ```bash
 cargo check --workspace
 ```
 
-Run the tests:
+Test:
 
 ```bash
 cargo test --workspace
@@ -1038,149 +1097,142 @@ Validate the browser runtime:
 node --check crates/korlix-compiler/runtime-bundle/korlix.runtime.js
 ```
 
-Build the V2 example:
+Build the complete showcase:
 
 ```bash
-cd examples/v2-showcase
-../../target/release/korlix check
-../../target/release/korlix build --mode static
+cd examples/complete-showcase
+
+korlix check
+korlix build --mode static
 ```
 
----
-
-## Rebuilding the Runtime
-
-The pre-bundled runtime is stored at:
-
-```text
-crates/korlix-compiler/runtime-bundle/korlix.runtime.js
-```
-
-Rebuild it from TypeScript:
+Start it:
 
 ```bash
-cd runtime
-npm install
-npm run build
-cp dist/korlix.runtime.js ../crates/korlix-compiler/runtime-bundle/
+korlix dev
 ```
 
 ---
 
-## Included Examples
+# Included Examples
 
-| Example                  | Purpose                                                                            |
-| ------------------------ | ---------------------------------------------------------------------------------- |
-| `examples/landing-page`  | Static multipage landing-page project with shared layout and marketing sections    |
-| `examples/spa-dashboard` | Dashboard-style project using experimental SPA configuration                       |
-| `examples/v2-showcase`   | V2 syntax, components, state, responsive styles, themes, pagination and API syntax |
-
----
-
-## Current Project Status
-
-Korlix currently provides a tested V2 language foundation. **Static multipage compilation is the stable target.**
-
-The following areas remain incomplete or experimental:
-
-* Full record-shape and flow-sensitive type checking
-* Undefined identifier and function validation
-* Complete runtime behavior for top-level `let` and `derived`
-* Complete component-instance state isolation
-* Named slots and event forwarding
-* Specialized behavior for every registered component
-* Declarative API headers, params, authentication, retry and timeout
-* Complete SPA page mounting and unmounting
-* Strict Content Security Policy compatibility
-* Dedicated accessibility, security and SEO checks
-* Server-side rendering and data-driven SSG
-* Package management
-* Formatter and language-server tooling
-* Complete JavaScript and TypeScript interoperability
-
-See [Implementation Status](docs/18-implementation-status.md) for the full matrix.
+| Example | Purpose |
+|---|---|
+| `examples/landing-page` | Static marketing website with shared layouts |
+| `examples/spa-dashboard` | Dashboard project using experimental SPA mode |
+| `examples/v2-showcase` | Focused V2 language demonstration |
+| `examples/complete-showcase` | Multipage catalogue of language and runtime features |
 
 ---
 
-## Engineering Notes
+# Current Project Status
 
-* Indentation is part of the Korlix grammar.
-* V1 and V2 syntax are both accepted during migration.
-* The style scanner generates CSS from utilities found in source files.
-* Application layouts are applied before final component lowering.
-* Component aliases are resolved through imported `.klx` modules.
-* Static routes generate directory-based HTML files.
-* Page state is route-gated to reduce cross-page collisions.
-* Generic catalogue components produce semantic output but may not implement advanced interaction behavior.
-* SPA mode should be treated as experimental until route-level page replacement is complete.
+Korlix currently provides a tested frontend-language foundation.
 
----
+**Stable focus:** static multipage compilation.
 
-## Roadmap
+**Experimental:** SPA output and client-side page mounting.
 
-* Expanded semantic and type analysis
-* Complete component behavior and accessibility contracts
-* Isolated component state and lifecycle
-* Declarative API configuration
-* Full SPA route mounting
-* Formatter
-* Language Server Protocol support
-* Editor extensions
-* Source maps and improved debugging
-* Runtime feature tree-shaking
-* CSP-compatible event generation
-* Package ecosystem
-* SSR and SSG
-* Plugin and component extension APIs
+Current limitations:
+
+- Partial record-shape and flow-sensitive type checking
+- Incomplete undefined identifier and function validation
+- Incomplete top-level `let` and `derived` runtime behavior
+- Incomplete component-instance state isolation
+- Limited named slots and event forwarding
+- Generic behavior for many registered components
+- Limited declarative API configuration
+- Experimental SPA lifecycle
+- No strict CSP-compatible event generation
+- Incomplete accessibility, security, and SEO analysis passes
+- No SSR or data-driven SSG
+- No package ecosystem yet
+- No complete formatter or language server
+- Limited JavaScript and TypeScript interoperability
+
+See [Implementation Status](docs/18-implementation-status.md) for the detailed status matrix.
 
 ---
 
-## Documentation
+# Roadmap
 
-* [Documentation Index](docs/00-index.md)
-* [Getting Started](docs/01-getting-started.md)
-* [Project Structure](docs/02-project-structure.md)
-* [Language Syntax](docs/03-syntax.md)
-* [Colors and Utilities](docs/06-colors-and-utilities.md)
-* [Components](docs/07-components.md)
-* [State, Events and Functions](docs/09-state-events-functions.md)
-* [Compiler Architecture](docs/11-compiler-architecture.md)
-* [Korlix V2 Language](docs/12-korlix-v2-language.md)
-* [HTML Reference](docs/13-html-reference.md)
-* [Colors and Themes](docs/14-korlix-colors-and-themes.md)
-* [V2 Component Catalogue](docs/15-component-catalog-v2.md)
-* [API and Pagination](docs/16-scripting-api-pagination.md)
-* [Testing and Conformance](docs/17-testing-and-conformance.md)
-* [Implementation Status](docs/18-implementation-status.md)
+- Expanded semantic analysis and type checking
+- Complete component behavior and accessibility contracts
+- Component-instance state and lifecycle
+- Declarative API headers, parameters, authentication, retries, and timeout
+- Full SPA route mounting
+- Formatter
+- Language Server Protocol support
+- Editor extensions
+- Source maps and improved diagnostics
+- Runtime feature tree-shaking
+- CSP-compatible event generation
+- Package and plugin ecosystem
+- Server-side rendering
+- Static site generation
+- Public component extension APIs
 
 ---
 
-## Contributing
+# Documentation
 
-Contributions are welcome across the compiler, parser, styling engine, components, browser runtime, diagnostics, tests, documentation and examples.
+- [Documentation Index](docs/00-index.md)
+- [Getting Started](docs/01-getting-started.md)
+- [Project Structure](docs/02-project-structure.md)
+- [Language Syntax](docs/03-syntax.md)
+- [Colors and Utilities](docs/06-colors-and-utilities.md)
+- [Components](docs/07-components.md)
+- [State, Events, and Functions](docs/09-state-events-functions.md)
+- [Compiler Architecture](docs/11-compiler-architecture.md)
+- [Korlix V2 Language](docs/12-korlix-v2-language.md)
+- [HTML Reference](docs/13-html-reference.md)
+- [Colors and Themes](docs/14-korlix-colors-and-themes.md)
+- [V2 Component Catalogue](docs/15-component-catalog-v2.md)
+- [API and Pagination](docs/16-scripting-api-pagination.md)
+- [Testing and Conformance](docs/17-testing-and-conformance.md)
+- [Implementation Status](docs/18-implementation-status.md)
+
+---
+
+# Contributing
+
+Contributions are welcome across:
+
+- Compiler and parser development
+- Semantic validation
+- Styling and color systems
+- Components
+- Browser runtime
+- Developer tooling
+- Tests
+- Documentation
+- Examples
+
+Development setup:
 
 ```bash
 git clone https://github.com/SachinRamasamy-cloud/korlix.git
 cd korlix
+
 cargo check --workspace
 cargo test --workspace
 ```
 
-Create a focused branch, include tests for language changes, and document compatibility effects in the pull request.
+Create a focused branch, add tests for language changes, and document compatibility effects in the pull request.
 
 ---
 
-## License
+# License
 
 Korlix is released under the [MIT License](LICENSE).
 
 ---
 
-## Author
+# Author
 
-**Sachin Ramasamy**
+**Sachin Ramasamy**  
 Full-Stack Developer
 
-* Portfolio: https://sachinrtech.vercel.app/
-* GitHub: https://github.com/SachinRamasamy-cloud
-* Repository: https://github.com/SachinRamasamy-cloud/korlix
+- Portfolio: https://sachinrtech.vercel.app/
+- GitHub: https://github.com/SachinRamasamy-cloud
+- Repository: https://github.com/SachinRamasamy-cloud/korlix
