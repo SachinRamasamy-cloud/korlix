@@ -1,0 +1,213 @@
+flowchart TB
+    %% KORLIX FUTURE ROADMAP — dependency-oriented, not date-based
+
+    CURRENT["Current baseline<br/>Korlix v0.1.x<br/><br/>Static multipage compiler<br/>V2 syntax foundation<br/>115 registered components<br/>JIT styles and themes<br/>Basic state, events, API, pagination<br/>Partial semantics and experimental SPA"]:::current
+
+    PRINCIPLES["Roadmap principles<br/><br/>Stabilize before expanding<br/>Do not present parser-only features as complete<br/>Every feature requires diagnostics and tests<br/>Generated output remains browser-native<br/>Static builds remain the reference target"]:::principle
+
+    CURRENT --> PRINCIPLES
+
+    subgraph P0["PHASE 0 — STABILIZATION AND SPECIFICATION"]
+        direction TB
+        P0_SPEC["Freeze Korlix V2 specification<br/>Grammar, indentation, keywords,<br/>scope, types, components, events,<br/>styles and generated behavior"]:::phase
+        P0_BUGS["Resolve known inconsistencies<br/>Theme keys and token order<br/>Boolean prop parsing<br/>Import diagnostics<br/>Top-level declarations<br/>Route duplication<br/>Version drift"]:::task
+        P0_TESTS["Create conformance suite<br/>Valid/invalid syntax<br/>Recovery tests<br/>AST and output snapshots<br/>Cross-platform checks"]:::task
+        P0_STATUS["Mark features as<br/>Stable, Experimental, Generic,<br/>Parsed only, Planned"]:::task
+        P0_GATE["Gate<br/>All official examples compile cleanly<br/>No malformed CSS<br/>No silent route overwrite<br/>One authoritative version source"]:::gate
+        P0_SPEC --> P0_BUGS --> P0_TESTS --> P0_STATUS --> P0_GATE
+    end
+
+    PRINCIPLES --> P0_SPEC
+
+    subgraph P1["PHASE 1 — SEMANTICS AND TYPE SYSTEM"]
+        direction TB
+        P1_SYMBOLS["Complete module graph and scopes<br/>Imports, exports, aliases,<br/>shadowing, undefined identifiers,<br/>unused imports, cycles"]:::phase
+        P1_TYPES["Practical type checker<br/>Primitives, lists, records,<br/>nullable values, assignments,<br/>functions, component props,<br/>API result shapes"]:::task
+        P1_FLOW["Complete control flow<br/>return, while, break, continue,<br/>try/catch/finally, async/await"]:::task
+        P1_DIAG["Improve diagnostics<br/>Stable codes, related spans,<br/>suggested fixes, readable type errors"]:::task
+        P1_HIR["Introduce resolved HIR<br/>Normalize symbols, types,<br/>components, events, styles, routes"]:::task
+        P1_GATE["Gate<br/>Undefined names fail<br/>Function signatures are checked<br/>Prop expressions are checked<br/>Codegen receives only resolved HIR"]:::gate
+        P1_SYMBOLS --> P1_TYPES --> P1_FLOW --> P1_DIAG --> P1_HIR --> P1_GATE
+    end
+
+    P0_GATE --> P1_SYMBOLS
+
+    subgraph P2["PHASE 2 — COMPONENT MODEL AND RUNTIME ISOLATION"]
+        direction TB
+        P2_INST["Per-instance component state<br/>Local actions and derived values<br/>Mount/unmount lifecycle<br/>Nested ownership"]:::phase
+        P2_SLOTS["Complete slots<br/>Default, named, required,<br/>fallback content, slot props"]:::task
+        P2_EVENTS["Typed component events<br/>Custom emits, forwarding,<br/>parent handlers, payload checks"]:::task
+        P2_CORE["Upgrade core components<br/>Dedicated schemas, semantic HTML,<br/>keyboard behavior, accessibility,<br/>responsive and theme coverage"]:::task
+        P2_CSP["CSP-compatible event model<br/>Generated handler tables<br/>No eval/new Function<br/>Stable component IDs"]:::task
+        P2_A11Y["Accessibility contracts<br/>Labels, focus, modal trap,<br/>ARIA, keyboard, reduced motion"]:::task
+        P2_GATE["Gate<br/>Instances are isolated<br/>Named slots and custom events work<br/>Core components pass browser/a11y tests<br/>Standard output is CSP-compatible"]:::gate
+        P2_INST --> P2_SLOTS --> P2_EVENTS --> P2_CORE --> P2_CSP --> P2_A11Y --> P2_GATE
+    end
+
+    P1_GATE --> P2_INST
+
+    subgraph P3["PHASE 3 — DATA, FORMS, AND STANDARD LIBRARY"]
+        direction TB
+        P3_API["Declarative API configuration<br/>Base URL, headers, params,<br/>auth hooks, environment values"]:::phase
+        P3_QUERY["Production queries<br/>data/loading/error, cache,<br/>deduplication, retry, timeout,<br/>cancellation, refresh dependencies"]:::task
+        P3_MUT["Mutation lifecycle<br/>success/error/finally,<br/>optimistic updates, invalidation,<br/>reset, typed responses"]:::task
+        P3_FORMS["Form system<br/>Binding, validation, touched/dirty,<br/>errors, async validation,<br/>submission and reset"]:::task
+        P3_PAGE["Pagination<br/>Offset and cursor modes<br/>Query integration<br/>URL and history restoration"]:::task
+        P3_STDLIB["Standard library<br/>text, list, math, date,<br/>JSON, URL, storage,<br/>clipboard, timers"]:::task
+        P3_GATE["Gate<br/>CRUD app needs no custom JS<br/>Forms expose complete state<br/>Requests cancel on unmount<br/>Pagination restores from URL"]:::gate
+        P3_API --> P3_QUERY --> P3_MUT --> P3_FORMS --> P3_PAGE --> P3_STDLIB --> P3_GATE
+    end
+
+    P2_GATE --> P3_API
+
+    subgraph P4["PHASE 4 — ROUTING, SPA, AND LIFECYCLE"]
+        direction TB
+        P4_ROUTER["Complete router<br/>Dynamic and nested routes<br/>404, redirects, guards,<br/>active-link state"]:::phase
+        P4_LIFE["Page lifecycle<br/>Unmount listeners and instances<br/>Cancel requests and timers<br/>Restore focus and scroll"]:::task
+        P4_CHUNK["Route-level output<br/>Per-page JS, shared runtime,<br/>lazy chunks, route manifests"]:::task
+        P4_STATIC["Strengthen static mode<br/>Base paths, canonical routes,<br/>asset paths, deployment adapters"]:::task
+        P4_SPA["Promote SPA mode<br/>One shell, page replacement,<br/>state isolation, error boundaries,<br/>history fallback"]:::task
+        P4_SSG["SSG research<br/>Build-time data, parameterized pages,<br/>revalidation, hydration boundaries"]:::research
+        P4_GATE["Gate<br/>Static mode remains stable<br/>SPA replaces content correctly<br/>No leaked state/listeners<br/>Dynamic routes and 404 tested"]:::gate
+        P4_ROUTER --> P4_LIFE --> P4_CHUNK --> P4_STATIC --> P4_SPA --> P4_SSG --> P4_GATE
+    end
+
+    P3_GATE --> P4_ROUTER
+
+    subgraph P5["PHASE 5 — DEVELOPER EXPERIENCE"]
+        direction TB
+        P5_FMT["korlix fmt<br/>Deterministic, idempotent,<br/>comment-preserving formatting"]:::phase
+        P5_LSP["Language server<br/>Diagnostics, autocomplete, hover,<br/>definition, references, rename"]:::task
+        P5_EDITOR["Editor integrations<br/>VS Code, syntax highlighting,<br/>color previews, prop hints,<br/>run/check commands"]:::task
+        P5_MAP["Source maps and debugging<br/>KLX-to-JS and KLX-to-HTML<br/>Runtime errors map to source"]:::task
+        P5_DEV["Dev server improvements<br/>Incremental graph, CSS-only updates,<br/>error overlay, browser open,<br/>port conflict handling"]:::task
+        P5_INSPECT["Inspection tools<br/>korlix inspect, korlix doctor,<br/>AST/HIR, routes, bundles,<br/>unused utilities"]:::task
+        P5_GATE["Gate<br/>Formatter deterministic<br/>LSP works across imports<br/>Runtime errors map to KLX<br/>Edit-refresh latency measured"]:::gate
+        P5_FMT --> P5_LSP --> P5_EDITOR --> P5_MAP --> P5_DEV --> P5_INSPECT --> P5_GATE
+    end
+
+    P4_GATE --> P5_FMT
+
+    subgraph P6["PHASE 6 — PACKAGE AND EXTENSION ECOSYSTEM"]
+        direction TB
+        P6_FORMAT["Define package format<br/>Metadata, exports, components,<br/>themes, runtime requirements,<br/>compiler compatibility"]:::phase
+        P6_REG["Dependency resolution<br/>Versions, lock file, checksums,<br/>reproducible installs"]:::task
+        P6_EXT["Extension APIs<br/>Components, utilities, themes,<br/>runtime modules, safe transforms"]:::task
+        P6_SEC["Supply-chain security<br/>Integrity, permissions,<br/>audit, path isolation"]:::task
+        P6_TEMPL["Official templates<br/>Landing page, docs, dashboard,<br/>storefront, CRUD, portfolio"]:::task
+        P6_GATE["Gate<br/>Deterministic lock file<br/>Reproducible installs<br/>Capability declarations<br/>Compatibility tests"]:::gate
+        P6_FORMAT --> P6_REG --> P6_EXT --> P6_SEC --> P6_TEMPL --> P6_GATE
+    end
+
+    P5_GATE --> P6_FORMAT
+
+    subgraph P7["PHASE 7 — PRODUCTION HARDENING"]
+        direction TB
+        P7_PERF["Compiler/runtime performance<br/>Incremental compilation, caching,<br/>parallel parsing, smaller runtime"]:::phase
+        P7_OUTPUT["Production output<br/>Minification, hashes,<br/>tree-shaking, critical CSS,<br/>dead-code elimination, budgets"]:::task
+        P7_SEC["Security analysis<br/>Unsafe URLs, XSS, raw HTML,<br/>CSP, secret leakage, traversal"]:::task
+        P7_CHECKS["Real quality commands<br/>--a11y, --security, --seo"]:::task
+        P7_PLATFORM["Cross-platform releases<br/>Linux, Windows, macOS<br/>CI matrix, checksums"]:::task
+        P7_GATE["Gate<br/>Reproducible releases<br/>Security suite passes<br/>Bundle budgets enforced<br/>No critical core-component a11y failures"]:::gate
+        P7_PERF --> P7_OUTPUT --> P7_SEC --> P7_CHECKS --> P7_PLATFORM --> P7_GATE
+    end
+
+    P6_GATE --> P7_PERF
+
+    subgraph V1["KORLIX 1.0 — STABLE LANGUAGE"]
+        direction TB
+        V1_SPEC["Versioned language specification"]:::release
+        V1_COMP["Stable compiler and diagnostics"]:::release
+        V1_STATIC["Production static builds"]:::release
+        V1_SPA["Supported SPA mode"]:::release
+        V1_COMPONENTS["Accessible documented core components"]:::release
+        V1_TOOLING["Formatter, LSP, source maps"]:::release
+        V1_SECURITY["CSP-compatible and security-tested"]:::release
+        V1_POLICY["Compatibility and deprecation policy"]:::release
+        V1_DONE["Korlix 1.0<br/>Stable syntax and output contracts<br/>Migration guarantees<br/>Reproducible releases"]:::final
+
+        V1_SPEC --> V1_DONE
+        V1_COMP --> V1_DONE
+        V1_STATIC --> V1_DONE
+        V1_SPA --> V1_DONE
+        V1_COMPONENTS --> V1_DONE
+        V1_TOOLING --> V1_DONE
+        V1_SECURITY --> V1_DONE
+        V1_POLICY --> V1_DONE
+    end
+
+    P7_GATE --> V1_SPEC
+    P7_GATE --> V1_COMP
+    P7_GATE --> V1_STATIC
+    P7_GATE --> V1_SPA
+    P7_GATE --> V1_COMPONENTS
+    P7_GATE --> V1_TOOLING
+    P7_GATE --> V1_SECURITY
+    P7_GATE --> V1_POLICY
+
+    subgraph CONTINUOUS["CONTINUOUS WORKSTREAMS"]
+        direction LR
+        DOCS["Documentation<br/>Reference, tutorials,<br/>examples, migrations"]:::continuous
+        TESTS["Testing<br/>Unit, snapshots, browser,<br/>a11y, security, cross-platform"]:::continuous
+        RELEASES["Release engineering<br/>Changelog, version sync,<br/>npm, binaries, checksums"]:::continuous
+        COMMUNITY["Community<br/>Contribution guide, RFCs,<br/>issues, governance"]:::continuous
+    end
+
+    P0_SPEC -. continuous .-> DOCS
+    P1_TYPES -. continuous .-> TESTS
+    P2_CORE -. continuous .-> TESTS
+    P3_QUERY -. continuous .-> TESTS
+    P4_SPA -. continuous .-> TESTS
+    P5_EDITOR -. continuous .-> DOCS
+    P6_REG -. continuous .-> RELEASES
+    P7_PLATFORM -. continuous .-> RELEASES
+    CURRENT -. continuous .-> COMMUNITY
+    V1_DONE -. maintained by .-> COMMUNITY
+
+    subgraph VERSIONS["SUGGESTED QUALITY-GATED VERSION MAPPING"]
+        direction LR
+        V02["0.2.x<br/>Stabilization"]:::version
+        V03["0.3.x<br/>Semantics"]:::version
+        V04["0.4.x<br/>Components"]:::version
+        V05["0.5.x<br/>Data and forms"]:::version
+        V06["0.6.x<br/>Router and SPA"]:::version
+        V07["0.7.x<br/>Tooling"]:::version
+        V08["0.8.x<br/>Packages"]:::version
+        V09["0.9.x<br/>Hardening"]:::version
+        V10["1.0.0<br/>Stable"]:::version
+        V02 --> V03 --> V04 --> V05 --> V06 --> V07 --> V08 --> V09 --> V10
+    end
+
+    P0_GATE -. maps to .-> V02
+    P1_GATE -. maps to .-> V03
+    P2_GATE -. maps to .-> V04
+    P3_GATE -. maps to .-> V05
+    P4_GATE -. maps to .-> V06
+    P5_GATE -. maps to .-> V07
+    P6_GATE -. maps to .-> V08
+    P7_GATE -. maps to .-> V09
+    V1_DONE -. maps to .-> V10
+
+    subgraph LEGEND["LEGEND"]
+        direction LR
+        L1["Current"]:::current
+        L2["Principle"]:::principle
+        L3["Phase"]:::phase
+        L4["Task"]:::task
+        L5["Gate"]:::gate
+        L6["Research"]:::research
+        L7["Continuous"]:::continuous
+        L8["Release requirement"]:::release
+        L9["Version"]:::version
+    end
+
+    classDef current fill:#111827,color:#ffffff,stroke:#111827,stroke-width:2px;
+    classDef principle fill:#f5f3ff,color:#4c1d95,stroke:#8b5cf6,stroke-width:1.5px;
+    classDef phase fill:#dbeafe,color:#172554,stroke:#2563eb,stroke-width:1.6px;
+    classDef task fill:#eff6ff,color:#172554,stroke:#60a5fa,stroke-width:1.2px;
+    classDef gate fill:#ecfdf5,color:#064e3b,stroke:#10b981,stroke-width:1.6px;
+    classDef research fill:#fff7ed,color:#7c2d12,stroke:#f97316,stroke-width:1.4px,stroke-dasharray:5 3;
+    classDef continuous fill:#fdf4ff,color:#701a75,stroke:#d946ef,stroke-width:1.3px;
+    classDef release fill:#f0fdf4,color:#14532d,stroke:#16a34a,stroke-width:1.5px;
+    classDef final fill:#14532d,color:#ffffff,stroke:#052e16,stroke-width:2px;
+    classDef version fill:#fefce8,color:#713f12,stroke:#eab308,stroke-width:1.3px;
