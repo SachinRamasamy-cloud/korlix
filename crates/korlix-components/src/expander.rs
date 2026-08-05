@@ -19,7 +19,37 @@ pub fn expand_component(node: &ComponentNode) -> Node {
         .iter()
         .map(|c| ClassRef::new(c.clone(), node.span))
         .collect();
-    classes.extend(node.classes.clone());
+    // V1 used `.primary`, `.ghost`, and similar class-like modifiers on
+    // components. Normalize those into Korlix component variants instead of
+    // treating them as global utility classes. Ordinary utility classes stay
+    // untouched.
+    for class_ref in &node.classes {
+        if is_legacy_component_variant(&class_ref.name) {
+            classes.push(ClassRef::new(
+                format!("kx-{}--{}", node.name, class_ref.name),
+                class_ref.span,
+            ));
+        } else {
+            classes.push(class_ref.clone());
+        }
+    }
+    if let Some(variant) = get_prop_str(node, "variant") {
+        if variant != "default" {
+            classes.push(ClassRef::new(
+                format!("kx-{}--{}", node.name, variant),
+                node.span,
+            ));
+        }
+    }
+    if let Some(size) = get_prop_str(node, "size") {
+        classes.push(ClassRef::new(
+            format!("kx-{}--{}", node.name, size),
+            node.span,
+        ));
+    }
+    if get_prop_bool(node, "disabled").unwrap_or(false) {
+        classes.push(ClassRef::new("kx-is-disabled", node.span));
+    }
 
     // Special expansions per component
     match node.name.as_str() {
@@ -44,12 +74,37 @@ pub fn expand_component(node: &ComponentNode) -> Node {
         "section" => expand_section(node, classes),
         "link" => expand_link(node, classes),
         "hero" => expand_hero(node, classes),
+        "theme-toggle" => expand_theme_toggle(node, classes),
         _ => expand_generic(node, schema.html_tag.clone(), classes),
     }
 }
 
+fn is_legacy_component_variant(name: &str) -> bool {
+    matches!(
+        name,
+        "default"
+            | "primary"
+            | "secondary"
+            | "success"
+            | "danger"
+            | "warning"
+            | "info"
+            | "ghost"
+            | "outline"
+            | "soft"
+            | "link"
+            | "glass"
+            | "raised"
+            | "bordered"
+            | "filled"
+            | "floating"
+            | "compact"
+    )
+}
+
 fn get_prop_str<'a>(node: &'a ComponentNode, key: &str) -> Option<&'a str> {
-    node.props.iter().find(|p| p.key == key)?.value.as_string()
+    let value = &node.props.iter().find(|prop| prop.key == key)?.value;
+    value.as_string().or_else(|| value.as_ident())
 }
 fn get_prop_num(node: &ComponentNode, key: &str) -> Option<f64> {
     node.props.iter().find(|p| p.key == key)?.value.as_number()
@@ -457,22 +512,67 @@ fn expand_modal(node: &ComponentNode, classes: Vec<ClassRef>) -> Node {
 }
 
 fn expand_pagination(node: &ComponentNode, classes: Vec<ClassRef>) -> Node {
-    let page = get_prop_num(node, "page").unwrap_or(1.0) as i64;
-    let total = get_prop_num(node, "total").unwrap_or(0.0) as i64;
-    let per_page = get_prop_num(node, "perPage").unwrap_or(10.0) as i64;
-    let _pages = ((total + per_page - 1) / per_page).max(1);
+    let prop_value = |names: &[&str], fallback: Expr| {
+        names
+            .iter()
+            .find_map(|name| {
+                node.props
+                    .iter()
+                    .find(|prop| prop.key == *name)
+                    .map(|prop| prop.value.clone())
+            })
+            .unwrap_or(fallback)
+    };
+
+    let mut props = vec![
+        Prop::new("data-kx-pagination", Expr::String("true".into()), node.span),
+        Prop::new(
+            "data-page",
+            prop_value(&["page"], Expr::Number(1.0)),
+            node.span,
+        ),
+        Prop::new(
+            "data-pages",
+            prop_value(&["pages"], Expr::Number(0.0)),
+            node.span,
+        ),
+        Prop::new(
+            "data-total",
+            prop_value(&["total"], Expr::Number(0.0)),
+            node.span,
+        ),
+        Prop::new(
+            "data-per-page",
+            prop_value(&["size", "perPage", "per-page"], Expr::Number(10.0)),
+            node.span,
+        ),
+        Prop::new(
+            "data-siblings",
+            prop_value(&["siblings"], Expr::Number(1.0)),
+            node.span,
+        ),
+        Prop::new("role", Expr::String("navigation".into()), node.span),
+        Prop::new("aria-label", Expr::String("Pagination".into()), node.span),
+    ];
+    if get_prop_bool(node, "url-sync").unwrap_or(false) {
+        props.push(Prop::new(
+            "data-url-sync",
+            Expr::String("true".into()),
+            node.span,
+        ));
+    }
+    if let Some(page_param) = get_prop_str(node, "page-param") {
+        props.push(Prop::new(
+            "data-page-param",
+            Expr::String(page_param.into()),
+            node.span,
+        ));
+    }
 
     Node::Element(ElementNode {
-        tag: "div".into(),
+        tag: "nav".into(),
         classes,
-        props: vec![
-            Prop::new("data-kx-pagination", Expr::String("true".into()), node.span),
-            Prop::new("data-page", Expr::Number(page as f64), node.span),
-            Prop::new("data-total", Expr::Number(total as f64), node.span),
-            Prop::new("data-per-page", Expr::Number(per_page as f64), node.span),
-            Prop::new("role", Expr::String("navigation".into()), node.span),
-            Prop::new("aria-label", Expr::String("Pagination".into()), node.span),
-        ],
+        props,
         events: node.events.clone(),
         children: vec![],
         span: node.span,
@@ -625,12 +725,49 @@ fn expand_hero(node: &ComponentNode, mut classes: Vec<ClassRef>) -> Node {
     })
 }
 fn expand_generic(node: &ComponentNode, tag: String, classes: Vec<ClassRef>) -> Node {
+    let props = node
+        .props
+        .iter()
+        .filter(|prop| !matches!(prop.key.as_str(), "variant" | "size" | "disabled"))
+        .cloned()
+        .collect();
     Node::Element(ElementNode {
         tag,
         classes,
-        props: node.props.clone(),
+        props,
         events: node.events.clone(),
         children: node.children.clone(),
+        span: node.span,
+    })
+}
+
+fn expand_theme_toggle(node: &ComponentNode, classes: Vec<ClassRef>) -> Node {
+    let children = if node.children.is_empty() {
+        vec![Node::Text(korlix_ast::node::TextNode {
+            value: Expr::String("Theme".into()),
+            span: node.span,
+        })]
+    } else {
+        node.children.clone()
+    };
+    Node::Element(ElementNode {
+        tag: "button".into(),
+        classes,
+        props: vec![
+            Prop::new("type", Expr::String("button".into()), node.span),
+            Prop::new(
+                "data-kx-theme-toggle",
+                Expr::String("true".into()),
+                node.span,
+            ),
+            Prop::new(
+                "aria-label",
+                Expr::String("Toggle color theme".into()),
+                node.span,
+            ),
+        ],
+        events: node.events.clone(),
+        children,
         span: node.span,
     })
 }

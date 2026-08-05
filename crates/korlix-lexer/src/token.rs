@@ -25,6 +25,8 @@ pub enum TokenKind {
     Mount,
     To,
     Route,
+    At,
+    Fn,
     Slot,
     Providers,
     Routes,
@@ -51,6 +53,8 @@ pub enum TokenKind {
     // ── Operators ─────────────────────────────────────────────────────
     Plus,
     Minus,
+    PlusEq,
+    MinusEq,
     Star,
     Slash,
     Percent,
@@ -116,6 +120,7 @@ impl TokenKind {
                 | TokenKind::Mount
                 | TokenKind::To
                 | TokenKind::Route
+                | TokenKind::Fn
                 | TokenKind::Slot
                 | TokenKind::Providers
                 | TokenKind::Routes
@@ -145,6 +150,8 @@ impl TokenKind {
             TokenKind::Mount => Some("mount"),
             TokenKind::To => Some("to"),
             TokenKind::Route => Some("route"),
+            TokenKind::At => Some("at"),
+            TokenKind::Fn => Some("fn"),
             TokenKind::Slot => Some("slot"),
             TokenKind::Providers => Some("providers"),
             TokenKind::Routes => Some("routes"),
@@ -169,6 +176,8 @@ impl std::fmt::Display for TokenKind {
             TokenKind::Equals => write!(f, "="),
             TokenKind::Plus => write!(f, "+"),
             TokenKind::Minus => write!(f, "-"),
+            TokenKind::PlusEq => write!(f, "+="),
+            TokenKind::MinusEq => write!(f, "-="),
             TokenKind::Star => write!(f, "*"),
             TokenKind::Slash => write!(f, "/"),
             TokenKind::EqEq => write!(f, "=="),

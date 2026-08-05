@@ -1,0 +1,48 @@
+page ApiCheck at "/api-check"
+  get apiHealth "http://localhost:8787/api/health"
+
+  main .min-h-screen .surface-canvas .content-content
+    container .py-16
+      column .gap-6
+        badge variant=soft "API Test"
+
+        h1 .text-4xl .font-bold "Korlix API connection check"
+
+        p .content-content-muted
+          "This page calls the Node.js API running on port 8787."
+
+        card variant=raised
+          column .gap-4
+            if apiHealthLoading
+              row .gap-3
+                spinner
+                p "Checking the API..."
+
+            else
+              if apiHealthError
+                alert variant=danger
+                  strong "API connection failed"
+                  p "{apiHealthError}"
+
+              else
+                alert variant=success
+                  strong "API is working"
+                  p "{apiHealth.message}"
+
+                key-value-list
+                  row
+                    strong "Status"
+                    p "{apiHealth.status}"
+
+                  row
+                    strong "Service"
+                    p "{apiHealth.service}"
+
+                  row
+                    strong "Server time"
+                    p "{apiHealth.timestamp}"
+
+            button "Check API again" variant=primary click=checkApi
+
+  fn checkApi
+    reload apiHealth

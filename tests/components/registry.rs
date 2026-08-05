@@ -52,8 +52,8 @@ mod tests {
     fn test_minimum_component_count() {
         let names = all_component_names();
         assert!(
-            names.len() >= 30,
-            "Should have 30+ components, got {}",
+            names.len() >= 100,
+            "Should have 100+ components, got {}",
             names.len()
         );
     }

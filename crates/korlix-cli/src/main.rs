@@ -7,7 +7,7 @@ mod output;
 #[derive(Parser)]
 #[command(
     name    = "korlix",
-    version = "0.1.0",
+    version ,
     author  = "Korlix Team",
     about   = "◈  Korlix — ultra-light frontend language compiler",
     long_about = None,
@@ -28,7 +28,7 @@ enum Commands {
     Dev,
     /// Build the project for production
     Build {
-        /// Build mode: static|spa|ssg
+        /// Build mode: static|spa
         #[arg(long, default_value = "static")]
         mode: String,
     },

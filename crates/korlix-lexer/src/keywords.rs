@@ -24,12 +24,17 @@ pub fn lookup_keyword(s: &str) -> Option<TokenKind> {
         "mount" => Some(TokenKind::Mount),
         "to" => Some(TokenKind::To),
         "route" => Some(TokenKind::Route),
+        "at" => Some(TokenKind::At),
+        "fn" => Some(TokenKind::Fn),
         "slot" => Some(TokenKind::Slot),
         "providers" => Some(TokenKind::Providers),
         "routes" => Some(TokenKind::Routes),
         "true" => Some(TokenKind::Bool(true)),
         "false" => Some(TokenKind::Bool(false)),
         "null" => Some(TokenKind::Null),
+        "and" => Some(TokenKind::AmpAmp),
+        "or" => Some(TokenKind::PipePipe),
+        "not" => Some(TokenKind::Bang),
         // ── HTTP / API keywords ─────────────────────────────────────────
         // Use dedicated token variants (not HttpMethod(String)) so the parser
         // can match them by enum discriminant without allocating.
@@ -38,8 +43,6 @@ pub fn lookup_keyword(s: &str) -> Option<TokenKind> {
         "put" => Some(TokenKind::Put),
         "patch" => Some(TokenKind::Patch),
         "delete" => Some(TokenKind::Delete),
-        "options" => Some(TokenKind::Options),
-        "head" => Some(TokenKind::Head),
         "reload" => Some(TokenKind::Reload),
         _ => None,
     }

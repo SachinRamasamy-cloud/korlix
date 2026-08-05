@@ -1,0 +1,485 @@
+flowchart TB
+    %% ============================================================
+    %% KORLIX COLOR CLASS ARCHITECTURE
+    %% Detailed architecture of palette creation, class parsing,
+    %% semantic tokens, themes, JIT CSS generation, and browser use.
+    %% ============================================================
+
+    DEV["Developer writes color classes in .klx files"]:::actor
+
+    subgraph SOURCE["1. KORLIX SOURCE SYNTAX"]
+        direction TB
+
+        KORLIX_NATIVE["Korlix-native color utilities<br/><br/>.surface-violet-2<br/>.content-violet-11<br/>.outline-violet-4<br/>.accent-cyan-7<br/>.ring-color-blue-5"]:::syntax
+
+        TRADITIONAL["Traditional utility aliases<br/><br/>.bg-indigo-600<br/>.text-white<br/>.border-indigo-700<br/>.ring-blue-400<br/>.fill-emerald-500"]:::syntax
+
+        SEMANTIC["Semantic theme utilities<br/><br/>.surface-canvas<br/>.surface-raised<br/>.content-content<br/>.content-content-muted<br/>.outline-outline<br/>.surface-brand"]:::syntax
+
+        VARIANTS["Variant-prefixed utilities<br/><br/>.hover:surface-violet-3<br/>.focus:ring-color-violet-5<br/>.disabled:content-neutral-6<br/>.dark:surface-neutral-11<br/>.md:surface-blue-2"]:::syntax
+
+        ARBITRARY["Arbitrary color values<br/><br/>.surface-[#101827]<br/>.content-[rgb(230_230_240)]<br/>.outline-[oklch(75%_0.05_250)]"]:::syntax
+    end
+
+    DEV --> KORLIX_NATIVE
+    DEV --> TRADITIONAL
+    DEV --> SEMANTIC
+    DEV --> VARIANTS
+    DEV --> ARBITRARY
+
+    subgraph PALETTE["2. COLOR PALETTE REGISTRY — korlix-style"]
+        direction TB
+
+        subgraph BASEFAMILIES["BASE COLOR FAMILIES"]
+            direction LR
+            BASE1["slate<br/>gray<br/>zinc"]:::palette
+            BASE2["red<br/>orange<br/>amber<br/>yellow"]:::palette
+            BASE3["green<br/>emerald<br/>teal<br/>cyan"]:::palette
+            BASE4["blue<br/>indigo<br/>violet<br/>purple"]:::palette
+            BASE5["pink<br/>rose"]:::palette
+        end
+
+        SHADES["Stored base shades per family<br/><br/>50, 100, 200, 300, 400, 500,<br/>600, 700, 800, 900, 950"]:::artifact
+
+        subgraph ALIASES["PUBLIC ALIAS FAMILIES"]
+            direction LR
+            A1["neutral → gray<br/>ash → slate<br/>stone → zinc"]:::alias
+            A2["sand → amber<br/>lime → green<br/>mint → emerald"]:::alias
+            A3["sky → cyan<br/>coral → orange<br/>magenta → pink"]:::alias
+        end
+
+        ENDPOINTS["Special endpoints<br/><br/>white<br/>black<br/>transparent<br/>current"]:::palette
+
+        BASE1 --> SHADES
+        BASE2 --> SHADES
+        BASE3 --> SHADES
+        BASE4 --> SHADES
+        BASE5 --> SHADES
+
+        SHADES --> ALIASES
+        SHADES --> ENDPOINTS
+    end
+
+    subgraph SCALE["3. KORLIX 0–12 SCALE MAPPING"]
+        direction TB
+
+        SCALE_MAP["Map Korlix scale to stored shades"]:::stage
+
+        M0["0 → white endpoint"]:::level
+        M1["1 → 50"]:::level
+        M2["2 → 100"]:::level
+        M3["3 → 200"]:::level
+        M4["4 → 300"]:::level
+        M5["5 → 400"]:::level
+        M6["6 → 500"]:::level
+        M7["7 → 600"]:::level
+        M8["8 → 700"]:::level
+        M9["9 → 800"]:::level
+        M10["10 → 900"]:::level
+        M11["11 → 950"]:::level
+        M12["12 → black endpoint"]:::level
+
+        SCALE_MAP --> M0
+        SCALE_MAP --> M1
+        SCALE_MAP --> M2
+        SCALE_MAP --> M3
+        SCALE_MAP --> M4
+        SCALE_MAP --> M5
+        SCALE_MAP --> M6
+        SCALE_MAP --> M7
+        SCALE_MAP --> M8
+        SCALE_MAP --> M9
+        SCALE_MAP --> M10
+        SCALE_MAP --> M11
+        SCALE_MAP --> M12
+    end
+
+    SHADES --> SCALE_MAP
+    ALIASES --> SCALE_MAP
+    ENDPOINTS --> SCALE_MAP
+
+    subgraph SEMANTIC_TOKENS["4. SEMANTIC THEME TOKEN MODEL"]
+        direction TB
+
+        TOKEN_NAMES["Semantic token names"]:::artifact
+
+        T1["canvas"]:::token
+        T2["surface"]:::token
+        T3["raised"]:::token
+        T4["overlay"]:::token
+        T5["content"]:::token
+        T6["content-muted"]:::token
+        T7["outline"]:::token
+        T8["brand"]:::token
+        T9["success"]:::token
+        T10["warning"]:::token
+        T11["danger"]:::token
+        T12["info"]:::token
+
+        TOKEN_NAMES --> T1
+        TOKEN_NAMES --> T2
+        TOKEN_NAMES --> T3
+        TOKEN_NAMES --> T4
+        TOKEN_NAMES --> T5
+        TOKEN_NAMES --> T6
+        TOKEN_NAMES --> T7
+        TOKEN_NAMES --> T8
+        TOKEN_NAMES --> T9
+        TOKEN_NAMES --> T10
+        TOKEN_NAMES --> T11
+        TOKEN_NAMES --> T12
+
+        LIGHT_VALUES["Light-theme assignments<br/><br/>canvas → neutral.0<br/>surface → white<br/>raised → neutral.1<br/>content → neutral.12<br/>content-muted → neutral.8<br/>outline → neutral.3<br/>brand → violet.7"]:::theme
+
+        DARK_VALUES["Dark-theme assignments<br/><br/>canvas → neutral.12<br/>surface → neutral.11<br/>raised → neutral.10<br/>content → neutral.1<br/>content-muted → neutral.5<br/>outline → neutral.9<br/>brand → violet.5"]:::theme
+
+        CSS_CUSTOM_PROPS["Generate semantic CSS variables<br/><br/>--kx-canvas<br/>--kx-surface<br/>--kx-raised<br/>--kx-content<br/>--kx-content-muted<br/>--kx-outline<br/>--kx-brand"]:::output
+
+        TOKEN_NAMES --> LIGHT_VALUES
+        TOKEN_NAMES --> DARK_VALUES
+        LIGHT_VALUES --> CSS_CUSTOM_PROPS
+        DARK_VALUES --> CSS_CUSTOM_PROPS
+    end
+
+    subgraph PARSING["5. COLOR CLASS PARSING"]
+        direction TB
+
+        RAW_CLASS["Raw class from lowered UI tree"]:::stage
+
+        VARIANT_SPLIT["Split variant prefixes from base utility<br/><br/>md:hover:surface-violet-3<br/>→ [md, hover] + surface-violet-3"]:::stage
+
+        PREFIX_MATCH["Match supported color prefix"]:::stage
+
+        PREFIX_NATIVE["Native prefixes<br/><br/>surface<br/>content<br/>outline<br/>accent<br/>fill<br/>stroke<br/>ring-color<br/>caret-color"]:::prefix
+
+        PREFIX_ALIAS["Traditional prefixes<br/><br/>bg<br/>text<br/>border<br/>ring<br/>fill<br/>stroke<br/>outline<br/>caret<br/>placeholder"]:::prefix
+
+        VALUE_PARSE["Parse requested value"]:::stage
+
+        FAMILY_SCALE["Family + scale<br/><br/>violet-2<br/>blue-11<br/>neutral-7"]:::value
+
+        SEMANTIC_VALUE["Semantic token<br/><br/>canvas<br/>raised<br/>content-muted<br/>brand"]:::value
+
+        SPECIAL_VALUE["Special value<br/><br/>white<br/>black<br/>transparent<br/>current"]:::value
+
+        ARBITRARY_VALUE["Bracket value<br/><br/>[#101827]<br/>[rgb(...)]<br/>[oklch(...)]"]:::value
+
+        RAW_CLASS --> VARIANT_SPLIT
+        VARIANT_SPLIT --> PREFIX_MATCH
+        PREFIX_MATCH --> PREFIX_NATIVE
+        PREFIX_MATCH --> PREFIX_ALIAS
+        PREFIX_NATIVE --> VALUE_PARSE
+        PREFIX_ALIAS --> VALUE_PARSE
+        VALUE_PARSE --> FAMILY_SCALE
+        VALUE_PARSE --> SEMANTIC_VALUE
+        VALUE_PARSE --> SPECIAL_VALUE
+        VALUE_PARSE --> ARBITRARY_VALUE
+    end
+
+    KORLIX_NATIVE --> RAW_CLASS
+    TRADITIONAL --> RAW_CLASS
+    SEMANTIC --> RAW_CLASS
+    VARIANTS --> RAW_CLASS
+    ARBITRARY --> RAW_CLASS
+
+    subgraph VALIDATION["6. COLOR CLASS VALIDATION"]
+        direction TB
+
+        FAMILY_CHECK["Check color family exists"]:::validate
+        SCALE_CHECK["Check valid level or shade exists"]:::validate
+        PREFIX_CHECK["Check prefix supports color output"]:::validate
+        SEMANTIC_CHECK["Check semantic token exists"]:::validate
+        ARBITRARY_CHECK["Validate arbitrary value syntax"]:::validate
+        SECURITY_CHECK["Reject unsafe arbitrary fragments<br/><br/>javascript:<br/>expression("]:::validate
+
+        SUCCESS["Valid color utility"]:::artifact
+        UNKNOWN["KX-E201 unknown utility class<br/>with suggestion when available"]:::error
+
+        FAMILY_SCALE --> FAMILY_CHECK
+        FAMILY_CHECK --> SCALE_CHECK
+        SCALE_CHECK --> PREFIX_CHECK
+
+        SEMANTIC_VALUE --> SEMANTIC_CHECK
+        SPECIAL_VALUE --> PREFIX_CHECK
+
+        ARBITRARY_VALUE --> ARBITRARY_CHECK
+        ARBITRARY_CHECK --> SECURITY_CHECK
+
+        PREFIX_CHECK --> SUCCESS
+        SEMANTIC_CHECK --> SUCCESS
+        SECURITY_CHECK --> SUCCESS
+
+        FAMILY_CHECK -. invalid .-> UNKNOWN
+        SCALE_CHECK -. invalid .-> UNKNOWN
+        PREFIX_CHECK -. invalid .-> UNKNOWN
+        SEMANTIC_CHECK -. invalid .-> UNKNOWN
+        ARBITRARY_CHECK -. invalid .-> UNKNOWN
+        SECURITY_CHECK -. blocked .-> UNKNOWN
+    end
+
+    subgraph PROPERTY_MAP["7. PREFIX TO CSS PROPERTY MAPPING"]
+        direction TB
+
+        VALID_UTILITY["Validated utility"]:::artifact
+
+        MAP_SURFACE["surface / bg<br/>→ background-color"]:::mapping
+        MAP_CONTENT["content / text<br/>→ color"]:::mapping
+        MAP_OUTLINE["outline / border<br/>→ border-color"]:::mapping
+        MAP_ACCENT["accent<br/>→ accent-color"]:::mapping
+        MAP_FILL["fill<br/>→ fill"]:::mapping
+        MAP_STROKE["stroke<br/>→ stroke"]:::mapping
+        MAP_RING["ring-color / ring<br/>→ --kx-ring-color or box-shadow input"]:::mapping
+        MAP_CARET["caret-color / caret<br/>→ caret-color"]:::mapping
+        MAP_PLACEHOLDER["placeholder<br/>→ ::placeholder color"]:::mapping
+
+        SUCCESS --> VALID_UTILITY
+
+        VALID_UTILITY --> MAP_SURFACE
+        VALID_UTILITY --> MAP_CONTENT
+        VALID_UTILITY --> MAP_OUTLINE
+        VALID_UTILITY --> MAP_ACCENT
+        VALID_UTILITY --> MAP_FILL
+        VALID_UTILITY --> MAP_STROKE
+        VALID_UTILITY --> MAP_RING
+        VALID_UTILITY --> MAP_CARET
+        VALID_UTILITY --> MAP_PLACEHOLDER
+    end
+
+    subgraph VALUE_RESOLUTION["8. COLOR VALUE RESOLUTION"]
+        direction TB
+
+        RESOLVE_FAMILY["Resolve family level<br/>from palette registry"]:::stage
+        RESOLVE_ALIAS["Resolve alias family<br/>to canonical family"]:::stage
+        RESOLVE_SEMANTIC["Resolve semantic token<br/>to CSS custom property"]:::stage
+        RESOLVE_SPECIAL["Resolve white / black / transparent / current"]:::stage
+        RESOLVE_ARBITRARY["Normalize arbitrary color value"]:::stage
+
+        DIRECT_COLOR["Concrete CSS color<br/><br/>#7457f5<br/>rgb(...)<br/>oklch(...)"]:::artifact
+
+        VARIABLE_COLOR["Theme-aware variable<br/><br/>var(--kx-surface)<br/>var(--kx-content)<br/>var(--kx-brand)"]:::artifact
+
+        FAMILY_SCALE --> RESOLVE_FAMILY
+        RESOLVE_FAMILY --> RESOLVE_ALIAS
+        RESOLVE_ALIAS --> DIRECT_COLOR
+
+        SEMANTIC_VALUE --> RESOLVE_SEMANTIC
+        RESOLVE_SEMANTIC --> VARIABLE_COLOR
+
+        SPECIAL_VALUE --> RESOLVE_SPECIAL
+        RESOLVE_SPECIAL --> DIRECT_COLOR
+
+        ARBITRARY_VALUE --> RESOLVE_ARBITRARY
+        RESOLVE_ARBITRARY --> DIRECT_COLOR
+    end
+
+    subgraph VARIANT_ENGINE["9. VARIANT ENGINE"]
+        direction TB
+
+        BASE_RULE["Base selector and declaration"]:::artifact
+
+        RESPONSIVE["Responsive variants<br/><br/>sm, md, lg, xl, 2xl"]:::variant
+        STATE["State variants<br/><br/>hover, focus, active,<br/>disabled, checked, invalid"]:::variant
+        THEME_VARIANT["Theme variant<br/><br/>dark"]:::variant
+        DATA_VARIANT["Data/state variants<br/><br/>data-open, data-active"]:::variant
+        RELATIONAL["Relational variants<br/><br/>group-hover, peer-checked"]:::variant
+        MEDIA_VARIANT["Environment variants<br/><br/>motion-safe, motion-reduce, print"]:::variant
+
+        VARIANT_SELECTOR["Build escaped selector"]:::stage
+        MEDIA_WRAP["Wrap with media query when required"]:::stage
+
+        BASE_RULE --> RESPONSIVE
+        BASE_RULE --> STATE
+        BASE_RULE --> THEME_VARIANT
+        BASE_RULE --> DATA_VARIANT
+        BASE_RULE --> RELATIONAL
+        BASE_RULE --> MEDIA_VARIANT
+
+        RESPONSIVE --> VARIANT_SELECTOR
+        STATE --> VARIANT_SELECTOR
+        THEME_VARIANT --> VARIANT_SELECTOR
+        DATA_VARIANT --> VARIANT_SELECTOR
+        RELATIONAL --> VARIANT_SELECTOR
+        MEDIA_VARIANT --> VARIANT_SELECTOR
+
+        VARIANT_SELECTOR --> MEDIA_WRAP
+    end
+
+    MAP_SURFACE --> BASE_RULE
+    MAP_CONTENT --> BASE_RULE
+    MAP_OUTLINE --> BASE_RULE
+    MAP_ACCENT --> BASE_RULE
+    MAP_FILL --> BASE_RULE
+    MAP_STROKE --> BASE_RULE
+    MAP_RING --> BASE_RULE
+    MAP_CARET --> BASE_RULE
+    MAP_PLACEHOLDER --> BASE_RULE
+
+    DIRECT_COLOR --> BASE_RULE
+    VARIABLE_COLOR --> BASE_RULE
+
+    subgraph JIT["10. JIT CSS GENERATION"]
+        direction TB
+
+        USED_CLASSES["Collect unique color classes<br/>found in all lowered pages/components"]:::stage
+        HASHSET["Deduplicate repeated utilities"]:::stage
+        GENERATE_RULE["Generate one CSS rule per unique utility"]:::stage
+        GROUP_MEDIA["Group responsive and environment rules<br/>under shared media queries"]:::stage
+        ORDER_RULES["Order palette variables first,<br/>then semantic theme tokens,<br/>then utility rules"]:::stage
+        CSS_OUTPUT["assets/korlix.css"]:::output
+
+        MEDIA_WRAP --> USED_CLASSES
+        USED_CLASSES --> HASHSET
+        HASHSET --> GENERATE_RULE
+        GENERATE_RULE --> GROUP_MEDIA
+        GROUP_MEDIA --> ORDER_RULES
+        ORDER_RULES --> CSS_OUTPUT
+    end
+
+    CSS_CUSTOM_PROPS --> ORDER_RULES
+
+    subgraph GENERATED_CSS["11. GENERATED CSS STRUCTURE"]
+        direction TB
+
+        PALETTE_VARS["Raw palette variables<br/><br/>--kx-violet-0 ... --kx-violet-12<br/>--kx-cyan-0 ... --kx-cyan-12"]:::output
+
+        LIGHT_BLOCK[":root,<br/>[data-kx-theme='light']<br/>{ semantic light tokens }"]:::output
+
+        DARK_BLOCK["[data-kx-theme='dark']<br/>{ semantic dark tokens }"]:::output
+
+        UTILITY_RULES["Utility selectors<br/><br/>.kx-surface-violet-2<br/>.kx-content-content<br/>.kx-bg-indigo-600"]:::output
+
+        VARIANT_RULES["Variant selectors and media queries<br/><br/>.kx-hover\\:surface-violet-3:hover<br/>@media (min-width:768px) { ... }"]:::output
+
+        CSS_OUTPUT --> PALETTE_VARS
+        CSS_OUTPUT --> LIGHT_BLOCK
+        CSS_OUTPUT --> DARK_BLOCK
+        CSS_OUTPUT --> UTILITY_RULES
+        CSS_OUTPUT --> VARIANT_RULES
+    end
+
+    subgraph HTML_OUTPUT["12. GENERATED HTML CLASS OUTPUT"]
+        direction TB
+
+        SOURCE_CLASS["Source class<br/>.surface-violet-2"]:::syntax
+        PREFIXED_CLASS["Generated HTML class<br/>class='kx-surface-violet-2'"]:::output
+        ESCAPED_CLASS["Variant class<br/>class='kx-hover:surface-violet-3'"]:::output
+
+        SOURCE_CLASS --> PREFIXED_CLASS
+        SOURCE_CLASS --> ESCAPED_CLASS
+    end
+
+    subgraph THEME_RUNTIME["13. LIGHT / DARK / AUTO RUNTIME"]
+        direction TB
+
+        APP_MODE["Application configuration<br/><br/>theme light<br/>theme dark<br/>theme auto"]:::theme
+
+        BOOTSTRAP["Initial inline theme bootstrap<br/>runs before page paint"]:::runtime
+
+        SAVED["Read saved mode<br/>from localStorage"]:::runtime
+        SYSTEM["Read prefers-color-scheme"]:::runtime
+        CHOOSE["Choose effective theme"]:::runtime
+
+        APPLY["Set on document root<br/><br/>data-kx-theme='light|dark'<br/>style.colorScheme"]:::runtime
+
+        TOGGLE["theme-toggle or toggleTheme()"]:::runtime
+        PERSIST["Persist manual preference"]:::runtime
+        EVENT["Emit kx:theme-change"]:::runtime
+
+        APP_MODE --> BOOTSTRAP
+        BOOTSTRAP --> SAVED
+        BOOTSTRAP --> SYSTEM
+        SAVED --> CHOOSE
+        SYSTEM --> CHOOSE
+        CHOOSE --> APPLY
+        TOGGLE --> APPLY
+        TOGGLE --> PERSIST
+        APPLY --> EVENT
+    end
+
+    subgraph BROWSER["14. BROWSER COLOR RESOLUTION"]
+        direction TB
+
+        LOAD_HTML["Load generated HTML"]:::browser
+        LOAD_CSS["Load assets/korlix.css"]:::browser
+        ROOT_THEME["Read data-kx-theme"]:::browser
+        MATCH_CLASS["Match generated utility selector"]:::browser
+        RESOLVE_VAR["Resolve concrete color or semantic CSS variable"]:::browser
+        PAINT["Paint final foreground, surface,<br/>border, SVG, ring, and caret colors"]:::browser
+
+        LOAD_HTML --> LOAD_CSS
+        LOAD_CSS --> ROOT_THEME
+        ROOT_THEME --> MATCH_CLASS
+        MATCH_CLASS --> RESOLVE_VAR
+        RESOLVE_VAR --> PAINT
+    end
+
+    PREFIXED_CLASS --> LOAD_HTML
+    ESCAPED_CLASS --> LOAD_HTML
+    PALETTE_VARS --> LOAD_CSS
+    LIGHT_BLOCK --> LOAD_CSS
+    DARK_BLOCK --> LOAD_CSS
+    UTILITY_RULES --> LOAD_CSS
+    VARIANT_RULES --> LOAD_CSS
+    APPLY --> ROOT_THEME
+
+    subgraph EXAMPLES["15. END-TO-END EXAMPLES"]
+        direction TB
+
+        EX1[".surface-violet-2"]:::example
+        EX1_RESULT["background-color:<br/>var or concrete violet level 2"]:::exampleResult
+
+        EX2[".content-content"]:::example
+        EX2_RESULT["color:<br/>var(--kx-content)<br/>changes with theme"]:::exampleResult
+
+        EX3[".dark:surface-neutral-11"]:::example
+        EX3_RESULT["background applied only<br/>when dark theme selector matches"]:::exampleResult
+
+        EX4[".md:hover:outline-blue-6"]:::example
+        EX4_RESULT["border color applied on hover<br/>at md breakpoint and above"]:::exampleResult
+
+        EX5[".surface-[#101827]"]:::example
+        EX5_RESULT["background-color:#101827<br/>generated as a unique JIT rule"]:::exampleResult
+
+        EX1 --> EX1_RESULT
+        EX2 --> EX2_RESULT
+        EX3 --> EX3_RESULT
+        EX4 --> EX4_RESULT
+        EX5 --> EX5_RESULT
+    end
+
+    %% ============================================================
+    %% LEGEND
+    %% ============================================================
+
+    subgraph LEGEND["LEGEND"]
+        direction LR
+        L1["Source syntax"]:::syntax
+        L2["Palette / token data"]:::palette
+        L3["Compiler stage"]:::stage
+        L4["Validation"]:::validate
+        L5["Generated output"]:::output
+        L6["Theme/runtime"]:::runtime
+        L7["Browser behavior"]:::browser
+        L8["Error"]:::error
+    end
+
+    classDef actor fill:#111827,color:#ffffff,stroke:#111827,stroke-width:2px;
+    classDef syntax fill:#f5f3ff,color:#4c1d95,stroke:#8b5cf6,stroke-width:1.4px;
+    classDef palette fill:#ede9fe,color:#3b0764,stroke:#7c3aed,stroke-width:1.3px;
+    classDef alias fill:#faf5ff,color:#581c87,stroke:#a855f7,stroke-width:1.2px;
+    classDef artifact fill:#fefce8,color:#713f12,stroke:#eab308,stroke-width:1.2px;
+    classDef stage fill:#eff6ff,color:#172554,stroke:#60a5fa,stroke-width:1.2px;
+    classDef validate fill:#ecfdf5,color:#064e3b,stroke:#10b981,stroke-width:1.2px;
+    classDef error fill:#fef2f2,color:#7f1d1d,stroke:#ef4444,stroke-width:1.5px;
+    classDef prefix fill:#ecfeff,color:#164e63,stroke:#06b6d4,stroke-width:1.2px;
+    classDef value fill:#f0fdfa,color:#134e4a,stroke:#14b8a6,stroke-width:1.2px;
+    classDef mapping fill:#fff7ed,color:#7c2d12,stroke:#f97316,stroke-width:1.2px;
+    classDef variant fill:#fdf4ff,color:#701a75,stroke:#d946ef,stroke-width:1.2px;
+    classDef output fill:#f0fdf4,color:#14532d,stroke:#22c55e,stroke-width:1.4px;
+    classDef theme fill:#fff7ed,color:#7c2d12,stroke:#fb923c,stroke-width:1.3px;
+    classDef token fill:#fafafa,color:#18181b,stroke:#71717a,stroke-width:1px;
+    classDef runtime fill:#ecfeff,color:#164e63,stroke:#0891b2,stroke-width:1.3px;
+    classDef browser fill:#fdf4ff,color:#701a75,stroke:#c026d3,stroke-width:1.3px;
+    classDef level fill:#ffffff,color:#111827,stroke:#a1a1aa,stroke-width:1px;
+    classDef example fill:#f8fafc,color:#0f172a,stroke:#64748b,stroke-width:1.2px;
+    classDef exampleResult fill:#f0fdf4,color:#14532d,stroke:#16a34a,stroke-width:1.2px;

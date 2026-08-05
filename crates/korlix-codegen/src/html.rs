@@ -1,4 +1,8 @@
-use korlix_ast::{element::ElementNode, expression::Expr, node::Node};
+use korlix_ast::{
+    element::ElementNode,
+    expression::{Expr, StringPart},
+    node::Node,
+};
 use korlix_components::expander::expand_component;
 
 pub fn render_nodes(nodes: &[Node]) -> String {
@@ -37,30 +41,48 @@ fn render_element(el: &ElementNode) -> String {
     let classes = el
         .classes
         .iter()
-        .map(|c| format!("kx-{}", sanitize_class(&c.name)))
+        .flat_map(|class_ref| class_ref.name.split_whitespace())
+        .map(|class_name| {
+            let class_name = sanitize_class(class_name);
+            if class_name.starts_with("kx-") {
+                class_name
+            } else {
+                format!("kx-{class_name}")
+            }
+        })
         .collect::<Vec<_>>()
         .join(" ");
 
     let mut attrs = String::new();
+    let mut dynamic_attrs = Vec::new();
     if !classes.is_empty() {
         attrs.push_str(&format!(r#" class="{}""#, html_escape_attr(&classes)));
     }
     for prop in &el.props {
         if is_expr_dynamic(&prop.value) {
-            let expr_raw = render_expr_raw(&prop.value);
-            attrs.push_str(&format!(" data-kx-bind-attr=\"{}:{}\"", prop.key, expr_raw));
+            dynamic_attrs.push(format!("{}:{}", prop.key, render_expr_raw(&prop.value)));
         } else {
             let val = render_expr_attr(&prop.value);
             let key = &prop.key;
             if key.starts_with("on") && val.to_lowercase().contains("javascript:") {
                 continue;
             }
-            attrs.push_str(&format!(
-                r#" {}="{}""#,
-                html_attr_key(key),
-                html_escape_attr(&val)
-            ));
+            if matches!(&prop.value, Expr::Bool(true)) {
+                attrs.push_str(&format!(r#" {}"#, html_attr_key(key)));
+            } else if !matches!(&prop.value, Expr::Bool(false) | Expr::Null) {
+                attrs.push_str(&format!(
+                    r#" {}="{}""#,
+                    html_attr_key(key),
+                    html_escape_attr(&val)
+                ));
+            }
         }
+    }
+    if !dynamic_attrs.is_empty() {
+        attrs.push_str(&format!(
+            r#" data-kx-bind-attrs="{}""#,
+            html_escape_attr(&dynamic_attrs.join(";;"))
+        ));
     }
 
     // Encode events as data attributes for runtime
@@ -125,6 +147,10 @@ fn render_expr(e: &Expr) -> String {
                 field
             )
         }
+        Expr::Interpolated(_) => format!(
+            r#"<span data-kx-expr="{}"></span>"#,
+            html_escape_attr(&render_expr_raw(e))
+        ),
         Expr::Call { callee, args } => {
             let a = args
                 .iter()
@@ -149,6 +175,14 @@ pub fn render_expr_raw(e: &Expr) -> String {
         Expr::Null => "null".into(),
         Expr::Identifier(s) => s.clone(),
         Expr::Member { object, field } => format!("{}.{}", render_expr_raw(object), field),
+        Expr::Interpolated(parts) => parts
+            .iter()
+            .map(|part| match part {
+                StringPart::Literal(value) => format!("{:?}", value),
+                StringPart::Expr(value) => format!("String({})", render_expr_raw(value)),
+            })
+            .collect::<Vec<_>>()
+            .join(" + "),
         Expr::Binary { left, op, right } => {
             use korlix_ast::expression::BinaryOp;
             let op_str = match op {

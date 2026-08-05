@@ -2,8 +2,8 @@ use crate::parser::Parser;
 use korlix_ast::{
     api::{ApiMutationNode, ApiQueryNode, ApiReloadNode, HttpMethod},
     declarations::{
-        ActionDecl, DataDecl, DerivedDecl, ImportDecl, LetDecl, MetaBlock, RouteDecl, StateDecl,
-        ThemeDecl,
+        ActionDecl, DataDecl, DerivedDecl, ImportDecl, LetDecl, MetaBlock, PropDecl, RouteDecl,
+        StateDecl, ThemeDecl,
     },
     expression::Expr,
     node::{AssignNode, CallNode, ForNode, IfNode, Node, TextNode},
@@ -16,13 +16,7 @@ impl<'t> Parser<'t> {
     pub fn parse_top_level_item(&mut self) -> Option<Item> {
         self.skip_newlines();
         match self.current_kind() {
-            TokenKind::Import => self
-                .parse_import()
-                .map(|_i| {
-                    // imports stored in module.imports — just skip here
-                    None::<Item>
-                })
-                .flatten(),
+            TokenKind::Import => None,
             TokenKind::Mount => self.parse_mount().map(Item::MountDecl),
             TokenKind::App => self.parse_app().map(Item::AppDecl),
             TokenKind::Page => self.parse_page().map(Item::Page),
@@ -90,7 +84,11 @@ impl<'t> Parser<'t> {
     fn parse_app(&mut self) -> Option<AppDecl> {
         let span = self.current_span();
         self.advance(); // app
-        self.expect(&TokenKind::Colon);
+                        // V2 allows an optional application name: `app StoreApp`.
+        if matches!(self.current_kind(), TokenKind::Ident(_)) {
+            self.advance();
+        }
+        self.consume_if(&TokenKind::Colon);
 
         let mut layout = None;
         let mut routes = vec![];
@@ -107,13 +105,17 @@ impl<'t> Parser<'t> {
                 }
 
                 match self.current_kind() {
+                    TokenKind::Layout => {
+                        self.advance();
+                        layout = self.expect_ident();
+                    }
                     TokenKind::Ident(ref s) if s == "layout" => {
                         self.advance();
                         layout = self.expect_ident();
                     }
                     TokenKind::Routes => {
                         self.advance();
-                        self.expect(&TokenKind::Colon);
+                        self.consume_if(&TokenKind::Colon);
                         self.skip_newlines();
                         if self.check(&TokenKind::Indent) {
                             self.advance();
@@ -133,7 +135,7 @@ impl<'t> Parser<'t> {
                     }
                     TokenKind::Providers => {
                         self.advance();
-                        self.expect(&TokenKind::Colon);
+                        self.consume_if(&TokenKind::Colon);
                         self.skip_newlines();
                         if self.check(&TokenKind::Indent) {
                             self.advance();
@@ -153,8 +155,23 @@ impl<'t> Parser<'t> {
                     }
                     TokenKind::Theme => {
                         self.advance();
-                        self.expect(&TokenKind::Colon);
-                        theme = Some(self.parse_theme_block());
+                        if self.check(&TokenKind::Colon) {
+                            self.advance();
+                            theme = Some(self.parse_theme_block());
+                        } else {
+                            let mode = match self.current_kind() {
+                                TokenKind::Ident(value) | TokenKind::StringLit(value) => {
+                                    self.advance();
+                                    Some(value)
+                                }
+                                _ => None,
+                            };
+                            theme = Some(ThemeDecl {
+                                default_mode: mode.clone(),
+                                dark_enabled: mode.as_deref() != Some("light"),
+                                span: self.current_span(),
+                            });
+                        }
                     }
                     _ => {
                         self.advance();
@@ -252,7 +269,7 @@ impl<'t> Parser<'t> {
 
         // optional: route "/path"
         let mut route = None;
-        if self.check(&TokenKind::Route) {
+        if self.check(&TokenKind::Route) || self.check(&TokenKind::At) {
             self.advance();
             if let TokenKind::StringLit(s) = self.current_kind() {
                 route = Some(s.clone());
@@ -260,7 +277,7 @@ impl<'t> Parser<'t> {
             }
         }
 
-        self.expect(&TokenKind::Colon);
+        self.consume_if(&TokenKind::Colon);
         let body_raw = self.parse_block();
 
         // extract layout and meta from body
@@ -271,11 +288,10 @@ impl<'t> Parser<'t> {
         for node in body_raw {
             match &node {
                 Node::Element(el) if el.tag == "layout" => {
-                    if let Some(prop) = el.props.first() {
-                        if let Expr::String(s) | Expr::Identifier(s) = &prop.value {
-                            layout = Some(s.clone());
-                        }
-                    }
+                    layout = first_node_value(&node);
+                }
+                Node::Component(component) if component.name == "layout" => {
+                    layout = first_node_value(&node);
                 }
                 Node::Element(el) if el.tag == "meta" => {
                     meta = Some(extract_meta_block(&node));
@@ -302,7 +318,7 @@ impl<'t> Parser<'t> {
         let span = self.current_span();
         self.advance(); // layout
         let name = self.expect_ident()?;
-        self.expect(&TokenKind::Colon);
+        self.consume_if(&TokenKind::Colon);
         let body = self.parse_block();
         Some(LayoutDecl { name, body, span })
     }
@@ -312,19 +328,30 @@ impl<'t> Parser<'t> {
         let span = self.current_span();
         self.advance(); // component
         let name = self.expect_ident()?;
-        self.expect(&TokenKind::Colon);
-        let body_raw = self.parse_block();
+        self.consume_if(&TokenKind::Colon);
+        self.skip_newlines();
 
-        // extract prop declarations from body
-        let props = vec![];
+        let mut props = vec![];
         let mut body = vec![];
-
-        for node in body_raw {
-            match node {
-                Node::State(_s) => {
-                    // treat as prop
+        if self.check(&TokenKind::Indent) {
+            self.advance();
+            loop {
+                self.skip_newlines();
+                if self.check(&TokenKind::Dedent) || self.is_eof() {
+                    break;
                 }
-                _ => body.push(node),
+                if self.check(&TokenKind::Prop) {
+                    if let Some(prop) = self.parse_prop_decl() {
+                        props.push(prop);
+                    }
+                } else if let Some(node) = self.parse_node() {
+                    body.push(node);
+                } else {
+                    self.advance();
+                }
+            }
+            if self.check(&TokenKind::Dedent) {
+                self.advance();
             }
         }
 
@@ -332,6 +359,33 @@ impl<'t> Parser<'t> {
             name,
             props,
             body,
+            span,
+        })
+    }
+
+    fn parse_prop_decl(&mut self) -> Option<PropDecl> {
+        let span = self.current_span();
+        self.advance(); // prop
+        let name = self.expect_ident()?;
+        let type_ann = if self.check(&TokenKind::Colon) {
+            self.advance();
+            self.expect_ident()
+                .map(|name| KType::from_str(&name))
+                .unwrap_or(KType::Any)
+        } else {
+            KType::Any
+        };
+        let default = if self.check(&TokenKind::Equals) {
+            self.advance();
+            self.parse_expr()
+        } else {
+            None
+        };
+        Some(PropDecl {
+            name,
+            type_ann,
+            required: default.is_none(),
+            default,
             span,
         })
     }
@@ -344,7 +398,7 @@ impl<'t> Parser<'t> {
             TokenKind::State => self.parse_state().map(Node::State),
             TokenKind::Let => self.parse_let().map(Node::Let),
             TokenKind::Derived => self.parse_derived().map(Node::Derived),
-            TokenKind::Action => self.parse_action().map(Node::Action),
+            TokenKind::Action | TokenKind::Fn => self.parse_action().map(Node::Action),
             TokenKind::Data => self.parse_data().map(Node::Data),
             TokenKind::If => self.parse_if().map(Node::If),
             TokenKind::For => self.parse_for().map(Node::For),
@@ -390,10 +444,27 @@ impl<'t> Parser<'t> {
             return Some(Node::Text(TextNode { value, span }));
         }
 
-        if self.peek_ahead(1).kind == TokenKind::Equals {
+        if matches!(
+            self.peek_ahead(1).kind,
+            TokenKind::Equals | TokenKind::PlusEq | TokenKind::MinusEq
+        ) {
             self.advance();
+            let operator = self.current_kind();
             self.advance();
-            let value = self.parse_expr().unwrap_or(Expr::Null);
+            let right = self.parse_expr().unwrap_or(Expr::Null);
+            let value = match operator {
+                TokenKind::PlusEq => Expr::Binary {
+                    left: Box::new(Expr::Identifier(name.clone())),
+                    op: korlix_ast::expression::BinaryOp::Add,
+                    right: Box::new(right),
+                },
+                TokenKind::MinusEq => Expr::Binary {
+                    left: Box::new(Expr::Identifier(name.clone())),
+                    op: korlix_ast::expression::BinaryOp::Sub,
+                    right: Box::new(right),
+                },
+                _ => right,
+            };
             return Some(Node::Assign(AssignNode {
                 target: name,
                 value,
@@ -401,7 +472,7 @@ impl<'t> Parser<'t> {
             }));
         }
 
-        if self.peek_ahead(1).kind == TokenKind::LParen {
+        if matches!(self.peek_ahead(1).kind, TokenKind::LParen | TokenKind::Dot) {
             let expr = self.parse_expr()?;
             if let Expr::Call { callee, args } = expr {
                 let callee = match *callee {
@@ -466,13 +537,42 @@ impl<'t> Parser<'t> {
 
     fn parse_action(&mut self) -> Option<ActionDecl> {
         let span = self.current_span();
-        self.advance();
+        self.advance(); // action | fn
         let name = self.expect_ident()?;
-        self.expect(&TokenKind::Colon);
+        let mut params = vec![];
+        if self.check(&TokenKind::LParen) {
+            self.advance();
+            while !self.check(&TokenKind::RParen) && !self.is_eof() {
+                let param_span = self.current_span();
+                let param_name = self.expect_ident()?;
+                let type_ann = if self.check(&TokenKind::Colon) {
+                    self.advance();
+                    self.expect_ident()
+                        .map(|name| KType::from_str(&name))
+                        .unwrap_or(KType::Any)
+                } else {
+                    KType::Any
+                };
+                params.push(PropDecl {
+                    name: param_name,
+                    type_ann,
+                    default: None,
+                    required: true,
+                    span: param_span,
+                });
+                if self.check(&TokenKind::Comma) {
+                    self.advance();
+                } else {
+                    break;
+                }
+            }
+            self.expect(&TokenKind::RParen);
+        }
+        self.consume_if(&TokenKind::Colon);
         let body = self.parse_block();
         Some(ActionDecl {
             name,
-            params: vec![],
+            params,
             body,
             span,
         })
@@ -529,12 +629,12 @@ impl<'t> Parser<'t> {
         let span = self.current_span();
         self.advance(); // if
         let condition = self.parse_expr()?;
-        self.expect(&TokenKind::Colon);
+        self.consume_if(&TokenKind::Colon);
         let then_body = self.parse_block();
 
         let else_body = if self.check_exact(&TokenKind::Else) {
             self.advance();
-            self.expect(&TokenKind::Colon);
+            self.consume_if(&TokenKind::Colon);
             Some(self.parse_block())
         } else {
             None
@@ -554,7 +654,7 @@ impl<'t> Parser<'t> {
         let var = self.expect_ident()?;
         self.expect(&TokenKind::In);
         let iterable = self.parse_expr()?;
-        self.expect(&TokenKind::Colon);
+        self.consume_if(&TokenKind::Colon);
         let body = self.parse_block();
         Some(ForNode {
             var,
@@ -693,6 +793,26 @@ impl<'t> Parser<'t> {
 
         Some(Node::ApiReload(ApiReloadNode { target, span }))
     }
+}
+
+fn first_node_value(node: &Node) -> Option<String> {
+    let (props, children) = match node {
+        Node::Element(element) => (&element.props, &element.children),
+        Node::Component(component) => (&component.props, &component.children),
+        _ => return None,
+    };
+    if let Some(prop) = props.first() {
+        if let Expr::String(value) | Expr::Identifier(value) = &prop.value {
+            return Some(value.clone());
+        }
+    }
+    children.first().and_then(|child| match child {
+        Node::Text(text) => match &text.value {
+            Expr::String(value) | Expr::Identifier(value) => Some(value.clone()),
+            _ => None,
+        },
+        _ => None,
+    })
 }
 
 fn extract_meta_block(node: &Node) -> MetaBlock {

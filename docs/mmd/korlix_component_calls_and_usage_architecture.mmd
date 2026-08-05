@@ -1,0 +1,692 @@
+flowchart TB
+    %% ============================================================
+    %% KORLIX COMPONENT CALL AND USAGE ARCHITECTURE
+    %% Detailed model of component declaration, invocation, lookup,
+    %% prop validation, slot composition, lowering, runtime planning,
+    %% generated output, and browser behavior.
+    %% ============================================================
+
+    DEV["Developer writes component declarations and calls in .klx files"]:::actor
+
+    %% ============================================================
+    %% 1. SOURCE FORMS
+    %% ============================================================
+
+    subgraph SOURCE_FORMS["1. COMPONENT SOURCE FORMS"]
+        direction TB
+
+        NATIVE_CALL["Native HTML / SVG element call<br/><br/>article<br/>button<br/>input<br/>svg<br/>path"]:::syntax
+
+        BUILTIN_CALL["Built-in Korlix component call<br/><br/>card variant=raised<br/>navbar variant=glass<br/>pagination page=page<br/>theme-toggle"]:::syntax
+
+        USER_DECL["User component declaration<br/><br/>component UserCard<br/>  prop name: string<br/>  prop role: string = 'Member'<br/>  card<br/>    h3 '{name}'<br/>    slot"]:::syntax
+
+        USER_CALL["User component invocation<br/><br/>UserCard<br/>  name='Sachin'<br/>  role='Admin'<br/>  button 'Open profile'"]:::syntax
+
+        IMPORTED_CALL["Imported component alias<br/><br/>import ProductCard from<br/>'./components/product-card.klx'<br/><br/>ProductCard product=item"]:::syntax
+
+        EVENT_CALL["Component event usage<br/><br/>button 'Save' click=save<br/>modal id='confirm'<br/>pagination change=setPage"]:::syntax
+
+        CLASS_CALL["Component class and variant usage<br/><br/>card variant=outline<br/>  .surface-raised<br/>  .outline-outline<br/>  .hover:surface-violet-2"]:::syntax
+    end
+
+    DEV --> NATIVE_CALL
+    DEV --> BUILTIN_CALL
+    DEV --> USER_DECL
+    DEV --> USER_CALL
+    DEV --> IMPORTED_CALL
+    DEV --> EVENT_CALL
+    DEV --> CLASS_CALL
+
+    %% ============================================================
+    %% 2. PARSING
+    %% ============================================================
+
+    subgraph PARSING["2. PARSER AND AST CONSTRUCTION — korlix-parser + korlix-ast"]
+        direction TB
+
+        TOKEN_STREAM["Lexer token stream"]:::stage
+
+        PARSE_DECL["Parse component declaration"]:::stage
+        PARSE_PROP["Parse prop declarations<br/>name, type, required/default"]:::stage
+        PARSE_BODY["Parse component body tree"]:::stage
+
+        PARSE_CALL["Parse element/component invocation"]:::stage
+        PARSE_ATTRIBUTES["Parse attributes and prop assignments"]:::stage
+        PARSE_CLASSES["Parse utility classes and variants"]:::stage
+        PARSE_EVENTS["Parse event properties and event blocks"]:::stage
+        PARSE_CHILDREN["Parse nested children / slot content"]:::stage
+
+        COMPONENT_AST["ComponentDecl AST<br/><br/>name<br/>props<br/>body<br/>source span"]:::artifact
+
+        CALL_AST["Element / ComponentCall AST<br/><br/>name<br/>properties<br/>classes<br/>events<br/>children<br/>source span"]:::artifact
+
+        TOKEN_STREAM --> PARSE_DECL
+        PARSE_DECL --> PARSE_PROP
+        PARSE_PROP --> PARSE_BODY
+        PARSE_BODY --> COMPONENT_AST
+
+        TOKEN_STREAM --> PARSE_CALL
+        PARSE_CALL --> PARSE_ATTRIBUTES
+        PARSE_ATTRIBUTES --> PARSE_CLASSES
+        PARSE_CLASSES --> PARSE_EVENTS
+        PARSE_EVENTS --> PARSE_CHILDREN
+        PARSE_CHILDREN --> CALL_AST
+    end
+
+    NATIVE_CALL --> TOKEN_STREAM
+    BUILTIN_CALL --> TOKEN_STREAM
+    USER_DECL --> TOKEN_STREAM
+    USER_CALL --> TOKEN_STREAM
+    IMPORTED_CALL --> TOKEN_STREAM
+    EVENT_CALL --> TOKEN_STREAM
+    CLASS_CALL --> TOKEN_STREAM
+
+    %% ============================================================
+    %% 3. REGISTRIES AND SYMBOL DATA
+    %% ============================================================
+
+    subgraph REGISTRIES["3. COMPONENT REGISTRIES AND SYMBOL DATA"]
+        direction TB
+
+        subgraph HTML_REG["NATIVE ELEMENT REGISTRY"]
+            direction TB
+            HTML_NAMES["137 registered HTML and SVG names"]:::registry
+            HTML_META["Metadata<br/><br/>void element<br/>output tag<br/>element category"]:::registry
+        end
+
+        subgraph BUILTIN_REG["BUILT-IN COMPONENT REGISTRY — korlix-components"]
+            direction TB
+
+            TOTAL["115 registered component names"]:::registry
+
+            SCHEMA_DEFINED["35 schema-defined components<br/><br/>Dedicated props, slots,<br/>events, output tags,<br/>runtime features"]:::registry
+
+            GENERIC["80 generic catalogue components<br/><br/>Shared props:<br/>variant='default'<br/>size='md'<br/>disabled=false<br/>default slot"]:::partial
+
+            SPECIALIZED["Specialized lowering/runtime subset<br/><br/>button, link, icon, image, avatar,<br/>card, navbar, footer, container,<br/>section, hero, badge, alert,<br/>spinner, skeleton, empty-state,<br/>toast, modal, drawer, pagination,<br/>progress, theme-toggle"]:::registry
+
+            TOTAL --> SCHEMA_DEFINED
+            TOTAL --> GENERIC
+            SCHEMA_DEFINED --> SPECIALIZED
+        end
+
+        subgraph USER_REG["USER COMPONENT SYMBOL TABLE"]
+            direction TB
+            LOCAL_DECLS["Local component declarations"]:::registry
+            IMPORT_ALIASES["Imported component aliases"]:::registry
+            PROP_SCHEMA["User prop schema<br/><br/>name<br/>type<br/>required/default"]:::registry
+            BODY_TEMPLATE["Stored component body template"]:::registry
+
+            LOCAL_DECLS --> PROP_SCHEMA
+            IMPORT_ALIASES --> PROP_SCHEMA
+            PROP_SCHEMA --> BODY_TEMPLATE
+        end
+
+        subgraph COMPONENT_SCHEMA["BUILT-IN COMPONENT DEFINITION MODEL"]
+            direction TB
+
+            SCHEMA_NAME["name"]:::schema
+            SCHEMA_PROPS["props"]:::schema
+            SCHEMA_SLOTS["slots"]:::schema
+            SCHEMA_EVENTS["events"]:::schema
+            SCHEMA_VARIANTS["variants"]:::schema
+            SCHEMA_SIZES["sizes"]:::schema
+            SCHEMA_RUNTIME["runtime feature flags"]:::schema
+            SCHEMA_RENDERER["renderer / lowering strategy"]:::schema
+        end
+    end
+
+    COMPONENT_AST --> LOCAL_DECLS
+    COMPONENT_AST --> PROP_SCHEMA
+    COMPONENT_AST --> BODY_TEMPLATE
+
+    %% ============================================================
+    %% 4. COMPONENT NAME CLASSIFICATION
+    %% ============================================================
+
+    subgraph CLASSIFICATION["4. COMPONENT NAME CLASSIFICATION"]
+        direction TB
+
+        RAW_NAME["Invocation name from AST"]:::stage
+
+        CHECK_NATIVE["Is name a registered HTML/SVG element?"]:::decision
+        CHECK_BUILTIN["Is name in built-in component registry?"]:::decision
+        CHECK_USER["Is name a local user component?"]:::decision
+        CHECK_IMPORT["Is name an imported alias?"]:::decision
+
+        NATIVE_KIND["Classify as native element"]:::result
+        BUILTIN_KIND["Classify as built-in component"]:::result
+        USER_KIND["Classify as user component"]:::result
+        IMPORT_KIND["Resolve alias to imported declaration"]:::result
+
+        UNKNOWN["KX-S201<br/>Unknown component"]:::error
+
+        RAW_NAME --> CHECK_NATIVE
+        CHECK_NATIVE -- yes --> NATIVE_KIND
+        CHECK_NATIVE -- no --> CHECK_BUILTIN
+        CHECK_BUILTIN -- yes --> BUILTIN_KIND
+        CHECK_BUILTIN -- no --> CHECK_USER
+        CHECK_USER -- yes --> USER_KIND
+        CHECK_USER -- no --> CHECK_IMPORT
+        CHECK_IMPORT -- yes --> IMPORT_KIND
+        CHECK_IMPORT -- no --> UNKNOWN
+    end
+
+    CALL_AST --> RAW_NAME
+    HTML_NAMES --> CHECK_NATIVE
+    TOTAL --> CHECK_BUILTIN
+    LOCAL_DECLS --> CHECK_USER
+    IMPORT_ALIASES --> CHECK_IMPORT
+
+    %% ============================================================
+    %% 5. CALL INPUT NORMALIZATION
+    %% ============================================================
+
+    subgraph NORMALIZATION["5. COMPONENT CALL NORMALIZATION"]
+        direction TB
+
+        RAW_PROPS["Raw properties from call"]:::stage
+        RAW_CLASSES["Raw utility classes"]:::stage
+        RAW_EVENTS["Raw events"]:::stage
+        RAW_CHILDREN["Nested child nodes"]:::stage
+
+        SPLIT_INPUTS["Separate inputs into:<br/>props, native attributes,<br/>classes, events, children"]:::stage
+
+        NORMALIZED_CALL["Normalized component call"]:::artifact
+
+        RAW_PROPS --> SPLIT_INPUTS
+        RAW_CLASSES --> SPLIT_INPUTS
+        RAW_EVENTS --> SPLIT_INPUTS
+        RAW_CHILDREN --> SPLIT_INPUTS
+        SPLIT_INPUTS --> NORMALIZED_CALL
+    end
+
+    CALL_AST --> RAW_PROPS
+    CALL_AST --> RAW_CLASSES
+    CALL_AST --> RAW_EVENTS
+    CALL_AST --> RAW_CHILDREN
+
+    %% ============================================================
+    %% 6. PROP RESOLUTION AND VALIDATION
+    %% ============================================================
+
+    subgraph PROP_VALIDATION["6. PROP RESOLUTION AND VALIDATION"]
+        direction TB
+
+        SELECT_SCHEMA["Select component prop schema"]:::stage
+
+        USER_SCHEMA["User component props"]:::artifact
+        BUILTIN_SCHEMA["Built-in component props"]:::artifact
+        GENERIC_SCHEMA["Generic shared props"]:::partial
+        NATIVE_ATTRS["Native HTML attributes"]:::artifact
+
+        MATCH_PROPS["Match supplied prop names"]:::validate
+        REQUIRED_CHECK["Check required props"]:::validate
+        DEFAULTS["Apply default prop values"]:::stage
+        LITERAL_TYPES["Check basic literal type compatibility"]:::validate
+        UNKNOWN_PROP_CHECK["Unknown prop validation"]:::partial
+        FINAL_PROP_ENV["Resolved prop environment"]:::artifact
+
+        MISSING_PROP["Missing required prop diagnostic"]:::error
+        TYPE_ERROR["Literal prop type mismatch"]:::error
+
+        SELECT_SCHEMA --> USER_SCHEMA
+        SELECT_SCHEMA --> BUILTIN_SCHEMA
+        SELECT_SCHEMA --> GENERIC_SCHEMA
+        SELECT_SCHEMA --> NATIVE_ATTRS
+
+        USER_SCHEMA --> MATCH_PROPS
+        BUILTIN_SCHEMA --> MATCH_PROPS
+        GENERIC_SCHEMA --> MATCH_PROPS
+        NATIVE_ATTRS --> MATCH_PROPS
+
+        MATCH_PROPS --> REQUIRED_CHECK
+        REQUIRED_CHECK --> DEFAULTS
+        DEFAULTS --> LITERAL_TYPES
+        LITERAL_TYPES --> UNKNOWN_PROP_CHECK
+        UNKNOWN_PROP_CHECK --> FINAL_PROP_ENV
+
+        REQUIRED_CHECK -. missing .-> MISSING_PROP
+        LITERAL_TYPES -. mismatch .-> TYPE_ERROR
+    end
+
+    NATIVE_KIND --> SELECT_SCHEMA
+    BUILTIN_KIND --> SELECT_SCHEMA
+    USER_KIND --> SELECT_SCHEMA
+    IMPORT_KIND --> SELECT_SCHEMA
+
+    PROP_SCHEMA --> USER_SCHEMA
+    SCHEMA_DEFINED --> BUILTIN_SCHEMA
+    GENERIC --> GENERIC_SCHEMA
+    HTML_META --> NATIVE_ATTRS
+
+    NORMALIZED_CALL --> MATCH_PROPS
+
+    %% ============================================================
+    %% 7. SLOT AND CHILD CONTENT RESOLUTION
+    %% ============================================================
+
+    subgraph SLOT_RESOLUTION["7. SLOT AND CHILD CONTENT RESOLUTION"]
+        direction TB
+
+        CALL_CHILDREN["Children passed at invocation site"]:::stage
+        SLOT_SCHEMA["Component slot definitions"]:::artifact
+
+        DEFAULT_SLOT["Resolve default slot"]:::stage
+        NAMED_SLOT["Resolve named slots"]:::partial
+        EMPTY_SLOT["Handle missing optional slot"]:::stage
+
+        SLOT_CONTENT["Resolved slot content tree"]:::artifact
+
+        CALL_CHILDREN --> DEFAULT_SLOT
+        CALL_CHILDREN --> NAMED_SLOT
+        SLOT_SCHEMA --> DEFAULT_SLOT
+        SLOT_SCHEMA --> NAMED_SLOT
+        DEFAULT_SLOT --> SLOT_CONTENT
+        NAMED_SLOT --> SLOT_CONTENT
+        EMPTY_SLOT --> SLOT_CONTENT
+    end
+
+    NORMALIZED_CALL --> CALL_CHILDREN
+    SCHEMA_SLOTS --> SLOT_SCHEMA
+    BODY_TEMPLATE --> SLOT_SCHEMA
+
+    %% ============================================================
+    %% 8. USER COMPONENT EXPANSION
+    %% ============================================================
+
+    subgraph USER_EXPANSION["8. USER COMPONENT EXPANSION"]
+        direction TB
+
+        SELECT_TEMPLATE["Select component body template"]:::stage
+        CLONE_TEMPLATE["Clone body AST"]:::stage
+        PROP_SUBSTITUTE["Replace prop references<br/>with supplied/default expressions"]:::stage
+        SLOT_SUBSTITUTE["Replace slot node<br/>with invocation children"]:::stage
+        NESTED_EXPAND["Recursively expand nested components"]:::stage
+        RECURSION_GUARD["Detect recursive component expansion"]:::validate
+        USER_LOWERED["Expanded user component tree"]:::artifact
+
+        SELECT_TEMPLATE --> CLONE_TEMPLATE
+        CLONE_TEMPLATE --> PROP_SUBSTITUTE
+        PROP_SUBSTITUTE --> SLOT_SUBSTITUTE
+        SLOT_SUBSTITUTE --> RECURSION_GUARD
+        RECURSION_GUARD --> NESTED_EXPAND
+        NESTED_EXPAND --> USER_LOWERED
+    end
+
+    USER_KIND --> SELECT_TEMPLATE
+    IMPORT_KIND --> SELECT_TEMPLATE
+    BODY_TEMPLATE --> SELECT_TEMPLATE
+    FINAL_PROP_ENV --> PROP_SUBSTITUTE
+    SLOT_CONTENT --> SLOT_SUBSTITUTE
+
+    %% ============================================================
+    %% 9. BUILT-IN COMPONENT LOWERING
+    %% ============================================================
+
+    subgraph BUILTIN_LOWERING["9. BUILT-IN COMPONENT LOWERING"]
+        direction TB
+
+        SELECT_DEFINITION["Select ComponentDefinition"]:::stage
+
+        SPECIAL_RENDERER["Specialized renderer"]:::stage
+        GENERIC_RENDERER["Generic semantic renderer"]:::partial
+
+        VARIANT_RESOLVE["Resolve variant and size"]:::stage
+        STATE_RESOLVE["Resolve disabled/loading/open/etc."]:::stage
+        CLASS_ASSEMBLY["Assemble base, variant,<br/>size, state, and user classes"]:::stage
+        ATTRIBUTE_ASSEMBLY["Assemble semantic attributes<br/>and accessibility metadata"]:::stage
+        CHILD_ASSEMBLY["Insert component children / slots"]:::stage
+
+        BUILTIN_LOWERED["Lowered semantic HTML tree"]:::artifact
+
+        SELECT_DEFINITION --> SPECIAL_RENDERER
+        SELECT_DEFINITION --> GENERIC_RENDERER
+
+        SPECIAL_RENDERER --> VARIANT_RESOLVE
+        GENERIC_RENDERER --> VARIANT_RESOLVE
+        VARIANT_RESOLVE --> STATE_RESOLVE
+        STATE_RESOLVE --> CLASS_ASSEMBLY
+        CLASS_ASSEMBLY --> ATTRIBUTE_ASSEMBLY
+        ATTRIBUTE_ASSEMBLY --> CHILD_ASSEMBLY
+        CHILD_ASSEMBLY --> BUILTIN_LOWERED
+    end
+
+    BUILTIN_KIND --> SELECT_DEFINITION
+    SCHEMA_RENDERER --> SELECT_DEFINITION
+    SPECIALIZED --> SPECIAL_RENDERER
+    GENERIC --> GENERIC_RENDERER
+    FINAL_PROP_ENV --> VARIANT_RESOLVE
+    SLOT_CONTENT --> CHILD_ASSEMBLY
+
+    %% ============================================================
+    %% 10. NATIVE ELEMENT LOWERING
+    %% ============================================================
+
+    subgraph NATIVE_LOWERING["10. NATIVE HTML / SVG LOWERING"]
+        direction TB
+
+        KEEP_TAG["Preserve native output tag"]:::stage
+        VALIDATE_VOID["Check void-element behavior"]:::validate
+        EMIT_ATTRS["Emit native attributes"]:::stage
+        EMIT_CHILDREN["Emit child nodes when allowed"]:::stage
+        NATIVE_LOWERED["Lowered native element tree"]:::artifact
+
+        KEEP_TAG --> VALIDATE_VOID
+        VALIDATE_VOID --> EMIT_ATTRS
+        EMIT_ATTRS --> EMIT_CHILDREN
+        EMIT_CHILDREN --> NATIVE_LOWERED
+    end
+
+    NATIVE_KIND --> KEEP_TAG
+    NATIVE_ATTRS --> EMIT_ATTRS
+    SLOT_CONTENT --> EMIT_CHILDREN
+
+    %% ============================================================
+    %% 11. COMPONENT CLASS HANDLING
+    %% ============================================================
+
+    subgraph CLASS_HANDLING["11. COMPONENT CLASS AND STYLE HANDLING"]
+        direction TB
+
+        BASE_CLASSES["Component base classes<br/><br/>kx-card<br/>kx-button<br/>kx-modal"]:::style
+        VARIANT_CLASSES["Variant classes<br/><br/>kx-card--raised<br/>kx-button--primary"]:::style
+        SIZE_CLASSES["Size classes<br/><br/>kx-button--sm<br/>kx-button--lg"]:::style
+        STATE_CLASSES["State classes<br/><br/>is-disabled<br/>is-loading<br/>is-open"]:::style
+        USER_CLASSES["Developer utility classes<br/><br/>surface-raised<br/>content-content<br/>md:grid-cols-2"]:::style
+
+        CLASS_NORMALIZATION["Normalize internal class names<br/>and apply kx- output prefix once"]:::stage
+        STYLE_SCAN["Send used utility classes<br/>to Korlix JIT style scanner"]:::stage
+        FINAL_CLASSES["Final generated class list"]:::artifact
+
+        BASE_CLASSES --> CLASS_NORMALIZATION
+        VARIANT_CLASSES --> CLASS_NORMALIZATION
+        SIZE_CLASSES --> CLASS_NORMALIZATION
+        STATE_CLASSES --> CLASS_NORMALIZATION
+        USER_CLASSES --> CLASS_NORMALIZATION
+        CLASS_NORMALIZATION --> STYLE_SCAN
+        CLASS_NORMALIZATION --> FINAL_CLASSES
+    end
+
+    CLASS_ASSEMBLY --> BASE_CLASSES
+    CLASS_ASSEMBLY --> VARIANT_CLASSES
+    CLASS_ASSEMBLY --> SIZE_CLASSES
+    CLASS_ASSEMBLY --> STATE_CLASSES
+    NORMALIZED_CALL --> USER_CLASSES
+
+    %% ============================================================
+    %% 12. EVENT AND RUNTIME FEATURE ANALYSIS
+    %% ============================================================
+
+    subgraph RUNTIME_ANALYSIS["12. EVENT AND RUNTIME FEATURE ANALYSIS"]
+        direction TB
+
+        COMPONENT_EVENTS["Component call events"]:::stage
+        COMPONENT_FLAGS["Runtime feature flags<br/>from ComponentDefinition"]:::artifact
+
+        EVENT_FEATURE["events"]:::runtime
+        STATE_FEATURE["state"]:::runtime
+        THEME_FEATURE["theme"]:::runtime
+        TOAST_FEATURE["toast"]:::runtime
+        OVERLAY_FEATURE["modal / drawer / overlay"]:::runtime
+        PAGINATION_FEATURE["pagination"]:::runtime
+        ROUTER_FEATURE["router / navigation"]:::runtime
+        API_FEATURE["API"]:::runtime
+
+        RUNTIME_PLAN["Page/project runtime feature plan"]:::artifact
+
+        COMPONENT_EVENTS --> EVENT_FEATURE
+        COMPONENT_FLAGS --> EVENT_FEATURE
+        COMPONENT_FLAGS --> STATE_FEATURE
+        COMPONENT_FLAGS --> THEME_FEATURE
+        COMPONENT_FLAGS --> TOAST_FEATURE
+        COMPONENT_FLAGS --> OVERLAY_FEATURE
+        COMPONENT_FLAGS --> PAGINATION_FEATURE
+        COMPONENT_FLAGS --> ROUTER_FEATURE
+        COMPONENT_FLAGS --> API_FEATURE
+
+        EVENT_FEATURE --> RUNTIME_PLAN
+        STATE_FEATURE --> RUNTIME_PLAN
+        THEME_FEATURE --> RUNTIME_PLAN
+        TOAST_FEATURE --> RUNTIME_PLAN
+        OVERLAY_FEATURE --> RUNTIME_PLAN
+        PAGINATION_FEATURE --> RUNTIME_PLAN
+        ROUTER_FEATURE --> RUNTIME_PLAN
+        API_FEATURE --> RUNTIME_PLAN
+    end
+
+    NORMALIZED_CALL --> COMPONENT_EVENTS
+    SCHEMA_RUNTIME --> COMPONENT_FLAGS
+
+    %% ============================================================
+    %% 13. NORMALIZED UI TREE
+    %% ============================================================
+
+    subgraph NORMALIZED_TREE["13. NORMALIZED UI TREE"]
+        direction TB
+
+        MERGE_USER["Expanded user component output"]:::artifact
+        MERGE_BUILTIN["Lowered built-in component output"]:::artifact
+        MERGE_NATIVE["Native element output"]:::artifact
+
+        TREE["Normalized semantic UI tree<br/><br/>tags<br/>attributes<br/>classes<br/>event IDs<br/>children<br/>bindings"]:::artifact
+
+        MERGE_USER --> TREE
+        MERGE_BUILTIN --> TREE
+        MERGE_NATIVE --> TREE
+    end
+
+    USER_LOWERED --> MERGE_USER
+    BUILTIN_LOWERED --> MERGE_BUILTIN
+    NATIVE_LOWERED --> MERGE_NATIVE
+    FINAL_CLASSES --> TREE
+
+    %% ============================================================
+    %% 14. CODE GENERATION
+    %% ============================================================
+
+    subgraph CODEGEN["14. COMPONENT CODE GENERATION"]
+        direction TB
+
+        subgraph HTML_GEN["HTML GENERATION"]
+            direction TB
+            HTML_TAG["Emit semantic output tag"]:::stage
+            HTML_ATTR["Emit attributes and classes"]:::stage
+            HTML_EVENT_ID["Emit data/event binding IDs"]:::stage
+            HTML_CHILDREN["Emit nested content"]:::stage
+            HTML_OUTPUT["Generated route HTML"]:::output
+            HTML_TAG --> HTML_ATTR --> HTML_EVENT_ID --> HTML_CHILDREN --> HTML_OUTPUT
+        end
+
+        subgraph JS_GEN["JAVASCRIPT GENERATION"]
+            direction TB
+            JS_HANDLER["Generate component event handlers"]:::stage
+            JS_BINDING["Generate state, condition,<br/>loop, and interpolation bindings"]:::stage
+            JS_RUNTIME_CALL["Generate calls to runtime modules"]:::stage
+            JS_OUTPUT["assets/app.js"]:::output
+            JS_HANDLER --> JS_BINDING --> JS_RUNTIME_CALL --> JS_OUTPUT
+        end
+
+        subgraph CSS_GEN["CSS GENERATION"]
+            direction TB
+            COMPONENT_CSS["Built-in component base CSS"]:::stage
+            UTILITY_CSS["JIT utility CSS from used classes"]:::stage
+            VARIANT_CSS["Variant, responsive,<br/>state, and dark CSS"]:::stage
+            CSS_OUTPUT["assets/korlix.css"]:::output
+            COMPONENT_CSS --> UTILITY_CSS --> VARIANT_CSS --> CSS_OUTPUT
+        end
+
+        subgraph RUNTIME_OUT["RUNTIME OUTPUT"]
+            direction TB
+            BUNDLE_RUNTIME["Bundle shared Korlix runtime"]:::stage
+            RUNTIME_OUTPUT["assets/korlix.runtime.js"]:::output
+            BUNDLE_RUNTIME --> RUNTIME_OUTPUT
+        end
+    end
+
+    TREE --> HTML_TAG
+    TREE --> JS_HANDLER
+    STYLE_SCAN --> UTILITY_CSS
+    RUNTIME_PLAN --> BUNDLE_RUNTIME
+
+    %% ============================================================
+    %% 15. COMPONENT-SPECIFIC RUNTIME USE
+    %% ============================================================
+
+    subgraph COMPONENT_RUNTIME["15. COMPONENT RUNTIME USE IN THE BROWSER"]
+        direction TB
+
+        LOAD_PAGE["Browser loads HTML, CSS,<br/>runtime, and app.js"]:::browser
+
+        INIT_COMPONENTS["Initialize component bindings"]:::browser
+
+        BUTTON_USE["button<br/>dispatch click/change/action"]:::browser
+        THEME_USE["theme-toggle<br/>switch light/dark/auto"]:::browser
+        TOAST_USE["toast<br/>create and dismiss notification"]:::browser
+        MODAL_USE["modal / drawer<br/>open, close, restore focus"]:::browser
+        PAGINATION_USE["pagination<br/>calculate pages,<br/>emit page-change event,<br/>sync URL"]:::browser
+        FORM_USE["input/select/checkbox/switch<br/>emit input/change events"]:::browser
+        NAV_USE["link/navbar/sidebar<br/>navigation and active-link behavior"]:::browser
+
+        INTERACTIVE_APP["Interactive Korlix UI"]:::browser
+
+        LOAD_PAGE --> INIT_COMPONENTS
+        INIT_COMPONENTS --> BUTTON_USE
+        INIT_COMPONENTS --> THEME_USE
+        INIT_COMPONENTS --> TOAST_USE
+        INIT_COMPONENTS --> MODAL_USE
+        INIT_COMPONENTS --> PAGINATION_USE
+        INIT_COMPONENTS --> FORM_USE
+        INIT_COMPONENTS --> NAV_USE
+
+        BUTTON_USE --> INTERACTIVE_APP
+        THEME_USE --> INTERACTIVE_APP
+        TOAST_USE --> INTERACTIVE_APP
+        MODAL_USE --> INTERACTIVE_APP
+        PAGINATION_USE --> INTERACTIVE_APP
+        FORM_USE --> INTERACTIVE_APP
+        NAV_USE --> INTERACTIVE_APP
+    end
+
+    HTML_OUTPUT --> LOAD_PAGE
+    JS_OUTPUT --> LOAD_PAGE
+    CSS_OUTPUT --> LOAD_PAGE
+    RUNTIME_OUTPUT --> LOAD_PAGE
+
+    %% ============================================================
+    %% 16. BUILT-IN COMPONENT CATEGORIES
+    %% ============================================================
+
+    subgraph CATEGORIES["16. BUILT-IN COMPONENT CATEGORIES AND USES"]
+        direction TB
+
+        CAT_NAV["Navigation<br/><br/>navbar, footer, sidebar,<br/>breadcrumb, tabs, stepper,<br/>mobile-menu, bottom-navigation"]:::category
+
+        CAT_FORM["Forms<br/><br/>input, select, textarea,<br/>checkbox, switch, text-field,<br/>date-picker, file-upload,<br/>dropzone, otp-input"]:::category
+
+        CAT_CONTENT["Content<br/><br/>card, badge, accordion,<br/>article-card, image-card,<br/>timeline, list-group, code-block"]:::category
+
+        CAT_LAYOUT["Layout<br/><br/>container, row, column,<br/>grid, stack, split,<br/>divider, spacer, scroll-area"]:::category
+
+        CAT_OVERLAY["Overlays<br/><br/>modal, drawer, tooltip,<br/>popover, dropdown,<br/>context-menu, lightbox, sheet"]:::category
+
+        CAT_DATA["Data display<br/><br/>table, data-table, data-grid,<br/>tree-view, calendar, metric,<br/>key-value-list, pagination"]:::category
+
+        CAT_MEDIA["Media<br/><br/>image, carousel, gallery,<br/>image-viewer, video-player,<br/>audio-player, map-container"]:::category
+
+        CAT_FEEDBACK["Feedback<br/><br/>toast, alert, notification,<br/>progress-bar, spinner,<br/>skeleton, empty-state"]:::category
+
+        CAT_MARKETING["Marketing and dashboard<br/><br/>hero, pricing-card,<br/>testimonial-card, feature-card,<br/>product-card, stat-card"]:::category
+    end
+
+    TOTAL --> CAT_NAV
+    TOTAL --> CAT_FORM
+    TOTAL --> CAT_CONTENT
+    TOTAL --> CAT_LAYOUT
+    TOTAL --> CAT_OVERLAY
+    TOTAL --> CAT_DATA
+    TOTAL --> CAT_MEDIA
+    TOTAL --> CAT_FEEDBACK
+    TOTAL --> CAT_MARKETING
+
+    %% ============================================================
+    %% 17. END-TO-END CALL EXAMPLES
+    %% ============================================================
+
+    subgraph EXAMPLES["17. END-TO-END COMPONENT CALL EXAMPLES"]
+        direction TB
+
+        EX1["Source<br/><br/>button 'Save'<br/>  variant=primary<br/>  click=save"]:::example
+        EX1_OUT["Lowered output<br/><br/>semantic button<br/>component classes<br/>event binding<br/>runtime click handler"]:::exampleResult
+
+        EX2["Source<br/><br/>UserCard<br/>  name='Sachin'<br/>  role='Admin'<br/>  button 'Open'"]:::example
+        EX2_OUT["Lowered output<br/><br/>clone user template<br/>bind name/role<br/>replace slot with button<br/>expand nested card"]:::exampleResult
+
+        EX3["Source<br/><br/>pagination<br/>  page=page<br/>  total=100<br/>  perPage=20<br/>  url-sync"]:::example
+        EX3_OUT["Lowered output<br/><br/>accessible nav controls<br/>page calculations<br/>disabled states<br/>page-change events<br/>URL query sync"]:::exampleResult
+
+        EX4["Source<br/><br/>modal id='confirm'<br/>  title='Delete item'<br/>  button 'Delete'"]:::example
+        EX4_OUT["Lowered output<br/><br/>dialog/backdrop structure<br/>overlay runtime flag<br/>openModal/closeModal support"]:::exampleResult
+
+        EX5["Source<br/><br/>theme-toggle"]:::example
+        EX5_OUT["Lowered output<br/><br/>theme button/control<br/>theme runtime feature<br/>data-kx-theme update<br/>saved preference"]:::exampleResult
+
+        EX1 --> EX1_OUT
+        EX2 --> EX2_OUT
+        EX3 --> EX3_OUT
+        EX4 --> EX4_OUT
+        EX5 --> EX5_OUT
+    end
+
+    %% ============================================================
+    %% 18. CURRENT LIMITATIONS
+    %% ============================================================
+
+    subgraph LIMITATIONS["18. CURRENT COMPONENT LIMITATIONS"]
+        direction TB
+
+        LIMIT1["Not all 115 components have<br/>specialized runtime behavior"]:::partial
+        LIMIT2["80 catalogue components currently<br/>use generic renderer behavior"]:::partial
+        LIMIT3["Named-slot invocation is incomplete"]:::partial
+        LIMIT4["Unknown prop validation is incomplete"]:::partial
+        LIMIT5["Component-local state isolation<br/>is not fully implemented"]:::partial
+        LIMIT6["Event forwarding and lifecycle hooks<br/>are not fully implemented"]:::partial
+        LIMIT7["Generic component accessibility<br/>contracts remain incomplete"]:::partial
+    end
+
+    %% ============================================================
+    %% LEGEND
+    %% ============================================================
+
+    subgraph LEGEND["LEGEND"]
+        direction LR
+        L1["Source syntax"]:::syntax
+        L2["Registry / schema"]:::registry
+        L3["Compiler stage"]:::stage
+        L4["Validation"]:::validate
+        L5["Intermediate artifact"]:::artifact
+        L6["Generated output"]:::output
+        L7["Runtime/browser"]:::browser
+        L8["Partial / incomplete"]:::partial
+        L9["Error"]:::error
+    end
+
+    classDef actor fill:#111827,color:#ffffff,stroke:#111827,stroke-width:2px;
+    classDef syntax fill:#f5f3ff,color:#4c1d95,stroke:#8b5cf6,stroke-width:1.4px;
+    classDef stage fill:#eff6ff,color:#172554,stroke:#60a5fa,stroke-width:1.2px;
+    classDef validate fill:#ecfdf5,color:#064e3b,stroke:#10b981,stroke-width:1.2px;
+    classDef artifact fill:#fefce8,color:#713f12,stroke:#eab308,stroke-width:1.2px;
+    classDef registry fill:#ede9fe,color:#3b0764,stroke:#7c3aed,stroke-width:1.3px;
+    classDef schema fill:#faf5ff,color:#581c87,stroke:#a855f7,stroke-width:1.1px;
+    classDef decision fill:#fff7ed,color:#7c2d12,stroke:#f97316,stroke-width:1.3px;
+    classDef result fill:#f0fdf4,color:#14532d,stroke:#22c55e,stroke-width:1.3px;
+    classDef error fill:#fef2f2,color:#7f1d1d,stroke:#ef4444,stroke-width:1.5px;
+    classDef partial fill:#fff7ed,color:#7c2d12,stroke:#f97316,stroke-width:1.4px,stroke-dasharray:5 3;
+    classDef style fill:#ecfeff,color:#164e63,stroke:#06b6d4,stroke-width:1.2px;
+    classDef runtime fill:#fdf4ff,color:#701a75,stroke:#d946ef,stroke-width:1.2px;
+    classDef output fill:#f0fdf4,color:#14532d,stroke:#22c55e,stroke-width:1.4px;
+    classDef browser fill:#fdf4ff,color:#701a75,stroke:#c026d3,stroke-width:1.3px;
+    classDef category fill:#f8fafc,color:#0f172a,stroke:#64748b,stroke-width:1.2px;
+    classDef example fill:#f8fafc,color:#0f172a,stroke:#64748b,stroke-width:1.2px;
+    classDef exampleResult fill:#f0fdf4,color:#14532d,stroke:#16a34a,stroke-width:1.2px;

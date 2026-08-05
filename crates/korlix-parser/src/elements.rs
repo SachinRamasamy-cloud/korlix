@@ -1,89 +1,12 @@
 use crate::parser::Parser;
 use korlix_ast::{
     element::{ClassRef, ComponentNode, ElementNode, EventHandler, Prop},
-    node::{Node, TextNode},
+    expression::Expr,
+    node::{CallNode, Node, TextNode},
 };
 use korlix_lexer::token::TokenKind;
 
-/// HTML-native tags that map directly to HTML elements.
-const HTML_TAGS: &[&str] = &[
-    "div",
-    "span",
-    "p",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "h6",
-    "a",
-    "ul",
-    "ol",
-    "li",
-    "table",
-    "thead",
-    "tbody",
-    "tr",
-    "td",
-    "th",
-    "form",
-    "input",
-    "textarea",
-    "select",
-    "option",
-    "button",
-    "label",
-    "header",
-    "footer",
-    "main",
-    "nav",
-    "section",
-    "article",
-    "aside",
-    "figure",
-    "figcaption",
-    "img",
-    "video",
-    "audio",
-    "canvas",
-    "svg",
-    "path",
-    "rect",
-    "circle",
-    "line",
-    "polyline",
-    "polygon",
-    "ellipse",
-    "g",
-    "defs",
-    "linearGradient",
-    "stop",
-    "title",
-    "code",
-    "pre",
-    "blockquote",
-    "br",
-    "hr",
-    "strong",
-    "em",
-    "small",
-    "sub",
-    "sup",
-    "del",
-    "ins",
-    "mark",
-    "abbr",
-    "cite",
-    "q",
-    "details",
-    "summary",
-    "dialog",
-    "template",
-];
-
-fn is_html_tag(name: &str) -> bool {
-    HTML_TAGS.contains(&name)
-}
+use crate::html::is_html_tag;
 
 impl<'t> Parser<'t> {
     pub fn parse_element_or_component(&mut self) -> Option<Node> {
@@ -113,17 +36,36 @@ impl<'t> Parser<'t> {
                     classes.push(ClassRef::new(c.clone(), self.current_span()));
                     self.advance();
                 }
+                // HTML/Korlix boolean property: `required`, `disabled`, `url-sync`.
+                _ if self.current_kind().is_ident_like()
+                    && is_boolean_property(
+                        self.current_kind().as_ident_str().unwrap_or_default(),
+                    ) =>
+                {
+                    let key = self.expect_ident().unwrap_or_default();
+                    props.push(Prop::new(key, Expr::Bool(true), self.current_span()));
+                }
                 // prop=value
                 _ if self.current_kind().is_ident_like()
                     && self.peek_ahead(1).kind == TokenKind::Equals =>
                 {
                     let key = self.expect_ident().unwrap_or_default();
                     self.advance(); // =
-                    let val = self
-                        .parse_expr()
-                        .unwrap_or(korlix_ast::expression::Expr::Null);
+                    let val = self.parse_expr().unwrap_or(Expr::Null);
                     let prop_span = span;
-                    props.push(Prop::new(key, val, prop_span));
+                    if is_event_property(&key) {
+                        if let Some(body) = event_expression_to_body(&val, prop_span) {
+                            events.push(EventHandler {
+                                event: normalize_event_name(&key),
+                                body,
+                                span: prop_span,
+                            });
+                        } else {
+                            props.push(Prop::new(key, val, prop_span));
+                        }
+                    } else {
+                        props.push(Prop::new(key, val, prop_span));
+                    }
                 }
                 // inline text / binding content
                 TokenKind::StringLit(_)
@@ -159,28 +101,20 @@ impl<'t> Parser<'t> {
             }
         }
 
-        // Check for a block (children)
-        let has_block = self.check(&TokenKind::Colon) && {
-            // lookahead: does the next non-newline token after colon start a block?
-            let mut i = self.pos + 1;
-            while i < self.tokens.len() {
-                match &self.tokens[i].kind {
-                    TokenKind::Newline => i += 1,
-                    TokenKind::Indent => break,
-                    _ => {
-                        break;
-                    }
-                }
-            }
-            i < self.tokens.len() && matches!(self.tokens[i].kind, TokenKind::Indent)
-        };
+        // Check for an indented child block. Korlix V2 makes the trailing
+        // colon optional, while V1 source remains valid.
+        let has_colon = self.check(&TokenKind::Colon);
+        let mut i = self.pos + usize::from(has_colon);
+        while i < self.tokens.len() && matches!(self.tokens[i].kind, TokenKind::Newline) {
+            i += 1;
+        }
+        let has_block = i < self.tokens.len() && matches!(self.tokens[i].kind, TokenKind::Indent);
 
+        if has_colon {
+            self.advance();
+        }
         let children = if has_block {
-            self.expect(&TokenKind::Colon);
             self.parse_block()
-        } else if self.check(&TokenKind::Colon) {
-            self.advance(); // consume lone colon (e.g. on:click: inside same line)
-            vec![]
         } else {
             vec![]
         };
@@ -213,4 +147,91 @@ impl<'t> Parser<'t> {
             }))
         }
     }
+}
+
+fn is_event_property(name: &str) -> bool {
+    matches!(
+        name,
+        "click"
+            | "double-click"
+            | "input"
+            | "change"
+            | "submit"
+            | "focus"
+            | "blur"
+            | "keydown"
+            | "keyup"
+            | "mouseenter"
+            | "mouseleave"
+            | "scroll"
+            | "load"
+            | "error"
+            | "drag"
+            | "drop"
+            | "touch-start"
+            | "touch-end"
+    )
+}
+
+fn normalize_event_name(name: &str) -> String {
+    match name {
+        "double-click" => "dblclick".into(),
+        "touch-start" => "touchstart".into(),
+        "touch-end" => "touchend".into(),
+        other => other.into(),
+    }
+}
+
+fn event_expression_to_body(expr: &Expr, span: korlix_core::Span) -> Option<Vec<Node>> {
+    match expr {
+        Expr::Identifier(name) => Some(vec![Node::Call(CallNode {
+            callee: name.clone(),
+            args: vec![],
+            span,
+        })]),
+        Expr::Call { callee, args } => {
+            let callee = match callee.as_ref() {
+                Expr::Identifier(name) => name.clone(),
+                other => other.to_string(),
+            };
+            Some(vec![Node::Call(CallNode {
+                callee,
+                args: args.clone(),
+                span,
+            })])
+        }
+        _ => None,
+    }
+}
+
+fn is_boolean_property(name: &str) -> bool {
+    matches!(
+        name,
+        "allowfullscreen"
+            | "async"
+            | "autofocus"
+            | "autoplay"
+            | "checked"
+            | "controls"
+            | "default"
+            | "defer"
+            | "disabled"
+            | "formnovalidate"
+            | "hidden"
+            | "inert"
+            | "ismap"
+            | "itemscope"
+            | "loop"
+            | "multiple"
+            | "muted"
+            | "nomodule"
+            | "novalidate"
+            | "open"
+            | "playsinline"
+            | "readonly"
+            | "required"
+            | "reversed"
+            | "selected"
+            | "url-sync"
+    )
 }

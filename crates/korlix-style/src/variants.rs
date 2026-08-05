@@ -70,24 +70,46 @@ pub fn breakpoint_media(prefix: &str) -> Option<String> {
 /// Apply a variant to an existing CssRule, modifying selector or wrapping in @media.
 pub fn apply_variant(prefix: &str, base_class: &str, mut rule: CssRule) -> CssRule {
     if is_breakpoint(prefix) {
-        let mq = breakpoint_media(prefix).unwrap();
-        rule.selector = format!("{}\\:{}", prefix, base_class);
-        rule.media_query = Some(mq);
+        rule.selector = format!("{}:{}", prefix, base_class);
+        rule.media_query = breakpoint_media(prefix);
         return rule;
     }
 
-    for (vname, pseudo) in STATE_VARIANTS {
-        if *vname == prefix {
-            if pseudo.starts_with("@media") {
-                rule.selector = format!("{}\\:{}", prefix, base_class);
-                rule.media_query = Some(pseudo.to_string());
-            } else if pseudo.starts_with('.') || pseudo.starts_with('[') {
-                // group / peer variants — parent selector prefix
-                rule.selector = format!("{} .kx-{}\\:{}", pseudo.trim(), prefix, base_class);
-            } else {
-                rule.selector = format!("{}\\:{}{}", prefix, base_class, pseudo);
+    let escaped_variant_class = format!("{}\\:{}", prefix, base_class);
+    match prefix {
+        "dark" => {
+            rule.selector = format!("[data-kx-theme=\"dark\"] .kx-{}", escaped_variant_class);
+            rule.selector_is_raw = true;
+        }
+        "group-hover" => {
+            rule.selector = format!(".kx-group:hover .kx-{}", escaped_variant_class);
+            rule.selector_is_raw = true;
+        }
+        "peer-checked" => {
+            rule.selector = format!(".kx-peer:checked ~ .kx-{}", escaped_variant_class);
+            rule.selector_is_raw = true;
+        }
+        "data-open" => {
+            rule.selector = format!(".kx-{}[data-open]", escaped_variant_class);
+            rule.selector_is_raw = true;
+        }
+        "data-active" => {
+            rule.selector = format!(".kx-{}[data-active]", escaped_variant_class);
+            rule.selector_is_raw = true;
+        }
+        _ => {
+            for (variant, pseudo) in STATE_VARIANTS {
+                if *variant != prefix {
+                    continue;
+                }
+                if pseudo.starts_with("@media") {
+                    rule.selector = format!("{}:{}", prefix, base_class);
+                    rule.media_query = Some((*pseudo).into());
+                } else {
+                    rule.selector = format!("{}:{}{}", prefix, base_class, pseudo);
+                }
+                break;
             }
-            return rule;
         }
     }
     rule

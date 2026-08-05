@@ -1,6 +1,6 @@
 use crate::output::*;
 use colored::Colorize;
-use korlix_compiler::Project;
+use korlix_compiler::{compile, Project};
 use korlix_core::DiagnosticSet;
 use korlix_lexer::lexer::lex;
 use korlix_parser::parser::Parser;
@@ -61,6 +61,23 @@ pub fn run(_a11y: bool, _security: bool, _seo: bool, ast: bool) -> anyhow::Resul
 
         total_errors += diag.error_count();
         total_warnings += diag.warning_count();
+    }
+
+    // Run the whole-program semantic pass after file-local lexing, parsing,
+    // and style validation. This catches duplicate routes/declarations,
+    // unknown components, required props, and literal type mismatches.
+    if total_errors == 0 {
+        if let Err(error) = compile(&project, "static") {
+            let lines: Vec<&str> = error
+                .lines()
+                .filter(|line| !line.trim().is_empty())
+                .collect();
+            total_errors += lines.len().max(1);
+            println!("  {} Whole-program semantics", "→".dimmed());
+            for line in lines {
+                println!("    {} {}", "✕".red().bold(), line);
+            }
+        }
     }
 
     println!();
