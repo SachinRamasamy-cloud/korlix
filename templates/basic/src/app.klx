@@ -11,6 +11,7 @@ app:
     page "/" from "./pages/index.klx"
     page "/about" from "./pages/about.klx"
     page "/api-test" from "./pages/api-test.klx"
+    page "/api-demo" from "./pages/api-demo.klx"
 
   providers:
     toast

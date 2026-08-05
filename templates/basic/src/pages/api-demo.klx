@@ -1,0 +1,67 @@
+page ApiDemo route "/api-demo":
+  get users "http://localhost:4001/api/users"
+  get stats "http://localhost:4001/api/stats"
+
+  state name: string = ""
+  state email: string = ""
+  state role: string = "User"
+
+  action createUser:
+    post "http://localhost:4001/api/users" { name: name, email: email, role: role, active: true }
+    reload users
+    reload stats
+
+  section .p-6 .space-y-6:
+    div:
+      h1 .text-2xl .font-bold "API Demo"
+      p .text-muted "This demo uses a Node backend and Korlix API queries to verify GET, POST, reload, loading, and error behavior."
+
+    div .grid .grid-cols-3 .gap-4:
+      div .p-4 .border .rounded-lg:
+        h2 .font-semibold "Total users"
+        p .text-3xl stats.totalUsers
+
+      div .p-4 .border .rounded-lg:
+        h2 .font-semibold "Active users"
+        p .text-3xl stats.activeUsers
+
+      div .p-4 .border .rounded-lg:
+        h2 .font-semibold "Inactive users"
+        p .text-3xl stats.inactiveUsers
+
+    div .p-4 .border .rounded-lg .space-y-3:
+      h2 .font-semibold "Add a new user"
+      input .border .p-2 .rounded value=name placeholder="Name" on:input:
+        name = event.target.value
+      input .border .p-2 .rounded value=email placeholder="Email" on:input:
+        email = event.target.value
+      input .border .p-2 .rounded value=role placeholder="Role" on:input:
+        role = event.target.value
+      button .bg-blue-600 .text-white .px-4 .py-2 .rounded "Create User" on:click:
+        createUser()
+
+    if usersLoading:
+      p .text-muted "Loading users..."
+
+    if usersError:
+      p .text-danger usersError
+
+    if statsLoading:
+      p .text-muted "Loading stats..."
+
+    if statsError:
+      p .text-danger statsError
+
+    div .space-y-4:
+      h2 .text-xl .font-semibold "Users"
+      for user in users:
+        div .p-4 .border .rounded-lg:
+          div .flex .items-center .justify-between:
+            div:
+              h3 .font-semibold user.name
+              p .text-muted user.email
+              p .text-sm user.role
+            if user["active"]:
+              span .text-success "Active"
+            if user["active"] == false:
+              span .text-danger "Inactive"
