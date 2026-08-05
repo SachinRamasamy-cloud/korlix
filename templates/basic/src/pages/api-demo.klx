@@ -11,10 +11,25 @@ page ApiDemo route "/api-demo":
     reload users
     reload stats
 
+  action replaceUser:
+    put "http://localhost:4001/api/users/1" { name: name, email: email, role: role, active: true }
+    reload users
+    reload stats
+
+  action patchUser:
+    patch "http://localhost:4001/api/users/1" { role: role, active: true }
+    reload users
+    reload stats
+
+  action deleteUser:
+    delete "http://localhost:4001/api/users/1"
+    reload users
+    reload stats
+
   section .p-6 .space-y-6:
     div:
       h1 .text-2xl .font-bold "API Demo"
-      p .text-muted "This demo uses a Node backend and Korlix API queries to verify GET, POST, reload, loading, and error behavior."
+      p .text-muted "This demo uses a Node backend and Korlix API queries to verify GET, POST, PUT, PATCH, DELETE, reload, loading, and error behavior."
 
     div .grid .grid-cols-3 .gap-4:
       div .p-4 .border .rounded-lg:
@@ -30,15 +45,23 @@ page ApiDemo route "/api-demo":
         p .text-3xl stats.inactiveUsers
 
     div .p-4 .border .rounded-lg .space-y-3:
-      h2 .font-semibold "Add a new user"
+      h2 .font-semibold "Add or update user"
       input .border .p-2 .rounded value=name placeholder="Name" on:input:
         name = event.target.value
       input .border .p-2 .rounded value=email placeholder="Email" on:input:
         email = event.target.value
       input .border .p-2 .rounded value=role placeholder="Role" on:input:
         role = event.target.value
-      button .bg-blue-600 .text-white .px-4 .py-2 .rounded "Create User" on:click:
-        createUser()
+      div .flex .gap-2:
+        button .bg-blue-600 .text-white .px-4 .py-2 .rounded "Create User" on:click:
+          createUser()
+        button .bg-green-600 .text-white .px-4 .py-2 .rounded "Replace User 1" on:click:
+          replaceUser()
+        button .bg-yellow-600 .text-black .px-4 .py-2 .rounded "Patch User 1" on:click:
+          patchUser()
+        button .bg-red-600 .text-white .px-4 .py-2 .rounded "Delete User 1" on:click:
+          deleteUser()
+      p .text-sm .text-muted "The update/delete examples operate on user ID 1 for demo purposes."
 
     if usersLoading:
       p .text-muted "Loading users..."
