@@ -504,6 +504,7 @@ Phase 1: Compiler core, SPA mode, starter app, dev server
 Phase 2: More diagnostics, stronger validation, macOS binary support
 Phase 3: VS Code extension, docs website, templates
 Phase 4: Stable language spec
+phase 5 : implement the api layers
 ```
 
 ---
