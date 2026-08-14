@@ -505,6 +505,7 @@ Phase 2: More diagnostics, stronger validation, macOS binary support
 Phase 3: VS Code extension, docs website, templates
 Phase 4: Stable language spec
 phase 5 : implement the api layers
+phase 6 : implement 1000+ color class and components 
 ```
 
 ---
